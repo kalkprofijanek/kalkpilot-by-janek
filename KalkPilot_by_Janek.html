@@ -15,7 +15,6 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 header{background:var(--card);border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0}
 .logo{font-size:17px;font-weight:800;background:linear-gradient(135deg,#4f8ef7,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .logo-sub{font-size:10px;color:var(--muted);margin-top:1px}
-.version-badge{font-size:9px;color:var(--muted);background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);padding:2px 6px;border-radius:4px;display:inline-block;margin-top:2px}
 .hstats{margin-left:auto;display:flex;gap:18px;font-size:11px;color:var(--muted)}
 .hstat span{color:var(--accent);font-weight:700}
 nav{background:var(--card);border-bottom:1px solid var(--border);display:flex;padding:0 18px;flex-shrink:0}
@@ -80,7 +79,7 @@ input[type=checkbox]{accent-color:var(--accent);cursor:pointer;width:14px;height
 .sum-card{background:var(--input);border:1px solid rgba(255,255,255,.04);border-radius:6px;padding:12px;text-align:center}
 .sum-n{font-size:26px;font-weight:800;color:var(--accent)}
 .sum-l{font-size:10px;color:var(--muted);margin-top:3px}
-.xml-out{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:14px;font-family:'Cascadia Code',Consolas,monospace;font-size:11px;color:#98d1c0;overflow:auto;max-height:360px;white-space:pre-wrap;word-break:break-all;line-height:1.5}
+.xml-out{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:14px;font-family:'Cascadia Code',Consolas,monospace;font-size:11px;color:#98d1c0;overflow:auto;max-height:360px;white-space:pre;line-height:1.5;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
 .rng-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
 .rng-row input[type=range]{flex:1;accent-color:var(--accent)}
 .rng-val{color:var(--accent);font-weight:700;min-width:32px}
@@ -91,7 +90,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .action-strip{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;background:rgba(22,163,74,.05);border:1px solid rgba(22,163,74,.12);border-radius:8px}
 .unit-toggle{display:flex;align-items:center;gap:5px;padding:4px 8px;background:var(--input);border-radius:5px;font-size:11px;cursor:pointer;border:1px solid var(--border);transition:.15s}
 .unit-toggle:hover{border-color:var(--accent)}.unit-toggle.on{border-color:var(--accent);background:rgba(79,142,247,.1)}
-.lv-loaded{display:none;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.35);border-radius:7px;padding:10px 14px;color:#4ade80;font-size:12px;font-weight:600;align-items:center;gap:8px}
+.lv-loaded{display:none;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.35);border-radius:7px;padding:10px 14px;color:#4ade80;font-size:12px;font-weight:600;align-items:center;gap:8px;margin-top:10px}
 .lv-loaded.show{display:flex}
 .info-btn{background:none;border:1px solid var(--border);border-radius:4px;color:var(--muted);cursor:pointer;font-size:11px;padding:2px 6px;transition:.15s}
 .info-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -122,7 +121,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 /* DETAIL MODAL */
 #detailModal{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
 #detailModal.open{display:flex}
-.detail-box{background:var(--card);border:1px solid var(--border);border-radius:10px;width:min(700px,95vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.detail-box{background:var(--card);border:1px solid var(--border);border-radius:10px;width:min(700px,95vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
 .detail-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
 .detail-hdr h3{font-size:14px;font-weight:700;flex:1}
 .detail-body{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
@@ -156,7 +155,6 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
   <div>
     <div class="logo">⚙ KalkPilot by Janek</div>
     <div class="logo-sub">Der iTWO-Assistent für schnelle und sichere Kalkulationen · D83 + XML Paare · Semantisches Matching · RIB iTWO Export</div>
-    <div class="version-badge">📦 v1.0.0 · Stand 23.05.2026 11:01 UTC</div>
   </div>
   <div class="hstats">
     <div class="hstat">📁 Referenz: <span id="hRef">0</span> Pos.</div>
@@ -281,8 +279,8 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       <div style="display:flex;flex-direction:column;gap:10px">
         <div class="rng-row">
           Mindest-Score:
-          <input type="range" min="40" max="100" value="60" id="thresh" oninput="document.getElementById('thrV').textContent=this.value+'%'">
-          <span class="rng-val" id="thrV">60%</span>
+          <input type="range" min="25" max="100" value="25" id="thresh" oninput="document.getElementById('thrV').textContent=this.value+'%'">
+          <span class="rng-val" id="thrV">25%</span>
         </div>
         <div class="rng-row">
           Kurztext-Gewicht:
@@ -405,23 +403,17 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 
 <script>
 // ═══════════════════════════════════════════════════════
-// VERSION INFO
-// ═══════════════════════════════════════════════════════
-const APP_VERSION='1.0.0';
-const APP_BUILD_DATE='2026-05-23T11:01:00Z';
-console.log(`🚀 KalkPilot v${APP_VERSION} (${new Date(APP_BUILD_DATE).toLocaleString('de-DE')})`);
-
-// ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
 const S={
-  refProjects:[],
+  refProjects:[],   // [{name, active, d83Name, xmlName, positions, stats}]
   newLV:[],
   results:[],
   visibleResults:[],
   sortCol:'score',
   sortDir:'desc',
 };
+// Pending new project (before merging)
 const P={
   name:'',
   d83Pos:[],d83Name:'',
@@ -535,58 +527,1029 @@ async function readUploadedText(file,ext){
   return scoreDecodedText(ansi)>scoreDecodedText(utf8)?ansi:utf8;
 }
 function makeXref(){const c='0123456789ABCDEF';return Array.from({length:16},()=>c[Math.floor(Math.random()*16)]).join('');}
-function scoreBadge(sc){if(sc>=91)return'bh';if(sc>=60)return'bm';if(sc>=40)return'bo';if(sc>0)return'bl';return'';}
-function renderPills(kosten){if(!kosten||!kosten.length)return'—';const types={};kosten.forEach(k=>{if(k.typ!=='S')types[k.typ]=(types[k.typ]||0)+1;});return Object.entries(types).map(([t,c])=>`<span class="pill p${t}">${t}×${c}</span>`).join('');}
-function switchTab(id){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.tb').forEach(t=>t.classList.remove('active'));event.target.classList.add('active');}
-function toggleSort(col){if(S.sortCol===col)S.sortDir=S.sortDir==='asc'?'desc':'asc';else{S.sortCol=col;S.sortDir='desc';}renderMatch();}
-function toggleAllVisible(checked){S.visibleResults.forEach(r=>r.selected=checked);document.getElementById('selAllChk').checked=checked;renderMatch();}
+function scoreBadge(sc){if(sc>=91)return'bh';if(sc>=60)return'bm';if(sc>=25)return'bo';if(sc>0)return'bl';return'';}
+
+// ═══════════════════════════════════════════════════════
+// GAEB D83 PARSER
+// ═══════════════════════════════════════════════════════
+function parseD83(txt,src){
+  const lines=txt.split(/\r?\n/),out=[];let cur=null,ktLines=0;
+  for(const line of lines){
+    if(line.length<2)continue;const rt=line.substring(0,2);
+    if(rt==='21'){
+      const ozRaw=line.substring(2,10).trim();
+      const rest=line.substring(10).padEnd(80,' ');
+      const mm=rest.match(/(\d{6,11})\s*([a-zA-ZäöüÄÖÜ²³\/\.%][a-zA-Z0-9äöüÄÖÜ²³\/\.%]{0,5})/);
+      let menge=0,me='';
+      if(mm){menge=parseInt(mm[1])/1000;me=mm[2].trim();}
+      cur={oz:ozRaw,ozCanon:canonOZ(ozRaw),kurztext:'',langtext:'',menge,me,kosten:[],ep:0,source:src,
+           isFixedPriceItem:false,isNoMarkup:false,spPhase:'Tender',originalXref:null,outlineSpecs:'',sub:null,
+           matchedD83:true,matchedXML:false};
+      ktLines=0;out.push(cur);
+    }else if(rt==='25'&&cur){
+      const t=line.substring(2,Math.min(line.length,42)).trim();
+      if(ktLines===0)cur.kurztext=t;else if(ktLines===1)cur.kurztext+=' '+t;ktLines++;
+    }else if(rt==='26'&&cur){
+      const t=line.substring(2,Math.min(line.length,67)).trim();if(t)cur.langtext+=t+' ';
+    }else if((rt==='31'||rt==='32')&&cur){
+      const ep=parseFloat(line.substring(2,18).trim().replace(',','.'));
+      if(!isNaN(ep)&&ep>0&&!cur.ep){cur.ep=ep;cur.isFixedPriceItem=true;
+        cur.kosten=[{typ:'S',descr:'Gesamtpreis',menge:1,einheit:'psch',preis:ep,nameCoC:'Festpreis',identifyKey:null,xref:null,factor:1,costFactor:1,cFactorCoC:1,qFactorCoC:1,sItemDisabled:0,curCoC:'EUR'}];}
+    }
+  }
+  out.forEach(p=>{p.langtext=(p.langtext||'').trim();p.outlineSpecs=p.langtext||p.kurztext;});
+  return out.filter(p=>p.kurztext.length>1);
+}
+
+// ═══════════════════════════════════════════════════════
+// GAEB P83/X83 PARSER
+// ═══════════════════════════════════════════════════════
+function parseP83(txt,src){
+  const lines=txt.split(/\r?\n/),out=[];let inPos=false,inDesc=false,cur=null,i=0;
+  function readUntilEnd(v){
+    if(v.endsWith('[end]'))return v.slice(0,-5).trim();
+    while(i+1<lines.length){i++;const nl=lines[i].trim();if(nl.endsWith('[end]')){v+=' '+nl.slice(0,-5);break;}v+=' '+nl;}
+    return v.trim();
+  }
+  for(;i<lines.length;i++){
+    const line=lines[i].trim();
+    if(line==='#begin[Position]'){inPos=true;inDesc=false;cur={oz:'',ozCanon:'',kurztext:'',langtext:'',menge:0,me:'',kosten:[],ep:0,source:src,isFixedPriceItem:false,isNoMarkup:false,spPhase:'Tender',originalXref:null,outlineSpecs:'',sub:null,matchedD83:true,matchedXML:false};continue;}
+    if(line==='#end[Position]'){
+      if(cur&&cur.kurztext.length>1){cur.ozCanon=canonOZ(cur.oz);cur.outlineSpecs=cur.langtext||cur.kurztext;out.push(cur);}
+      inPos=false;cur=null;continue;
+    }
+    if(!inPos||!cur)continue;
+    if(line==='#begin[Beschreibung]'){inDesc=true;continue;}
+    if(line==='#end[Beschreibung]'){inDesc=false;continue;}
+    const kv=line.match(/^\[([^\]]+)\](.+)\[end\]$/s);
+    if(kv){const k=kv[1],v=kv[2].trim();
+      if(k==='OZ')cur.oz=v;else if(k==='ME')cur.me=v;
+      else if(k==='Menge')cur.menge=parseFloat(v.replace(',','.'))||0;
+      else if(k==='EP'||k==='Ep'){cur.ep=parseFloat(v.replace(',','.'))||0;if(cur.ep>0){cur.isFixedPriceItem=true;cur.kosten=[{typ:'S',descr:'Gesamtpreis',menge:1,einheit:'psch',preis:cur.ep,nameCoC:'Festpreis',identifyKey:null,xref:null,factor:1,costFactor:1,cFactorCoC:1,qFactorCoC:1,sItemDisabled:0,curCoC:'EUR'}];}}
+    }
+    if(inDesc){
+      if(line.startsWith('[Kurztext]'))cur.kurztext=readUntilEnd(line.substring(10));
+      else if(line.startsWith('[Langtext]'))cur.langtext=readUntilEnd(line.substring(10));
+    }
+  }
+  return out.filter(p=>p.kurztext.length>1);
+}
+
+function parseGAEBXML(txt,src){
+  const out=[];
+  try{
+    const doc=new DOMParser().parseFromString(txt,'text/xml');
+    if(doc.querySelector('parsererror'))throw new Error('GAEB-XML parse error');
+    const allEls=[...doc.getElementsByTagName('*')];
+    const items=allEls.filter(el=>el.localName==='Item');
+    items.forEach(item=>{
+      const parts=[];
+      let parent=item.parentElement;
+      while(parent){
+        if(parent.localName==='BoQCtgy'){
+          const rno=parent.getAttribute('RNoPart')?.trim();
+          if(rno)parts.unshift(rno);
+        }
+        parent=parent.parentElement;
+      }
+      const itemPart=item.getAttribute('RNoPart')?.trim();
+      if(itemPart)parts.push(itemPart);
+      const oz=parts.join(' ');
+      const qty=parseFloat(item.getElementsByTagNameNS('*','Qty')[0]?.textContent?.replace(',','.')||'0')||0;
+      const me=item.getElementsByTagNameNS('*','QU')[0]?.textContent?.trim()||'';
+      const outline=item.getElementsByTagNameNS('*','OutlineText')[0]?.textContent?.replace(/\s+/g,' ').trim()||'';
+      const detail=item.getElementsByTagNameNS('*','DetailTxt')[0]?.textContent?.replace(/\s+/g,' ').trim()||'';
+      const kurztext=outline||detail;
+      const langtext=detail||outline;
+      if(!kurztext)return;
+      out.push({
+        oz,
+        ozCanon:canonOZ(oz),
+        kurztext,
+        langtext,
+        outlineSpecs:langtext||kurztext,
+        menge:qty,
+        me,
+        kosten:[],
+        ep:0,
+        source:src,
+        isFixedPriceItem:item.getElementsByTagNameNS('*','LumpSumItem')[0]?.textContent?.trim()==='Yes',
+        isNoMarkup:false,
+        spPhase:'Tender',
+        originalXref:item.getAttribute('ID')||null,
+        sub:null,
+        matchedD83:true,
+        matchedXML:false
+      });
+    });
+  }catch(e){log('GAEB-XML-Fehler: '+e.message,'w');}
+  return out.filter(p=>p.kurztext.length>1);
+}
+
+// ═══════════════════════════════════════════════════════
+// iTWO XML PARSER (EstimateRoot / Kalkulations-XML)
+// ═══════════════════════════════════════════════════════
+function parseXML(txt,src){
+  const out=[];
+  try{
+    const doc=new DOMParser().parseFromString(txt,'text/xml');
+    if(doc.querySelector('parsererror'))throw new Error('XML parse error');
+    const rootName=doc.documentElement?.localName||'';
+    if(rootName==='GAEB')return parseGAEBXML(txt,src);
+    doc.querySelectorAll('WBSItem').forEach(item=>{
+      const nameEl=item.querySelector(':scope > NameWBSItem');if(!nameEl)return;
+      const oz=nameEl.textContent.trim();
+      const subs=item.querySelectorAll(':scope > EstDetails > SubItem');if(!subs.length)return;
+      const sub=subs[0];
+      const text=sub.querySelector(':scope > Text')?.textContent?.trim()||'';if(!text)return;
+      const me=sub.querySelector(':scope > UnitOfMeasure')?.textContent?.trim()||'';
+      const subQty=parseFloat(sub.querySelector(':scope > Quantity')?.textContent||'1')||1;
+      const subFactor=parseFloat(sub.querySelector(':scope > Factor')?.textContent||'1')||1;
+      const subCostFactor=parseFloat(sub.querySelector(':scope > CostFactor')?.textContent||'1')||1;
+      const subSItemDisabled=parseInt(sub.querySelector(':scope > SItemDisabled')?.textContent||'0')||0;
+      const subSpPhase=sub.querySelector(':scope > SPPhase')?.textContent?.trim()||'Tender';
+      const subItemNumber=parseInt(sub.querySelector(':scope > SubitemNumber')?.textContent||'1')||1;
+      const outlineSpecs=item.querySelector(':scope > OutlineSpecs')?.textContent?.trim()||text;
+      const isFixedPriceItem=item.querySelector(':scope > IsFixedPriceItem')?.textContent?.trim()==='1';
+      const isNoMarkup=item.querySelector(':scope > IsNoMarkup')?.textContent?.trim()==='1';
+      const spPhase=item.querySelector(':scope > SPPhase')?.textContent?.trim()||'Tender';
+      const originalXref=item.getAttribute('Xref')||null;
+      const subXref=sub.getAttribute('Xref')||null;
+      const kosten=[];
+      item.querySelectorAll('CoCDetail').forEach(c=>{
+        const nm=c.querySelector('NameCoC')?.textContent?.trim()||'';
+        const dsc=c.querySelector('DescrCoC')?.textContent?.trim()||'';
+        const cq=parseFloat(c.querySelector('Quantity')?.textContent||'0')||0;
+        const ur=parseFloat(c.querySelector('URValue')?.textContent||'0')||0;
+        const cu=c.querySelector('UnitOfMeasure')?.textContent?.trim()||'';
+        const sItemDisabled=parseInt(c.querySelector('SItemDisabled')?.textContent||'0')||0;
+        if(sItemDisabled===1)return;
+        kosten.push({
+          typ:classCoC(nm,dsc,cu),descr:dsc||nm,menge:cq,einheit:cu,preis:ur,nameCoC:nm,
+          identifyKey:c.querySelector('IdentifyKey')?.textContent?.trim()||null,
+          xref:c.getAttribute('Xref')||null,
+          factor:parseFloat(c.querySelector('Factor')?.textContent||'1')||1,
+          costFactor:parseFloat(c.querySelector('CostFactor')?.textContent||'1')||1,
+          cFactorCoC:parseFloat(c.querySelector('CFactorCoC')?.textContent||'1')||1,
+          qFactorCoC:parseFloat(c.querySelector('QFactorCoC')?.textContent||'1')||1,
+          sItemDisabled:0,curCoC:c.querySelector('CURCoC')?.textContent?.trim()||'EUR'
+        });
+      });
+      item.querySelectorAll('AssemblyDetail').forEach(a=>{
+        const nm=a.querySelector('NameAssembly')?.textContent?.trim()||'';
+        const dsc=a.querySelector('DescrAssembly')?.textContent?.trim()||nm;
+        const aq=parseFloat(a.querySelector('Quantity')?.textContent||'0')||0;
+        const fac=parseFloat(a.querySelector('Factor')?.textContent||'1')||1;
+        const cu=a.querySelector('UnitOfMeasure')?.textContent?.trim()||'';
+        const sItemDisabled=parseInt(a.querySelector('SItemDisabled')?.textContent||'0')||0;
+        if(sItemDisabled===1)return;
+        kosten.push({
+          typ:classCoC(nm,dsc,cu),descr:dsc,menge:aq,einheit:cu,preis:0,nameCoC:nm,
+          identifyKey:a.querySelector('IdentifyKey')?.textContent?.trim()||null,
+          xref:a.getAttribute('Xref')||null,
+          factor:fac,
+          costFactor:parseFloat(a.querySelector('CostFactor')?.textContent||'1')||1,
+          cFactorCoC:1,
+          qFactorCoC:1,
+          sItemDisabled:0,curCoC:'EUR',
+          entryType:'AssemblyDetail',
+          isAssembly:true,
+          factorIsPerformanceFactor:parseInt(a.querySelector('FactorIsPerformanceFactor')?.textContent||'0')||0
+        });
+      });
+      if(!kosten.length)return;
+      const ep=kosten.reduce((s,k)=>s+k.menge*k.preis,0);
+      out.push({
+        oz,ozCanon:canonOZ(oz),
+        kurztext:text,langtext:outlineSpecs,outlineSpecs,
+        menge:subQty,me,kosten,ep:Math.round(ep*100)/100,source:src,
+        isFixedPriceItem,isNoMarkup,spPhase,originalXref,
+        sub:{xref:subXref,subitemNumber:subItemNumber,qty:subQty,factor:subFactor,costFactor:subCostFactor,text,me,sItemDisabled:subSItemDisabled,spPhase:subSpPhase},
+        matchedD83:false,matchedXML:true,
+      });
+    });
+  }catch(e){log('XML-Fehler: '+e.message,'w');}
+  return out.filter(p=>p.kurztext.length>1);
+}
+
+// ═══════════════════════════════════════════════════════
+// MERGE D83 + XML → Referenzprojekt-Positionen
+// ═══════════════════════════════════════════════════════
+function mergeD83andXML(d83Pos,xmlPos,projName){
+  if(!d83Pos.length&&!xmlPos.length)return[];
+  if(!d83Pos.length){
+    // Nur XML: Positionen so übernehmen wie sie sind
+    return xmlPos.map(p=>({...p,source:projName}));
+  }
+  if(!xmlPos.length){
+    // Nur D83: Positionen ohne Kostenstruktur
+    return d83Pos.map(p=>({...p,source:projName}));
+  }
+
+  // XML nach kanonischer OZ indexieren
+  const xmlMap=new Map();
+  xmlPos.forEach(p=>{
+    const key=p.ozCanon;
+    if(key&&!xmlMap.has(key))xmlMap.set(key,p);
+  });
+  // Zusätzlich: XML nach normalisiertem Kurztext indexieren (Fallback)
+  const xmlTextMap=new Map();
+  xmlPos.forEach(p=>{
+    const key=norm(p.kurztext).substring(0,30);
+    if(key&&!xmlTextMap.has(key))xmlTextMap.set(key,p);
+  });
+
+  const merged=[];
+  const usedXmlOZ=new Set();
+
+  d83Pos.forEach(dp=>{
+    let xp=xmlMap.get(dp.ozCanon);
+    // Fallback: Kurztext-Match
+    if(!xp){
+      const textKey=norm(dp.kurztext).substring(0,30);
+      xp=xmlTextMap.get(textKey);
+    }
+    if(xp&&!usedXmlOZ.has(xp.ozCanon)){
+      usedXmlOZ.add(xp.ozCanon);
+      // Vollständige Zusammenführung: D83-Texte + XML-Kosten
+      merged.push({
+        oz:dp.oz,ozCanon:dp.ozCanon,
+        kurztext:dp.kurztext,       // D83 ist führend für LV-Text
+        langtext:dp.langtext||xp.langtext,
+        outlineSpecs:dp.langtext||xp.outlineSpecs||dp.kurztext,
+        menge:dp.menge,me:dp.me||xp.me,
+        kosten:xp.kosten,ep:xp.ep,
+        source:projName,
+        isFixedPriceItem:xp.isFixedPriceItem,
+        isNoMarkup:xp.isNoMarkup,spPhase:xp.spPhase,
+        originalXref:xp.originalXref,
+        sub:xp.sub,
+        matchedD83:true,matchedXML:true,
+      });
+    }else{
+      // Nur D83-Position (kein XML-Match)
+      merged.push({...dp,source:projName,matchedD83:true,matchedXML:false});
+    }
+  });
+
+  // Verbleibende XML-Positionen (kein D83-Match)
+  xmlPos.forEach(xp=>{
+    if(!usedXmlOZ.has(xp.ozCanon)){
+      merged.push({...xp,source:projName,matchedD83:false,matchedXML:true});
+    }
+  });
+
+  return merged;
+}
+
+// ═══════════════════════════════════════════════════════
+// PENDING PROJECT LOADING
+// ═══════════════════════════════════════════════════════
+async function loadPendingFile(file,type){
+  const ext=file.name.split('.').pop().toUpperCase();
+  try{
+    const txt=await readUploadedText(file,ext);
+    let pos=[];
+    if(ext==='D83')pos=parseD83(txt,file.name);
+    else if(ext==='X83')pos=txt.trim().startsWith('<?xml')||txt.includes('<GAEB')?parseGAEBXML(txt,file.name):parseD83(txt,file.name);
+    else if(ext==='P83')pos=parseP83(txt,file.name);
+    else if(ext==='XML')pos=parseXML(txt,file.name);
+
+    if(type==='d83'){
+      P.d83Pos=pos;P.d83Name=file.name;
+      const drop=document.getElementById('dropD83');
+      drop.classList.add('loaded');
+      document.getElementById('iconD83').textContent='✅';
+      document.getElementById('lblD83').textContent=`${file.name} (${pos.length} Pos.)`;
+      log(`D83 geladen: ${file.name} — ${pos.length} Positionen`,'s');
+    }else{
+      P.xmlPos=pos;P.xmlName=file.name;
+      const drop=document.getElementById('dropXML');
+      drop.classList.add('loaded');
+      document.getElementById('iconXML').textContent='✅';
+      document.getElementById('lblXML').textContent=`${file.name} (${pos.length} Kalk.Pos.)`;
+      log(`XML geladen: ${file.name} — ${pos.length} Kalkulationspositionen`,'s');
+    }
+    updatePendingStatus();
+  }catch(err){
+    log(`⚠ ${file.name}: ${err.message}`,'w');
+  }
+}
+
+function updatePendingStatus(){
+  const hasD83=P.d83Pos.length>0;
+  const hasXML=P.xmlPos.length>0;
+  const btn=document.getElementById('addProjBtn');
+  const st=document.getElementById('pendingStatus');
+  btn.disabled=!(hasD83||hasXML);
+  if(hasD83&&hasXML)st.textContent=`✅ ${P.d83Pos.length} LV-Pos. + ${P.xmlPos.length} Kalk.Pos. bereit — Zusammenführung möglich`;
+  else if(hasD83)st.textContent=`📋 ${P.d83Pos.length} D83-Positionen geladen (XML fehlt noch — nur Texte)`;
+  else if(hasXML)st.textContent=`📊 ${P.xmlPos.length} Kalkulations-Positionen geladen (D83 fehlt noch — nur Kosten)`;
+  else st.textContent='D83 und/oder XML laden, dann Projekt hinzufügen.';
+}
+
+function clearPending(){
+  P.name='';P.d83Pos=[];P.d83Name='';P.xmlPos=[];P.xmlName='';
+  document.getElementById('pendingName').value='';
+  ['dropD83','dropXML'].forEach(id=>document.getElementById(id).classList.remove('loaded'));
+  document.getElementById('iconD83').textContent='📄';document.getElementById('lblD83').textContent='D83-Datei ablegen oder klicken';
+  document.getElementById('iconXML').textContent='🗂';document.getElementById('lblXML').textContent='iTWO Kalkulations-XML ablegen oder klicken';
+  document.getElementById('addProjBtn').disabled=true;
+  document.getElementById('pendingStatus').textContent='D83 und/oder XML laden, dann Projekt hinzufügen.';
+  document.getElementById('fileD83').value='';document.getElementById('fileXML').value='';
+}
+
+// ═══════════════════════════════════════════════════════
+// PROJEKT HINZUFÜGEN (MERGE + SPEICHERN)
+// ═══════════════════════════════════════════════════════
+function addRefProject(){
+  if(!P.d83Pos.length&&!P.xmlPos.length){alert('Keine Dateien geladen.');return;}
+  const hasD83=P.d83Pos.length>0;
+  const hasXML=P.xmlPos.length>0;
+  // Projektname ableiten
+  let name=document.getElementById('pendingName').value.trim();
+  if(!name){
+    const base=P.d83Name||P.xmlName||'Referenzprojekt';
+    name=base.replace(/\.(d83|p83|x83|xml)$/i,'').replace(/[_\-]+/g,' ').trim();
+  }
+  const positions=mergeD83andXML(P.d83Pos,P.xmlPos,name);
+  const matched=positions.filter(p=>p.matchedD83&&p.matchedXML).length;
+  const d83Only=positions.filter(p=>p.matchedD83&&!p.matchedXML).length;
+  const xmlOnly=positions.filter(p=>!p.matchedD83&&p.matchedXML).length;
+  const withCosts=positions.filter(p=>p.kosten&&p.kosten.length>0&&!p.kosten.every(k=>k.typ==='S')).length;
+  const proj={
+    name,active:true,
+    d83Name:P.d83Name||null,
+    xmlName:P.xmlName||null,
+    positions,
+    stats:{total:positions.length,withCosts,matched,d83Only,xmlOnly,hasD83,hasXML}
+  };
+  S.refProjects.push(proj);
+  saveRefToStorage();
+  updateRefUI();
+  clearPending();
+  const matchInfo=hasD83&&hasXML?` (${matched} verknüpft, ${d83Only} nur D83, ${xmlOnly} nur XML)`:'';
+  log(`✓ Projekt „${name}" hinzugefügt: ${positions.length} Positionen${matchInfo}, ${withCosts} mit Kalkulation`,'s');
+}
+
+function removeRefProject(i){
+  const name=S.refProjects[i]?.name||'';
+  S.refProjects.splice(i,1);
+  saveRefToStorage();updateRefUI();
+  log(`Projekt „${name}" entfernt`,'w');
+}
+
+function toggleRefProject(i,active){
+  S.refProjects[i].active=active;
+  saveRefToStorage();updateRefUI();
+}
+
+function selectAllProj(state){
+  S.refProjects.forEach(p=>p.active=state);
+  saveRefToStorage();updateRefUI();
+}
+
+function clearAllProjects(){
+  if(!confirm(`Alle ${S.refProjects.length} Referenzprojekte wirklich löschen?`))return;
+  S.refProjects=[];
+  saveRefToStorage();updateRefUI();
+  log('Alle Referenzprojekte gelöscht.','w');
+}
+
+// ═══════════════════════════════════════════════════════
+// REFERENZ-UI RENDER
+// ═══════════════════════════════════════════════════════
+function updateRefUI(){
+  const activePos=getActiveRef();
+  document.getElementById('hRef').textContent=activePos.length;
+  document.getElementById('projCount').textContent=S.refProjects.length;
+  checkRunBtn();
+
+  const list=document.getElementById('projList');
+  if(!S.refProjects.length){
+    list.innerHTML='<div class="empty"><div class="empty-i">🗄</div>Noch keine Referenzprojekte</div>';
+  }else{
+    list.innerHTML=S.refProjects.map((p,i)=>{
+      const s=p.stats||{};
+      const typeIcon=s.hasD83&&s.hasXML?'📊':s.hasXML?'🗂':'📋';
+      const qualBadge=s.withCosts>0
+        ?`<span class="stat-chip sc-match">✓ ${s.withCosts} Kalk.Pos.</span>`:
+         `<span class="stat-chip" style="background:rgba(245,158,11,.15);color:#fbbf24">⚠ Keine Kosten</span>`;
+      return`<div class="proj-card ${p.active?'active-proj':''}">
+        <div class="proj-header">
+          <input type="checkbox" ${p.active?'checked':''} onchange="toggleRefProject(${i},this.checked)" style="width:14px;height:14px;flex-shrink:0;accent-color:var(--accent)">
+          <span style="font-size:16px">${typeIcon}</span>
+          <span class="proj-name">${h(p.name)}</span>
+          <button class="btn btn-s btn-sm" onclick="removeRefProject(${i})" style="margin-left:auto;color:var(--red)">✕</button>
+        </div>
+        <div class="proj-files">
+          ${p.d83Name?`<span class="proj-file has-file">📋 ${h(p.d83Name)}</span>`:'<span class="proj-file" style="opacity:.5">📋 kein D83</span>'}
+          ${p.xmlName?`<span class="proj-file has-file">📊 ${h(p.xmlName)}</span>`:'<span class="proj-file" style="opacity:.5">📊 kein XML</span>'}
+        </div>
+        <div class="proj-stats">
+          <span class="stat-chip sc-total">${s.total||0} gesamt</span>
+          ${s.hasD83&&s.hasXML?`<span class="stat-chip sc-match">🔗 ${s.matched||0} verknüpft</span>`:''}
+          ${s.d83Only?`<span class="stat-chip sc-d83">📋 ${s.d83Only} nur D83</span>`:''}
+          ${s.xmlOnly?`<span class="stat-chip sc-xml">📊 ${s.xmlOnly} nur XML</span>`:''}
+          ${qualBadge}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Positionsvorschau
+  const tb=document.getElementById('refTb');
+  document.getElementById('refPreviewCount').textContent=activePos.length?`${activePos.length} aktive Positionen (max. 200 angezeigt)`:'';
+  if(!activePos.length){
+    tb.innerHTML='<tr><td colspan="7"><div class="empty" style="padding:10px"><div style="font-size:20px">🗄</div>Keine aktiven Daten</div></td></tr>';
+    return;
+  }
+  // Welche ME-Variante anzeigen
+  const preview=activePos.filter(p=>p.kosten&&p.kosten.length>0&&!p.kosten.every(k=>k.typ==='S')).slice(0,200);
+  if(!preview.length){
+    tb.innerHTML='<tr><td colspan="7"><div class="empty" style="padding:10px">Keine Positionen mit Kalkulationsdaten (L/M/G/N)</div></td></tr>';
+    return;
+  }
+  tb.innerHTML=preview.map(p=>`
+    <tr>
+      <td class="oz">${h(p.oz)}</td>
+      <td><div class="kt">${h(p.kurztext)}</div>
+          ${p.matchedD83&&p.matchedXML?'<span style="font-size:9px;color:#4ade80">🔗 D83+XML</span>':p.matchedXML?'<span style="font-size:9px;color:#c4b5fd">📊 XML</span>':'<span style="font-size:9px;color:#93c5fd">📋 D83</span>'}
+      </td>
+      <td>${h(p.me)}</td>
+      <td>${renderPills(p.kosten)}</td>
+      <td class="ep">${p.ep>0?p.ep.toFixed(2):'–'}</td>
+      <td><span class="src">${h(p.source)}</span></td>
+      <td style="font-size:10px;color:var(--muted)">${p.matchedD83&&p.matchedXML?'D83+XML':p.matchedXML?'nur XML':'nur D83'}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// PERSISTENZ — localStorage + JSON Export/Import
+// ═══════════════════════════════════════════════════════
+const STORAGE_KEY='kalkpilot_refProjects_v2';
+
+function saveRefToStorage(){
+  try{
+    const data=JSON.stringify(S.refProjects);
+    localStorage.setItem(STORAGE_KEY,data);
+    // Größe anzeigen
+    const kb=Math.round(data.length/1024);
+    if(kb>3000)log(`⚠ Referenzdatenbank groß (${kb} KB) — Sicherung als JSON empfohlen`,'w');
+  }catch(e){
+    log('⚠ localStorage-Speichern fehlgeschlagen (Datenmenge zu groß?) — Bitte als JSON sichern!','w');
+  }
+}
+
+function loadRefFromStorage(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);
+    if(!raw)return;
+    S.refProjects=JSON.parse(raw);
+    updateRefUI();
+    log(`✓ ${S.refProjects.length} Referenzprojekte aus lokalem Speicher geladen`,'s');
+  }catch(e){
+    log('⚠ Laden aus lokalem Speicher fehlgeschlagen: '+e.message,'w');
+  }
+}
+
+function exportRefJSON(){
+  if(!S.refProjects.length){alert('Keine Referenzprojekte vorhanden.');return;}
+  const data=JSON.stringify(S.refProjects,null,2);
+  dl(data,`KalkPilot_by_Janek_Referenzdatenbank_${new Date().toISOString().slice(0,10)}.json`,'application/json');
+  log(`Referenzdatenbank (${S.refProjects.length} Projekte) als JSON gesichert`,'s');
+}
+
+function importRefFromJSON(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const projects=JSON.parse(e.target.result);
+      if(!Array.isArray(projects))throw new Error('Kein gültiges Array');
+      S.refProjects=projects;
+      saveRefToStorage();updateRefUI();
+      log(`✓ ${projects.length} Referenzprojekte aus JSON geladen`,'s');
+    }catch(err){
+      log('⚠ JSON-Import fehlgeschlagen: '+err.message,'w');
+      alert('JSON-Datei ungültig: '+err.message);
+    }
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+// ═══════════════════════════════════════════════════════
+// NEUES LV LADEN
+// ═══════════════════════════════════════════════════════
+async function loadNewLV(file){
+  const ext=file.name.split('.').pop().toUpperCase();
+  try{
+    const txt=await readUploadedText(file,ext);
+    let pos=[];
+    if(ext==='D83')pos=parseD83(txt,file.name);
+    else if(ext==='X83')pos=txt.trim().startsWith('<?xml')||txt.includes('<GAEB')?parseGAEBXML(txt,file.name):parseD83(txt,file.name);
+    else if(ext==='P83')pos=parseP83(txt,file.name);
+    else if(ext==='XML')pos=parseXML(txt,file.name);
+    if(pos.length){
+      S.newLV=pos;
+      document.getElementById('hNew').textContent=pos.length;
+      document.getElementById('lvLoadedTxt').textContent=`"${file.name}" geladen — ${pos.length} Positionen`;
+      document.getElementById('lvLoaded').classList.add('show');
+      checkRunBtn();
+      log(`✓ Neues LV: ${pos.length} Positionen aus "${file.name}"`,'s');
+      switchTab('t2');
+    }else log(`⚠ ${file.name}: Keine Positionen gefunden`,'w');
+  }catch(err){
+    log(`⚠ ${file.name}: ${err.message}`,'w');
+  }
+}
+
+function checkRunBtn(){
+  const hasRef=getActiveRef().some(rp=>rp.kosten&&rp.kosten.length>0&&!rp.kosten.every(k=>k.typ==='S'));
+  document.getElementById('runBtn').disabled=!(S.newLV.length&&hasRef);
+}
+
+// ═══════════════════════════════════════════════════════
+// MATCHING ENGINE
+// ═══════════════════════════════════════════════════════
+function runMatch(){
+  if(!S.newLV.length||!getActiveRef().length)return;
+  const unitOnly=document.getElementById('unitFilter').checked;
+  const thresh=parseInt(document.getElementById('thresh').value)||25;
+  const refPool=getActiveRef().filter(rp=>{
+    if(!rp.kosten||!rp.kosten.length)return false;
+    if(rp.isFixedPriceItem)return false;
+    if(rp.kosten.every(k=>k.typ==='S'))return false;
+    return true;
+  });
+  if(!refPool.length){alert('Keine Referenzpositionen mit Kalkulationsdaten (L/M/G/N).\nBitte iTWO Kalkulations-XML laden.');return;}
+  S.results=S.newLV.map(np=>{
+    const candidates=unitOnly?refPool.filter(rp=>norm(rp.me)===norm(np.me)):refPool;
+    if(!candidates.length)return{newPos:np,matches:[],sel:0,accepted:false};
+    const scored=candidates.map(rp=>({pos:rp,score:calcScore(np,rp)}));
+    scored.sort((a,b)=>b.score-a.score);
+    const top1=scored.slice(0,1).filter(m=>m.score>=thresh);
+    return{newPos:np,matches:top1,sel:0,accepted:top1[0]?.score>=91};
+  });
+  renderMatch();updateExport();
+  document.getElementById('matchSum').innerHTML=summarizeBadges();
+  document.getElementById('hAcc').textContent=S.results.filter(r=>r.accepted).length;
+}
+
+function summarizeBadges(){
+  const g=S.results.filter(r=>r.matches[0]?.score>=91).length;
+  const y=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>=60&&s<91;}).length;
+  const o=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>=25&&s<60;}).length;
+  const r=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>0&&s<25;}).length;
+  const n=S.results.filter(r=>!r.matches.length).length;
+  return`<span class="badge bh">🟢 ${g}</span><span class="badge bm">🟡 ${y}</span><span class="badge bo">🟠 ${o}</span><span class="badge bl">🔴 ${r}</span>${n?`<span class="badge" style="background:rgba(107,114,128,.2);color:#9ca3af">⬜ ${n}</span>`:''}`;
+}
+
+// ═══════════════════════════════════════════════════════
+// SORT & FILTER
+// ═══════════════════════════════════════════════════════
+function toggleSort(col){
+  if(S.sortCol===col)S.sortDir=S.sortDir==='desc'?'asc':'desc';
+  else{S.sortCol=col;S.sortDir=col==='oz'?'asc':'desc';}
+  document.getElementById('siOZ').textContent=S.sortCol==='oz'?(S.sortDir==='asc'?'↑':'↓'):'';
+  document.getElementById('siScore').textContent=S.sortCol==='score'?(S.sortDir==='asc'?'↑':'↓'):'';
+  renderMatch();
+}
+function onUnitToggle(){
+  document.getElementById('unitLbl').classList.toggle('on',document.getElementById('unitFilter').checked);
+  renderMatch();
+}
+
+// ═══════════════════════════════════════════════════════
+// BULK ACCEPT
+// ═══════════════════════════════════════════════════════
+function setAccepted(idx,val){S.results[idx].accepted=val;updateAccStat();updateExport();}
+function acceptAllVisible(){S.visibleResults.forEach(r=>{if(r.matches.length>0)r.accepted=true;});renderMatch();updateExport();}
+function deselectAllVisible(){S.visibleResults.forEach(r=>r.accepted=false);renderMatch();updateExport();}
+function deselectAll(){S.results.forEach(r=>r.accepted=false);renderMatch();updateExport();}
+function toggleAllVisible(checked){S.visibleResults.forEach(r=>{if(!checked||r.matches.length>0)r.accepted=checked;});renderMatch();updateExport();}
+function updateAccStat(){
+  const n=S.results.filter(r=>r.accepted).length;
+  document.getElementById('hAcc').textContent=n;
+  document.getElementById('accStat').textContent=n>0?`${n} von ${S.results.length} übernommen`:'';
+}
+
+// ═══════════════════════════════════════════════════════
+// MATCH TABLE RENDER
+// ═══════════════════════════════════════════════════════
+function renderMatch(){
+  const filter=document.getElementById('filterSel').value;
+  const search=(document.getElementById('searchBox')?.value||'').toLowerCase();
+  const unitOnly=document.getElementById('unitFilter').checked;
+  const tb=document.getElementById('matchTb');
+  if(!S.results.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-i">🔍</div>Noch kein Matching</div></td></tr>';return;}
+  let rows=[...S.results];
+  const fs=r=>r.matches[0]?.score||0;
+  if(filter==='green')        rows=rows.filter(r=>fs(r)>=91);
+  else if(filter==='yellow')  rows=rows.filter(r=>fs(r)>=60&&fs(r)<91);
+  else if(filter==='orange')  rows=rows.filter(r=>fs(r)>=25&&fs(r)<60);
+  else if(filter==='red')     rows=rows.filter(r=>fs(r)>0&&fs(r)<25);
+  else if(filter==='nomatch') rows=rows.filter(r=>!r.matches.length);
+  else if(filter==='acc')     rows=rows.filter(r=>r.accepted);
+  else if(filter==='notacc')  rows=rows.filter(r=>!r.accepted);
+  if(unitOnly)rows=rows.filter(r=>{const b=r.matches[0];return b&&norm(r.newPos.me)===norm(b.pos.me);});
+  if(search)  rows=rows.filter(r=>r.newPos.oz.toLowerCase().includes(search)||r.newPos.kurztext.toLowerCase().includes(search));
+  rows.sort((a,b)=>{
+    if(S.sortCol==='oz'){const c=a.newPos.oz.localeCompare(b.newPos.oz,undefined,{numeric:true});return S.sortDir==='asc'?c:-c;}
+    const sa=fs(a),sb=fs(b);return S.sortDir==='desc'?sb-sa:sa-sb;
+  });
+  S.visibleResults=rows;
+  document.getElementById('selAllChk').checked=rows.length>0&&rows.every(r=>r.accepted);
+  tb.innerHTML=rows.map(r=>{
+    const idx=S.results.indexOf(r);
+    const best=r.matches[0];
+    const sc=best?.score||0,bc=scoreBadge(sc);
+    const kosten=best?.pos?.kosten||[];
+    const ep=best?.pos?.ep||0;
+    const refMe=best?.pos?.me||'',newMe=r.newPos.me||'';
+    const meOk=refMe&&newMe&&norm(refMe)===norm(newMe);
+    const meCls=!refMe?'me-none':meOk?'me-ok':'me-diff';
+    // Quelle anzeigen (Projekt + D83/XML-Herkunft)
+    const srcType=best?.pos?.matchedD83&&best?.pos?.matchedXML?'🔗':best?.pos?.matchedXML?'📊':'📋';
+    return`<tr class="${r.accepted?'acc-row':''}">
+      <td class="chk-cell"><input type="checkbox" ${r.accepted?'checked':''} onchange="setAccepted(${idx},this.checked)" ${!best?'disabled':''}></td>
+      <td class="oz">${h(r.newPos.oz)}</td>
+      <td><div class="kt">${h(r.newPos.kurztext)}</div>
+          <div class="lt">${h((r.newPos.langtext||'').substring(0,55))}${(r.newPos.langtext||'').length>55?'…':''}</div></td>
+      <td style="white-space:nowrap;font-size:11px">${r.newPos.menge>0?`<b>${r.newPos.menge.toLocaleString('de-DE',{maximumFractionDigits:3})}</b> ${h(newMe)}`:'–'}</td>
+      <td>${sc>0?`<span class="badge ${bc}">${sc}%</span>`:`<span style="color:var(--muted);font-size:10px">–</span>`}</td>
+      <td style="min-width:185px">${best?`
+        <div style="display:flex;align-items:flex-start;gap:5px">
+          <div style="flex:1">
+            <div class="kt" style="font-size:11px">${h(best.pos.kurztext)}</div>
+            <div class="lt">${h((best.pos.langtext||'').substring(0,50))}${(best.pos.langtext||'').length>50?'…':''}</div>
+            <div style="margin-top:3px;display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+              <span class="src">${srcType} ${h(best.pos.source)}</span>
+              <span class="me-tag ${meCls}">ME: ${h(refMe)||'–'}</span>
+            </div>
+          </div>
+          <button class="info-btn" onclick="showDetail(${idx})" title="Vollständige Referenzposition">🔍</button>
+        </div>`:'<span style="color:var(--muted);font-size:10px">Kein Treffer</span>'}</td>
+      <td>${renderPills(kosten)}</td>
+      <td class="ep" style="white-space:nowrap">${ep>0?ep.toFixed(2)+' €':'–'}</td>
+    </tr>`;
+  }).join('');
+  updateAccStat();
+}
+
+function renderPills(kosten){
+  if(!kosten||!kosten.length)return'<span style="color:var(--muted);font-size:10px">–</span>';
+  const by={};kosten.forEach(k=>{by[k.typ]=(by[k.typ]||0)+k.menge*k.preis;});
+  return'<div class="pills">'+Object.entries(by).map(([t,v])=>`<span class="pill p${t}">${t}: ${v>0?v.toFixed(0)+'€':'–'}</span>`).join('')+'</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// DETAIL MODAL
+// ═══════════════════════════════════════════════════════
+function showDetail(idx){
+  const r=S.results[idx];const best=r.matches[0];if(!best)return;
+  const rp=best.pos,np=r.newPos;
+  document.getElementById('dHdr').textContent=`Referenzposition — ${rp.oz} (${rp.source})`;
+  const totalEP=rp.kosten.reduce((s,k)=>s+k.menge*k.preis,0);
+  document.getElementById('dBody').innerHTML=`
+    <div class="detail-row">
+      <span class="detail-lbl">Projekt:</span><span class="detail-val"><span class="src">${h(rp.source)}</span></span>
+      <span class="detail-lbl">Herkunft:</span><span class="detail-val">${rp.matchedD83&&rp.matchedXML?'🔗 D83+XML verknüpft':rp.matchedXML?'📊 nur XML':'📋 nur D83'}</span>
+      <span class="detail-lbl">OZ (Referenz):</span><span class="detail-val oz">${h(rp.oz)}</span>
+      <span class="detail-lbl">Kurztext:</span><span class="detail-val kt">${h(rp.kurztext)}</span>
+      ${rp.outlineSpecs&&rp.outlineSpecs!==rp.kurztext?`<span class="detail-lbl">Langtext:</span><span class="detail-val detail-lt">${h(rp.outlineSpecs.trim())}</span>`:''}
+      <span class="detail-lbl">Menge / ME:</span><span class="detail-val">${rp.menge>0?rp.menge.toLocaleString('de-DE',{maximumFractionDigits:3})+' '+h(rp.me):'– / '+h(rp.me)}</span>
+      <span class="detail-lbl">Match-Score:</span><span class="detail-val"><span class="badge ${scoreBadge(best.score)}">${best.score}%</span> → OZ ${h(np.oz)} „${h(np.kurztext)}"</span>
+    </div>
+    <div>
+      <div class="ctitle" style="margin-bottom:8px">Kalkulationsaufgliederung</div>
+      ${rp.kosten.length?`
+      <table class="cost-tbl">
+        <thead><tr><th>Typ</th><th>Name</th><th>Beschreibung</th><th style="text-align:right">Menge</th><th style="text-align:right">UR-Preis</th><th>Einh.</th><th style="text-align:right">Wert</th></tr></thead>
+        <tbody>${rp.kosten.map(k=>`<tr>
+          <td><span class="pill p${k.typ}">${k.typ}</span></td>
+          <td>${h(k.nameCoC||k.typ)}</td><td>${h(k.descr)}</td>
+          <td style="text-align:right">${k.menge}</td>
+          <td style="text-align:right">${k.preis.toFixed(4)}</td>
+          <td>${h(k.einheit||'')}</td>
+          <td style="text-align:right;font-weight:600">${(k.menge*k.preis).toFixed(2)} €</td>
+        </tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="6" style="text-align:right">Gesamt EP:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
+      </table>`:'<div style="color:var(--muted);font-size:11px">Keine Kalkulationsdaten.</div>'}
+    </div>`;
+  document.getElementById('detailModal').classList.add('open');
+}
 function closeDetail(){document.getElementById('detailModal').classList.remove('open');}
-function dl(data,fn,type){const blob=new Blob([data],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=fn;a.click();URL.revokeObjectURL(url);}
-function acceptAllVisible(){S.visibleResults.forEach(r=>r.selected=true);renderMatch();}
-function deselectAllVisible(){S.visibleResults.forEach(r=>r.selected=false);renderMatch();}
-function deselectAll(){S.results.forEach(r=>r.selected=false);renderMatch();}
-function onUnitToggle(){renderMatch();}
-function copyXML(e){const txt=document.getElementById('xmlPrev').textContent;if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>log('✓ XML kopiert','s')).catch(()=>log('⚠ Fehler beim Kopieren','w'));else{const t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);log('✓ XML kopiert','s');}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();closeDonationModal();}});
 
-// [...] REST DES SCRIPTS GEKÜRZT FÜR PLATZGRÜNDE - Original-JS-Logik bleibt
-// Falls du die vollständige Version brauchst, sag Bescheid!
+// ═══════════════════════════════════════════════════════
+// EXPORT SUMMARY
+// ═══════════════════════════════════════════════════════
+function updateExport(){
+  const acc=S.results.filter(r=>r.accepted).length;
+  const hi=S.results.filter(r=>r.matches[0]?.score>=91).length;
+  const mi=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>=60&&s<91;}).length;
+  const lo=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>0&&s<60;}).length;
+  document.getElementById('sAcc').textContent=acc;
+  document.getElementById('sHigh').textContent=hi;
+  document.getElementById('sMid').textContent=mi;
+  document.getElementById('sLow').textContent=lo;
+  if(acc>0)buildXML();else document.getElementById('xmlPrev').textContent='/* Noch keine Positionen markiert. */';
+}
 
-// INIT
-window.addEventListener('load',()=>{
-  loadRefFromStorage();
-  document.getElementById('fileD83').addEventListener('change',e=>loadPendingFile(e.target.files[0],'d83'));
-  document.getElementById('fileXML').addEventListener('change',e=>loadPendingFile(e.target.files[0],'xml'));
-  document.getElementById('fNew').addEventListener('change',e=>loadNewLV(e.target.files[0]));
-  document.getElementById('fileRefJSON').addEventListener('change',e=>importRefFromJSON(e.target.files[0]));
-  ['dropD83','dropXML','dNew'].forEach(id=>{const el=document.getElementById(id);el?.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('over');});el?.addEventListener('dragleave',()=>el.classList.remove('over'));el?.addEventListener('drop',e=>{e.preventDefault();el.classList.remove('over');});});
-  log(`✓ KalkPilot v${APP_VERSION} bereit – ${new Date(APP_BUILD_DATE).toLocaleDateString('de-DE')}`,'s');
-});
+// ═══════════════════════════════════════════════════════
+// XML EXPORT — vollständige iTWO-Struktur
+// ═══════════════════════════════════════════════════════
+function buildXML(){
+  const projName=document.getElementById('projName').value||'KalkPilot_Export';
+  const acc=S.results.filter(r=>r.accepted);
+  if(!acc.length){window._lastXML='';return;}
+  const sourceNames=[...new Set(acc.map(r=>(r.matches[r.sel]?.pos?.source||r.newPos?.source||'').trim()).filter(Boolean))];
+  const projDescr=sourceNames.length?sourceNames.join(' | '):projName;
+  const wbsXref=makeXref();const divXref=makeXref();
+  const items=acc.map(r=>{
+    const best=r.matches[r.sel];
+    const rp=best?.pos||r.newPos;const np=r.newPos;const sc=best?.score||0;
+    const outlineSpecs=rp.outlineSpecs||rp.langtext||rp.kurztext||'';
+    const costDetails=(rp.kosten||[]).map(k=>{
+      const identifyKey=k.identifyKey||(typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():`${makeXref()}-${makeXref()}`);
+      if(k.entryType==='AssemblyDetail'||k.isAssembly){
+        return`              <AssemblyDetail Xref="${makeXref()}">
+                <NameAssembly>${x(k.nameCoC||k.typ)}</NameAssembly>
+                <DescrAssembly>${x(k.descr)}</DescrAssembly>
+                <IsAssembly>1</IsAssembly>
+                <IdentifyKey>${identifyKey}</IdentifyKey>
+                <UnitOfMeasure>${x(k.einheit||'')}</UnitOfMeasure>
+                <SItemDisabled>0</SItemDisabled>
+                <Quantity>${k.menge}</Quantity>
+                <Factor>${k.factor||1}</Factor>
+                <FactorIsPerformanceFactor>${k.factorIsPerformanceFactor||0}</FactorIsPerformanceFactor>
+                <CostFactor>${k.costFactor||1}</CostFactor>
+                <FlagFixedBudget>0</FlagFixedBudget>
+                <BudgetUomItem>0</BudgetUomItem>
+                <Budget>0</Budget>
+              </AssemblyDetail>`;
+      }
+      return`              <CoCDetail Xref="${makeXref()}">
+                <NameCoC>${x(k.nameCoC||k.typ)}</NameCoC>
+                <DescrCoC>${x(k.descr)}</DescrCoC>
+                <IdentifyKey>${identifyKey}</IdentifyKey>
+                <SItemDisabled>0</SItemDisabled>
+                <CURCoC>${k.curCoC||'EUR'}</CURCoC>
+                <Quantity>${k.menge}</Quantity>
+                <Factor>${k.factor||1}</Factor>
+                <FactorIsPerformanceFactor>0</FactorIsPerformanceFactor>
+                <URValue>${k.preis}</URValue>
+                <CostFactor>${k.costFactor||1}</CostFactor>
+                <CFactorCoC>${k.cFactorCoC||1}</CFactorCoC>
+                <QFactorCoC>${k.qFactorCoC||1}</QFactorCoC>
+                <FlagFixedBudget>0</FlagFixedBudget>
+                <BudgetUomItem>0</BudgetUomItem>
+                <Budget>0</Budget>
+              </CoCDetail>`;
+    }).join('\n');
+    const subQty=Number.isFinite(Number(np.menge))&&Number(np.menge)>0?Number(np.menge):((rp.sub&&rp.sub.qty!=null)?rp.sub.qty:(Number(rp.menge)||1));
+    const subFactor=(rp.sub&&rp.sub.factor!=null)?rp.sub.factor:1;
+    const subCostFactor=(rp.sub&&rp.sub.costFactor!=null)?rp.sub.costFactor:1;
+    const subItemNumber=(rp.sub&&rp.sub.subitemNumber)||1;
+    const subSItemDisabled=(rp.sub&&rp.sub.sItemDisabled)||0;
+    const exportSpPhase='Tender';
+    return`        <!-- Match ${sc}% | Projekt: ${x(rp.source)} | Ref-OZ: ${x(rp.oz)} -->
+        <WBSItem Xref="${makeXref()}">
+          <NameWBSItem>${x(np.oz)}</NameWBSItem>
+          <OutlineSpecs>${x(outlineSpecs)}</OutlineSpecs>
+          <IsNeutralisedCostRisk>0</IsNeutralisedCostRisk>
+          <UsesDerivedCoCs>0</UsesDerivedCoCs>
+          <IsRevenueDeduction>0</IsRevenueDeduction>
+          <IsFixedPriceItem>0</IsFixedPriceItem>
+          <IsNoMarkup>${rp.isNoMarkup?1:0}</IsNoMarkup>
+          <URFromSubDesc>0</URFromSubDesc>
+          <SPPhase>${exportSpPhase}</SPPhase>
+          <EstDetails>
+            <SubItem Xref="${makeXref()}">
+              <SubitemNumber>${subItemNumber}</SubitemNumber>
+              <Quantity>${subQty}</Quantity>
+              <Factor>${subFactor}</Factor>
+              <FactorIsPerformanceFactor>0</FactorIsPerformanceFactor>
+              <CostFactor>${subCostFactor}</CostFactor>
+              <FlagFixedBudget>0</FlagFixedBudget>
+              <BudgetUomItem>0</BudgetUomItem>
+              <Budget>0</Budget>
+              <Text>${x(np.kurztext)}</Text>
+              <UnitOfMeasure>${x(np.me||rp.me||'')}</UnitOfMeasure>
+              <SItemNo>1</SItemNo>
+              <SItemLSum>0</SItemLSum>
+              <SItemLSumAbs>0</SItemLSumAbs>
+              <SItemDisabled>${subSItemDisabled}</SItemDisabled>
+              <Compressed>0</Compressed>
+              <SItemReserve>0</SItemReserve>
+              <SPPhase>${exportSpPhase}</SPPhase>
+              <EstDetails>
+${costDetails}
+              </EstDetails>
+            </SubItem>
+          </EstDetails>
+        </WBSItem>`;
+  }).join('\n');
+  window._lastXML=`<?xml version="1.0" encoding="UTF-8"?>
+<EstimateRoot>
+  <PrjInfo>
+    <NamePrj>${x(projName)}</NamePrj>
+    <DescrPrj>${x(projDescr)}</DescrPrj>
+    <CGRCatalog>
+      <CGRCatalog0>DIN276-08</CGRCatalog0>
+      <CGRCatalog1>2.DIN276 neu</CGRCatalog1>
+      <CGRCatalog2>DIN276 neu</CGRCatalog2>
+      <CGRCatalog3>DIN276_18</CGRCatalog3>
+    </CGRCatalog>
+    <PACode>1</PACode>
+    <PAName>Angebot Abgabe</PAName>
+  </PrjInfo>
+  <Estimate>
+    <Currency>EUR</Currency>
+    <ByAdvancedAllocation>1</ByAdvancedAllocation>
+    <ByManualCharge>1</ByManualCharge>
+    <ByUPFromDetailPricePortions>0</ByUPFromDetailPricePortions>
+    <IsDomesticEstimate>1</IsDomesticEstimate>
+    <RoundingNorm>
+      <Enabled>0</Enabled>
+      <RoundingMode>RoundNear</RoundingMode>
+      <IsRoundingAfterRoundingDigit>1</IsRoundingAfterRoundingDigit>
+      <DigitNumber>2</DigitNumber>
+      <IsRoundingAfterComma>1</IsRoundingAfterComma>
+      <MaxDiffAmount>0</MaxDiffAmount>
+      <IsNullAllowed>1</IsNullAllowed>
+    </RoundingNorm>
+    <WBS Xref="${wbsXref}">
+      <NameWBS>1</NameWBS>
+      <DescrWBS>BGK-LV</DescrWBS>
+      <WBSType>GCWBS</WBSType>
+      <DIVISIONS_EstimateStatus/>
+      <ITEMS>
+        <NameWBSDivision Xref="${divXref}">1.</NameWBSDivision>
+${items}
+      </ITEMS>
+    </WBS>
+  </Estimate>
+</EstimateRoot>`;
+  const lines=window._lastXML.split('\n');
+  document.getElementById('xmlPrev').textContent=lines.slice(0,80).join('\n')+(lines.length>80?'\n  ...('+acc.length+' Positionen — XML kopieren für vollständige Ansicht)':'');
+}
 
-// STUBS FÜR FEHLENDE FUNKTIONEN (kompletter Code würde folgen)
-function parseD83(txt,src){return [];}
-function parseP83(txt,src){return [];}
-function parseXML(txt,src){return [];}
-function mergeD83andXML(d83,xml,name){return [];}
-function addRefProject(){}
-function removeRefProject(i){}
-function toggleRefProject(i,a){}
-function selectAllProj(s){}
-function clearAllProjects(){}
-function clearPending(){}
-function updateRefUI(){}
-function saveRefToStorage(){}
-function loadRefFromStorage(){}
-function exportRefJSON(){}
-function importRefFromJSON(f){}
-function updatePendingStatus(){}
-function loadPendingFile(f,t){}
-function loadNewLV(f){}
-function checkRunBtn(){}
-function runMatch(){}
-function renderMatch(){}
-function doExportXML(){}
-function doExportCSV(){}
+// ═══════════════════════════════════════════════════════
+// EXPORT ACTIONS
+// ═══════════════════════════════════════════════════════
+function doExportXML(){
+  if(!window._lastXML){alert('Keine markierten Positionen.');return;}
+  requestDonationBeforeExport(()=>{
+    const name=document.getElementById('projName').value||'Export';
+    dl(window._lastXML,`KalkPilot_by_Janek_${name}_Kalkulation.xml`,'application/xml');
+  });
+}
+function doExportCSV(){
+  const acc=S.results.filter(r=>r.accepted);
+  if(!acc.length){alert('Keine markierten Positionen.');return;}
+  requestDonationBeforeExport(()=>{
+    const name=document.getElementById('projName').value||'Export';
+    const rows=[['OZ','Kurztext','Menge','ME','Match%','Projekt','Ref-OZ','Ref-ME','L(€)','M(€)','G(€)','N(€)','S(€)','EP(€)','Herkunft']];
+    acc.forEach(r=>{
+      const best=r.matches[r.sel],rp=best?.pos||r.newPos;
+      const g=t=>((rp.kosten||[]).filter(k=>k.typ===t).reduce((s,k)=>s+k.menge*k.preis,0)).toFixed(2);
+      const src=rp.matchedD83&&rp.matchedXML?'D83+XML':rp.matchedXML?'nur XML':'nur D83';
+      rows.push([r.newPos.oz,r.newPos.kurztext,r.newPos.menge,r.newPos.me,best?.score||0,rp.source||'',rp.oz||'',rp.me||'',g('L'),g('M'),g('G'),g('N'),g('S'),rp.ep.toFixed(2),src]);
+    });
+    dl('﻿'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n'),`KalkPilot_by_Janek_${name}_Kalkulation.csv`,'text/csv;charset=utf-8;');
+  });
+}
+function copyXML(ev){
+  if(!window._lastXML){alert('Kein XML vorhanden.');return;}
+  const btn=ev?.currentTarget||ev?.target||null;
+  const showCopied=()=>{
+    if(!btn)return;
+    btn.textContent='✓ Kopiert!';
+    setTimeout(()=>btn.textContent='📋 XML kopieren',2000);
+  };
+  if(navigator.clipboard?.writeText){
+    navigator.clipboard.writeText(window._lastXML).then(showCopied).catch(()=>{
+      alert('Kopieren fehlgeschlagen. Bitte XML exportieren.');
+    });
+    return;
+  }
+  alert('Kopieren wird in diesem Browser nicht unterstützt. Bitte XML exportieren.');
+}
+function dl(data,filename,mime){
+  const blob=new Blob([data],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;a.click();URL.revokeObjectURL(url);
+}
 
+// ═══════════════════════════════════════════════════════
+// TABS & DRAG-DROP
+// ═══════════════════════════════════════════════════════
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const i=['t1','t2','t3'].indexOf(id);
+  if(i>=0)document.querySelectorAll('.tb')[i].classList.add('active');
+  if(id==='t3'){buildXML();updateExport();}
+}
+
+// Drag-Drop für Pending-Projekt
+function setupDrop2(zoneId,type){
+  const z=document.getElementById(zoneId);
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('over');});
+  z.addEventListener('dragleave',()=>z.classList.remove('over'));
+  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');
+    const f=e.dataTransfer.files[0];if(f)loadPendingFile(f,type);});
+}
+setupDrop2('dropD83','d83');
+setupDrop2('dropXML','xml');
+
+document.getElementById('fileD83').addEventListener('change',e=>{if(e.target.files[0])loadPendingFile(e.target.files[0],'d83');});
+document.getElementById('fileXML').addEventListener('change',e=>{if(e.target.files[0])loadPendingFile(e.target.files[0],'xml');});
+document.getElementById('fileRefJSON').addEventListener('change',e=>{if(e.target.files[0])importRefFromJSON(e.target.files[0]);});
+
+// Neues LV
+const dNew=document.getElementById('dNew');
+dNew.addEventListener('dragover',e=>{e.preventDefault();dNew.classList.add('over');});
+dNew.addEventListener('dragleave',()=>dNew.classList.remove('over'));
+dNew.addEventListener('drop',e=>{e.preventDefault();dNew.classList.remove('over');const f=e.dataTransfer.files[0];if(f)loadNewLV(f);});
+document.getElementById('fNew').addEventListener('change',e=>{if(e.target.files[0])loadNewLV(e.target.files[0]);});
+
+function applyLayoutPolish(){
+  const previewHead=document.querySelector('#t1 .preview-compact .section-head');
+  if(previewHead){
+    const title=previewHead.querySelector(':scope > .ctitle');
+    if(title){
+      let copy=previewHead.querySelector(':scope > .section-copy');
+      if(!copy){
+        copy=document.createElement('div');
+        copy.className='section-copy';
+        previewHead.insertBefore(copy,title);
+      }
+      copy.prepend(title);
+      if(!copy.querySelector('.section-note')){
+        const note=document.createElement('div');
+        note.className='section-note';
+        note.textContent='Schneller Blick auf Struktur, Einheiten und Kostenquellen der aktiven Referenzen.';
+        copy.appendChild(note);
+      }
+    }
+  }
+
+  document.querySelector('#t2 .toolbar')?.classList.add('toolbar-band');
+  document.querySelectorAll('#t2 .toolbar')[1]?.classList.add('action-strip');
+  document.querySelector('#mTbl thead th:nth-child(5)')?.classList.add('decision-col');
+
+  const exportActions=document.querySelector('#t3 .export-actions');
+  if(exportActions && !exportActions.querySelector('.export-primary')){
+    const buttons=[...exportActions.querySelectorAll(':scope > button')];
+    if(buttons.length){
+      const wrap=document.createElement('div');
+      wrap.className='export-primary';
+      buttons.forEach(btn=>wrap.appendChild(btn));
+      exportActions.appendChild(wrap);
+    }
+  }
+
+  const xmlCard=document.querySelectorAll('#t3 .card')[1];
+  if(xmlCard){
+    const title=xmlCard.querySelector(':scope > .ctitle');
+    if(title){
+      const head=document.createElement('div');
+      head.className='section-head';
+      const copy=document.createElement('div');
+      copy.className='section-copy';
+      const newTitle=document.createElement('div');
+      newTitle.className='ctitle';
+      newTitle.style.margin='0';
+      newTitle.textContent='XML-Vorschau';
+      const note=document.createElement('div');
+      note.className='section-note';
+      note.textContent='Die Vorschau zeigt genau das, was aus den übernommenen Positionen erzeugt wird.';
+      const meta=document.createElement('div');
+      meta.className='export-meta';
+      meta.textContent='Nur übernommene Positionen werden ausgegeben.';
+      copy.appendChild(newTitle);
+      copy.appendChild(note);
+      head.appendChild(copy);
+      head.appendChild(meta);
+      title.replaceWith(head);
+    }
+  }
+
+  const filterSel=document.getElementById('filterSel');
+  if(filterSel){
+    const orange=filterSel.querySelector('option[value="orange"]');
+    const red=filterSel.querySelector('option[value="red"]');
+    if(orange)orange.textContent='Orange 25-59%';
+    if(red)red.textContent='Rot <= 24%';
+  }
+}
+
+// Init
+document.getElementById('siScore').textContent='↓';
+applyLayoutPolish();
+loadRefFromStorage();  // Referenzprojekte aus localStorage wiederherstellen
 </script>
 </body>
 </html>
