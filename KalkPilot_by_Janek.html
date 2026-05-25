@@ -322,6 +322,18 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         <div class="section-note">Hier stellst du nur die Strenge des Abgleichs ein. Alles andere bleibt bewusst schlicht.</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="ref-notice show" id="matchMemoryBox" style="display:flex">
+          <span style="font-size:14px;line-height:1">🧠</span>
+          <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+            <div id="matchMemorySummary"><b>Matching-Wissen:</b> Noch nichts geladen.</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <button class="btn btn-s btn-sm" onclick="document.getElementById('fileMatchMemoryJSON').click()" title="Top-Treffer und Lernstand aus JSON laden">📂 Wissen laden</button>
+              <button class="btn btn-s btn-sm" onclick="exportMatchMemoryJSON()" title="Top-Treffer und Lernstand als JSON speichern">💾 Wissen sichern</button>
+              <span style="font-size:11px;color:var(--muted)">Vor dem automatischen Matching optional laden, damit eure geprüften Treffer direkt mitwirken.</span>
+            </div>
+          </div>
+        </div>
+        <input type="file" id="fileMatchMemoryJSON" accept=".json">
         <div class="rng-row">
           Mindest-Score:
           <input type="range" min="45" max="100" value="45" id="thresh" oninput="document.getElementById('thrV').textContent=this.value+'%'">
@@ -363,8 +375,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       <button class="btn btn-s btn-sm" onclick="deselectAllVisible()">☐ Alle Sichtbaren abwählen</button>
       <button class="btn btn-s btn-sm" onclick="deselectAll()" style="color:var(--red)">✕ Alle abwählen</button>
       <button class="btn btn-s btn-sm" onclick="openReviewModal()">🤖 Testbericht für ChatGPT erzeugen</button>
-      <button class="btn btn-s btn-sm" onclick="runMatchingSelfTest(true)">🧪 Self-Test ausführen</button>
-      <button class="btn btn-s btn-sm" onclick="runReferenceLinkSelfTest(true)">🔗 Referenz-Selbsttest</button>
+      <button class="btn btn-s btn-sm" onclick="runDiagnosticsSelfTest(true,true)">🧪 Diagnose ausführen</button>
       <span id="accStat" style="font-size:11px;color:var(--muted);margin-left:4px"></span>
     </div>
     <div class="match-progress" id="matchProgressBox">
@@ -575,7 +586,33 @@ function norm(t){
     .replace(/ä|Ã¤/g,'ae').replace(/ö|Ã¶/g,'oe').replace(/ü|Ã¼/g,'ue').replace(/ß|ÃŸ/g,'ss')
     .replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
 }
-function canonOZ(raw){return(raw||'').replace(/\D/g,'');}
+function normalizeOZPart(part){
+  const cleaned=String(part||'').replace(/\D/g,'');
+  if(!cleaned)return'';
+  return cleaned.replace(/^0+(?=\d)/,'')||'0';
+}
+function canonOZLoose(raw){
+  const digits=String(raw||'').replace(/\D/g,'');
+  if(!digits)return'';
+  return digits.replace(/^0+(?=\d)/,'')||'0';
+}
+function canonOZ(raw){
+  const source=String(raw||'').trim();
+  if(!source)return'';
+  const parts=source.split(/\D+/).filter(Boolean).map(normalizeOZPart).filter(Boolean);
+  if(parts.length>1)return parts.join('|');
+  return parts[0]||canonOZLoose(source);
+}
+function ozLookupKeys(raw){
+  const strict=canonOZ(raw);
+  const loose=canonOZLoose(raw);
+  return [...new Set([strict&&('seg:'+strict),loose&&('dig:'+loose)].filter(Boolean))];
+}
+function sameOZ(a,b){
+  if(!a||!b)return false;
+  const bKeys=new Set(ozLookupKeys(b));
+  return ozLookupKeys(a).some(key=>bKeys.has(key));
+}
 function lev(a,b){
   if(!a.length)return b.length;if(!b.length)return a.length;
   const dp=[];
@@ -591,22 +628,57 @@ function lev(a,b){
 // Jede Gruppe = semantisch gleichwertige oder sehr Ã¤hnliche Begriffe.
 // synonymScore() gibt 1.0 zurÃ¼ck wenn beide Texte in derselben Gruppe liegen.
 const BAU_SYNONYMS=[
-  ['baustelleneinrichtung','baustelle einrichten','be einrichten','bauzaun'],
+  ['baustelleneinrichtung','baustelle einrichten','be einrichten'],
   ['baustelle raeumen','baustelleneinrichtung raeumen','be raeumen'],
+  ['bauzaun','bauzaun liefern','bauzaun aufstellen','bauzaun versetzbar'],
+  ['bauschild','bauschilder'],
+  ['baucontaineranlage','baucontainer','aufenthaltsraum','bauwagen'],
+  ['drehfluegeltor','drehflügeltor'],
+  ['schiebetor','schiebetor'],
+  ['schutzgelaender','schutzgeländer'],
+  ['treppenturm','treppentuerme'],
+  ['baustromversorgung','baustrom'],
+  ['bauwasserversorgung','bauwasser'],
+  ['baustellenbeleuchtung','beleuchtung fluchtweg','beleuchtung'],
+  ['arbeitsebene','arbeitsplattform'],
   ['schwarzweissanlage','schwarz weiss anlage','sw anlage','s w anlage','dekontaminationsanlage','deko anlage'],
   ['personen deko','personendeko','deko schleuse'],
   ['stiefelwaschanlage','stiefel waschanlage'],
   ['reifenwaschanlage','reifen waschanlage','mobile reifenwaschanlage'],
   ['schutzanzug','schutzkleidung','atemschutz'],
-  ['betriebsanweisung','alarmplan','notfallplan','gefaehrdungsbeurteilung'],
-  ['bodenaushub','aushub','erdaushub','boden loesen','boden laden'],
-  ['oberboden abtragen','oberboden loesen','mutterboden abtragen'],
-  ['wiedereinbau boden','boden einbauen','verfuellen','boden verfuellen'],
+  ['betriebsanweisung','alarmplan','notfallplan','gefaehrdungsbeurteilung','gefaehrdungsanalyse'],
+  ['rettungskonzept','havariekonzept','notfallkonzept'],
+  ['qualitaetssicherungsplan','qs plan','qualitaetsplan'],
+  ['bauzeitenplan','balkendiagramm','soll ist vergleich'],
+  ['baustelleneinrichtungsplan','be plan'],
+  ['vermessungsarbeiten','abstecken','hauptachsen abstecken'],
+  ['bodenaushub','aushub','erdaushub','boden loesen','boden laden','boden fuer baugrube loesen','boden fuer baugrube laden'],
+  ['baugrube herstellen','baugrubeherstellen','baugrube loesen','baugrube ausheben','boden fuer baugrube loesen','boden fuer baugrube laden'],
+  ['oberboden abtragen','oberboden abtragen laden','oberboden abtragen beseitigen','oberboden abtragen abfahren','oberboden loesen','oberboden loesen laden','mutterboden abtragen','mutterboden loesen','mutterboden beseitigen','oberboden beseitigen','humosen oberboden'],
+  ['wiedereinbau boden','boden einbauen','verfuellen','boden verfuellen','arbeitsraum verfuellen','leerschlitz verfuellen'],
   ['planum','profilieren','verdichten'],
-  ['entsorgung','verwertung','abfahren','deponieren'],
+  ['entsorgung','verwertung','abfahren','deponieren','entsorgen'],
+  ['nicht gefaehrlicher abfall','n gefaehrl abfall','abfall nicht gefaehrlich'],
+  ['bm 0','bm0','bm-0','einbauklasse bm0','avv 170504','170504','laga rc','laga z0 rc','ersatzbaustoffverordnung'],
+  ['bm 1','bm1','bm-1','einbauklasse bm1','laga z0','nicht gefaehrlicher abfall bm1'],
+  ['bm 2','bm2','bm-2','einbauklasse bm2','laga z1','nicht gefaehrlicher abfall bm2'],
+  ['bm f1','bmf1','bm-f1','einbauklasse bmf1'],
+  ['bm f2','bmf2','bm-f2','einbauklasse bmf2'],
+  ['bm f3','bmf3','bm-f3','einbauklasse bmf3','avv 170506','gefaehrlicher abfall ebv'],
+  ['laga z0','z0 laga','einbauklasse z0'],
+  ['laga z1 1','z1 1','laga z1.1'],
+  ['laga z1 2','z1 2','laga z1.2'],
+  ['laga z2','z2 laga','einbauklasse z2','deponieklasse 2'],
+  ['dk 0','dk0','deponieklasse 0','inertabfall deponie'],
+  ['dk i','dki','deponieklasse i','deponieklasse 1'],
+  ['dk ii','dkii','deponieklasse ii','deponieklasse 2'],
+  ['dk iii','dkiii','deponieklasse iii','deponieklasse 3','hausmuelldeponie'],
+  ['zwischenlager','laden vom zwischenlager'],
   ['technische barriere','mineralische dichtung','basisabdichtung'],
   ['kunststoffdichtungsbahn','pehd kunststoffdichtungsbahn','kdb'],
   ['schutzvlies','filtervlies','vliesstoff'],
+  ['geotextilien','geotextil','vliesstoff'],
+  ['baustrasse','baustraße'],
   ['sickerwasserrohr','pehd draenrohr','drainagerohr','sickerwasserleitung'],
   ['rohrbettung','bettung herstellen'],
   ['kompostwasserleitung','schmutzwasserleitung'],
@@ -633,6 +705,7 @@ const LV_STOPWORDS=new Set([
   'arbeiten','taetigkeit','massnahme','und','oder','mit','fuer','zur',
   'zum','eine','einen','dem','den','die','das','der','ist','sind',
   'von','auf','an','im','in','am','als','unter','ueber','bei',
+  'freitext','abrechnung','abrechng','auftrag','gesondert','anordnung','einrechn','einrechnen'
 ]);
 function removeLVStopwords(text){
   return norm(text).split(/\s+/).filter(w=>w.length>2&&!LV_STOPWORDS.has(w)).join(' ');
@@ -641,6 +714,10 @@ function removeLVStopwords(text){
 // â”€â”€â”€ Bauterm-Normierung â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Vereinheitlicht hÃ¤ufige Varianten, damit strSim/tokSim besser greift
 const TERM_NORMS=[
+  [/\boberboden\b[\w\s]{0,40}\b(laden|beseitigen|abfahren|entsorgen)\b/g,'oberboden abtragen'],
+  [/\bmutterboden\b[\w\s]{0,40}\b(laden|beseitigen|abfahren|entsorgen)\b/g,'oberboden abtragen'],
+  [/\boberboden\b[\w\s]{0,40}\b(loesen|lösen)\b/g,'oberboden loesen'],
+  [/\bmutterboden\b[\w\s]{0,40}\b(loesen|lösen|abtragen)\b/g,'oberboden abtragen'],
   [/schwarz[\s-]*weiß[\s-]*anlage|schwarz[\s-]*weiss[\s-]*anlage|schwarz[\s-]*weiÃŸ[\s-]*anlage|s\/w[\s-]*anlage/g,'schwarzweissanlage'],
   [/dekontaminations[\s-]*anlage/g,'dekontaminationsanlage'],
   [/baustellen[\s-]*einrichtung/g,'baustelleneinrichtung'],
@@ -653,8 +730,14 @@ const TERM_NORMS=[
   [/vibrations?walze/g,'vibrationswalze'],
   [/boden[\s-]*(loesen|lösen)/g,'boden loesen'],
   [/boden[\s-]*laden/g,'boden laden'],
+  [/boden[\s-]*fuer[\s-]*baugrube[\s-]*(loesen|lösen)/g,'boden fuer baugrube loesen'],
+  [/boden[\s-]*fuer[\s-]*baugrube[\s-]*laden/g,'boden fuer baugrube laden'],
+  [/baugrube[\s-]*(herstellen|herstellung)/g,'baugrube herstellen'],
+  [/baugrube[\s-]*(loesen|lösen|ausheben)/g,'baugrube loesen'],
   [/boden[\s-]*(einbauen|einbau)/g,'boden einbauen'],
   [/boden[\s-]*(verfuellen|verfüllen)/g,'boden verfuellen'],
+  [/arbeitsraum[\s-]*(verfuellen|verfüllen)/g,'arbeitsraum verfuellen'],
+  [/leerschlitz[\s-]*(verfuellen|verfüllen)/g,'leerschlitz verfuellen'],
   [/kdb/g,'kunststoffdichtungsbahn'],
   [/pehd[\s-]*dr[aäÃ¤]nrohr/g,'pehd draenrohr'],
   [/dr[aäÃ¤]nrohr/g,'draenrohr'],
@@ -663,9 +746,18 @@ const TERM_NORMS=[
   [/kunststoff[\s-]*dichtungsbahn/g,'kunststoffdichtungsbahn'],
   [/std\.?|stunden?|akh|arbeitskraftstunden?/g,'h'],
   [/lfm|laufmeter/g,'m'],
+  [/stmt|st[\s\-\/]*mt/g,'stmt'],
+  [/mmt|m[\s\-\/]*mt/g,'mmt'],
+  [/stwo|st[\s\-\/]*wo/g,'stwo'],
+  [/mt|monat|monate/g,'mt'],
   [/stück|stÃ¼ck|stk/g,'st'],
   [/wochen?|woche/g,'wo'],
   [/psch|pauschale?|pauschal/g,'psch'],
+  [/tonne|tonnen|to/g,'t'],
+  [/abfallschluessel|abfallschlüssel/g,'abfallschluessel'],
+  [/ersatzbaustoffverordnung/g,'ersatzbaustoffverordnung'],
+  [/\bfreitext\b/g,' '],
+  [/\babrechn(?:ung|g)\b/g,' '],
 ];
 function normalizeConstructionTerms(text){
   let t=removeLVStopwords(text);
@@ -682,8 +774,12 @@ function normUnit(u){
   if(/^(m3|m³|mÂ³|cbm|mue|mü|mÃ¼|kubikmeter)$/.test(s))return'm3';
   if(/^(m2|m²|mÂ²|qm|quadratmeter)$/.test(s))return'm2';
   if(/^(m|lfm|laufmeter)$/.test(s))return'm';
+  if(/^(mmt)$/.test(s))return'mmt';
   if(/^(st|stück|stÃ¼ck|stk)$/.test(s))return'st';
+  if(/^(stmt)$/.test(s))return'stmt';
+  if(/^(stwo)$/.test(s))return'stwo';
   if(/^(h|std|stunde|stunden|akh)$/.test(s))return'h';
+  if(/^(mt|monat|monate)$/.test(s))return'mt';
   if(/^(wo|woche|wochen)$/.test(s))return'wo';
   if(/^(psch|pauschal|pauschale)$/.test(s))return'psch';
   if(/^(t|to|tonne|tonnen)$/.test(s))return't';
@@ -693,6 +789,11 @@ function unitCompatibilityScore(ua,ub){
   if(!ua||!ub)return 0.50;
   const a=normUnit(ua),b=normUnit(ub);
   if(a===b)return 1.0;
+  if((a==='stmt'&&b==='st')||(a==='st'&&b==='stmt'))return 0.28;
+  if((a==='stwo'&&b==='st')||(a==='st'&&b==='stwo'))return 0.25;
+  if((a==='mmt'&&b==='m')||(a==='m'&&b==='mmt'))return 0.28;
+  if((a==='mt'&&b==='psch')||(a==='psch'&&b==='mt'))return 0.22;
+  if((a==='mt'&&b==='wo')||(a==='wo'&&b==='mt'))return 0.35;
   if((a==='m3'&&b==='t')||(a==='t'&&b==='m3'))return 0.45;
   if((a==='m2'&&b==='m3')||(a==='m3'&&b==='m2'))return 0.30;
   if((a==='st'&&b==='psch')||(a==='psch'&&b==='st'))return 0.25;
@@ -704,7 +805,7 @@ function quantitySimilarityScore(qa,qb,ua='',ub=''){
   const unitA=normUnit(ua),unitB=normUnit(ub);
   if(!a||!b||isNaN(a)||isNaN(b))return 0.50;
   const ratio=Math.abs(a-b)/Math.max(a,b);
-  const softUnits=new Set(['psch','st','h','wo']);
+  const softUnits=new Set(['psch','st','h','wo','mt','stmt','stwo','mmt']);
   if(softUnits.has(unitA)||softUnits.has(unitB)){
     if(ratio<=0.15)return 1.0;
     if(ratio<=0.35)return 0.80;
@@ -743,19 +844,49 @@ function swSubcategory(text){
   if(/\bschwarzweissanlage\b|\bdekontaminationsanlage\b|\bpersonen deko\b|\bpersonendeko\b|\bdeko anlage\b/.test(t))return'FACILITY';
   return'GENERIC';
 }
+function hasHoldingSemantics(text){
+  return /\bvorhaltung\b|\bverlaengerte\b|\bverlangerte\b|\bzusaetzl\b|\bzusatzliche?\b|\bfortschreibung\b|\baktualisierung\b/.test(normalizeConstructionTerms(text));
+}
+function isDocLikeText(text){
+  return /\bplan\b|\bkonzept\b|\banalyse\b|\bdokumentation\b|\bnachweis\b|\bfortschreibung\b|\baktualisierung\b|\bbericht\b|\bbeurteilung\b/.test(normalizeConstructionTerms(text));
+}
+function detectBeAsset(text){
+  const t=normalizeConstructionTerms(text);
+  const tags=[
+    ['bauzaun',/\bbauzaun\b/],
+    ['bauschild',/\bbauschild|bauschilder\b/],
+    ['container',/\bbaucontainer|bauwagen|aufenthaltsraum\b/],
+    ['tor',/\bdrehfluegeltor|schiebetor|bauzauntor|tor\b/],
+    ['schutzgelaender',/\bschutzgelaender|schutzgeländer\b/],
+    ['treppenturm',/\btreppenturm\b/],
+    ['baustrom',/\bbaustromversorgung|baustrom\b/],
+    ['bauwasser',/\bbauwasserversorgung|bauwasser|wasserzaehler\b/],
+    ['beleuchtung',/\bbeleuchtung|fluchtweg\b/],
+    ['baustrasse',/\bbaustrasse|baustraße|ueberfahrschutz|behelfsueberfahrt\b/]
+  ];
+  const found=tags.filter(([,rx])=>rx.test(t)).map(([name])=>name);
+  return found[0]||'';
+}
+function hasSurchargeSemantics(text){
+  return /\bsaemtliche kosten\b|\bsämtliche kosten\b|\bzuschlaege?\b|\bzuschläge?\b/.test(repairLegacyGermanText(text||'').toLowerCase());
+}
 function positionCategory(p){
   const t=normalizeConstructionTerms((p?.kurztext||'')+' '+(p?.langtext||'')+' '+(p?.outlineSpecs||''));
+  if(/\bbauzeitenplan\b|\bbalkendiagramm\b|\bsoll ist vergleich\b|\bbaustelleneinrichtungsplan\b|\bwerks und montageplanung\b|\bmontageplanung\b/.test(t))return'BAULEITUNG_PLANUNG';
+  if(/\brettungskonzept\b|\bhavariekonzept\b|\bgefaehrdungsanalyse\b|\bgefaehrdungsbeurteilung\b|\bbetriebsanweisung\b|\balarmplan\b|\bnotfallplan\b/.test(t))return'ARBEITSSCHUTZ_SW';
+  if(/\bqualitaetssicherungsplan\b|\bkontrollpruefung\b|\bplattendruckversuch\b|\bprobefeld\b/.test(t))return'QUALITAET_PROBEFELD';
+  if(/\bvermessungsarbeiten\b|\bhauptachsen\b|\babstecken\b/.test(t))return'VERMESSUNG';
   if(/\bsickerwasserrohr\b|\bdraenrohr\b|\bdrainagerohr\b|\brohrleitung\b|\brohrbettung\b|\bschacht\b|\bschieber\b|\bmuffe\b|\bformteil\b|\bbogen\b/.test(t))return'LEITUNGSBAU';
   if(/\bschwarzweissanlage\b|\bdekontaminationsanlage\b|\bpersonen deko\b|\bstiefelwaschanlage\b|\breifenwaschanlage\b|\batemschutz\b|\bschutzanzug\b|\bgefahrstoff\b|\bbetriebsanweisung\b|\balarmplan\b|\bnotfallplan\b|\bgefaehrdungsbeurteilung\b/.test(t))return'ARBEITSSCHUTZ_SW';
-  if(/\bbaustelleneinrichtung\b|\bbauzaun\b|\bbaustelleneinrichtung raeumen\b/.test(t))return'BE';
-  if(/\bbodenaushub\b|\baushub\b|\berdaushub\b|\bboden loesen\b|\bboden laden\b|\boberboden abtragen\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bplanum\b|\bprofilieren\b|\bverdichten\b/.test(t))return'ERDBAU';
+  if(/\bbaustelleneinrichtung\b|\bbauzaun\b|\bbaustelleneinrichtung raeumen\b|\bbauschild\b|\bbaucontainer\b|\bdrehfluegeltor\b|\bschiebetor\b|\bschutzgelaender\b|\btreppenturm\b|\bbaustromversorgung\b|\bbauwasserversorgung\b|\bbaustellenbeleuchtung\b|\bbaustra(s|ß)e\b|\bueberfahrschutz\b|\bbehelfsueberfahrt\b/.test(t))return'BE';
+  if(/\bbodenaushub\b|\baushub\b|\berdaushub\b|\bboden loesen\b|\bboden laden\b|\bboden fuer baugrube loesen\b|\bboden fuer baugrube laden\b|\bbaugrube herstellen\b|\bbaugrube loesen\b|\boberboden abtragen\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bplanum\b|\bprofilieren\b|\bverdichten\b|\barbeitsraum verfuellen\b|\bleerschlitz verfuellen\b|\barbeitsebene\b/.test(t))return'ERDBAU';
   const categoryMap={
-    'ENTSORGUNG':[/\bentsorgung\b/,/\bverwertung\b/,/\babfahren\b/,/\bdeponieren\b/,/\bdeponie\b/,/\bbeprobung\b/,/\banalyse\b/,/\bchemischer nachweis\b/,/\babfallinventar\b/,/\bgefaehrlicher abfall\b/],
+    'ENTSORGUNG':[/\bentsorgung\b/,/\bverwertung\b/,/\babfahren\b/,/\bdeponieren\b/,/\bdeponie\b/,/\bbeprobung\b/,/\bchemischer nachweis\b/,/\babfallinventar\b/,/\bgefaehrlicher abfall\b/,/\bnicht gefaehrlicher abfall\b/,/\bn gefaehrl abfall\b/,/\babfallschluessel\b/,/\b170504\b/,/\bbm0\b/,/\bersatzbaustoffverordnung\b/,/\bzwischenlager\b/],
     'DEPONIEBAU_ABDICHTUNG':[/\btechnische barriere\b/,/\bmineralische dichtung\b/,/\bbasisabdichtung\b/,/\bkunststoffdichtungsbahn\b/,/\bkdb\b/,/\bpehd\b/,/\bschutzvlies\b/,/\bfiltervlies\b/,/\bvliesstoff\b/,/\bsandmatte\b/,/\bentwaesserungsschicht\b/,/\brandwall\b/,/\bboeschungsbereich\b/,/\banschluss an bestand\b/],
     'LEITUNGSBAU':[/\brohr\b/,/\brohrleitung\b/,/\bpehd rohr\b/,/\bschmutzwasserleitung\b/,/\bkompostwasserleitung\b/],
-    'QUALITAET_PROBEFELD':[/\bprobefeld\b/,/\bprobebau\b/,/\bproctor\b/,/\bplattendruckversuch\b/,/\beigenpruefung\b/,/\bgueteueberwachung\b/,/\bkontrollpruefung\b/],
-    'BAULEITUNG_PLANUNG':[/\bbauleitung\b/,/\bbauzeitenplan\b/,/\bbauablaufplan\b/,/\bplanung\b/,/\bprojektleitung\b/,/\bkoordination\b/],
-    'VERMESSUNG':[/\bhauptachsen\b/,/\babstecken\b/,/\bvermessung\b/,/\btrassenabsteckung\b/,/\bachspunkt\b/],
+    'QUALITAET_PROBEFELD':[/\bprobefeld\b/,/\bprobebau\b/,/\bproctor\b/,/\bplattendruckversuch\b/,/\beigenpruefung\b/,/\bgueteueberwachung\b/,/\bkontrollpruefung\b/,/\bqualitaetssicherungsplan\b/],
+    'BAULEITUNG_PLANUNG':[/\bbauleitung\b/,/\bbauzeitenplan\b/,/\bbauablaufplan\b/,/\bplanung\b/,/\bprojektleitung\b/,/\bkoordination\b/,/\bbaustelleneinrichtungsplan\b/,/\bwerks und montageplanung\b/,/\blieferkonzept\b/,/\bsondierungskonzept\b/],
+    'VERMESSUNG':[/\bhauptachsen\b/,/\babstecken\b/,/\bvermessung\b/,/\bvermessungsarbeiten\b/,/\btrassenabsteckung\b/,/\bachspunkt\b/],
     'WASSERHALTUNG':[/\bpumpe\b/,/\bpumpen\b/,/\bwasserhaltung\b/,/\babpumpen\b/,/\bniederschlagswasser\b/,/\bstromaggregat\b/,/\bpumpensteuerung\b/],
     'RODUNG_FREIMACHUNG':[/\brodung\b/,/\bfreimach\b/,/\bbewuchs\b/,/\bbaum\b/,/\bhecke\b/,/\bstraeucher\b/],
     'STRASSENBAU':[/\basphalt\b/,/\bbitumen\b/,/\bdeckschicht\b/,/\btragschicht\b/,/\bbelag\b/,/\bfrostschutzschicht\b/],
@@ -769,6 +900,7 @@ function positionCategory(p){
 function categoryCompatibility(a,b,np=null,rp=null){
   if(!a||!b)return 0.50;
   if(a===b)return 1.0;
+  if(a==='SONSTIGES'||b==='SONSTIGES')return 0.0;
   const related={
     'ERDBAU|ENTSORGUNG':0.60,'ERDBAU|DEPONIEBAU_ABDICHTUNG':0.45,'LEITUNGSBAU|WASSERHALTUNG':0.50,'BE|BAULEITUNG_PLANUNG':0.35,
     'ERDBAU|STRASSENBAU':0.45,'MATERIAL|DEPONIEBAU_ABDICHTUNG':0.50,'GERÃ„TE|ERDBAU':0.35,'PERSONAL|ERDBAU':0.35,
@@ -790,6 +922,48 @@ function isGenericReference(p){
 }
 function isGenericLikePosition(p){
   return isGenericReference(p)||positionCategory(p)==='BAULEITUNG_PLANUNG';
+}
+function getEbvClass(text){
+  const t=normalizeConstructionTerms(text);
+  if(/\bbm[\s-]?f3\b|\bbmf3\b|\bavv[\s-]*17[\s-]*05[\s-]*06\b|\bgefaehrlicher abfall\b|\bklasse[\s-]*f3\b/.test(t))return'BM-F3';
+  if(/\bbm[\s-]?f2\b|\bbmf2\b|\bklasse[\s-]*f2\b/.test(t))return'BM-F2';
+  if(/\bbm[\s-]?f1\b|\bbmf1\b|\bklasse[\s-]*f1\b/.test(t))return'BM-F1';
+  if(/\bbm[\s-]?2\b|\bbm2\b|\beinbauklasse[\s-]*2\b|\blaga[\s-]*z1\b(?![\s.]*1)/.test(t))return'BM-2';
+  if(/\bbm[\s-]?1\b|\bbm1\b|\beinbauklasse[\s-]*1\b|\blaga[\s-]*z0\b/.test(t))return'BM-1';
+  if(/\bbm[\s-]?0\b|\bbm0\b|\beinbauklasse[\s-]*0\b|\b170504\b|\bersatzbaustoffverordnung\b|\blaga[\s-]*rc\b/.test(t))return'BM-0';
+  if(/\bz[\s-]?2\b|\bz2\b|\blaga[\s-]*z2\b|\bdeponieklasse[\s-]*(?:dk[\s-]*)?ii\b/.test(t))return'Z2';
+  if(/\bz[\s-]?1[\s-.]?2\b|\bz1[\s-.]?2\b|\blaga[\s-]*z1[\s-.]?2\b/.test(t))return'Z1.2';
+  if(/\bz[\s-]?1[\s-.]?1\b|\bz1[\s-.]?1\b|\blaga[\s-]*z1[\s-.]?1\b/.test(t))return'Z1.1';
+  if(/\bz[\s-]?1\b(?![\s.]*[12])\b|\bz1\b(?![\s.]*[12])|\blaga[\s-]*z1\b(?![\s.]*[12])/.test(t))return'Z1';
+  if(/\bz[\s-]?0\b|\bz0\b|\blaga[\s-]*z0\b|\b170504\b/.test(t))return'Z0';
+  return null;
+}
+function getDepvClass(text){
+  const t=normalizeConstructionTerms(text);
+  if(/\bdk[\s-]?0\b|\bdeponieklasse[\s-]*0\b|\binertabfall\b/.test(t))return'DK-0';
+  if(/\bdk[\s-]?i\b(?!i)|\bdeponieklasse[\s-]*i\b(?!i)/.test(t))return'DK-I';
+  if(/\bdk[\s-]?ii\b(?!i)|\bdeponieklasse[\s-]*ii\b(?!i)/.test(t))return'DK-II';
+  if(/\bdk[\s-]?iii\b|\bdeponieklasse[\s-]*iii\b/.test(t))return'DK-III';
+  if(/\bdk[\s-]?iv\b|\bdeponieklasse[\s-]*iv\b/.test(t))return'DK-IV';
+  if(/\bdepv\b|\bdeponieverordnung\b|\bta[\s-]?abfall\b|\babfallablagerung\b/.test(t))return'DEPV_UNSPEC';
+  return null;
+}
+const EBV_COMPAT={
+  'BM-0|BM-1':0.30,'BM-1|BM-2':0.25,'BM-0|BM-2':0.20,
+  'BM-0|BM-F1':0.15,'BM-0|BM-F2':0.15,'BM-0|BM-F3':0.10,
+  'BM-1|BM-F1':0.20,'BM-1|BM-F2':0.15,'BM-1|BM-F3':0.10,
+  'BM-2|BM-F1':0.25,'BM-2|BM-F2':0.20,'BM-2|BM-F3':0.15,
+  'Z0|Z1':0.30,'Z0|Z1.1':0.30,'Z0|Z1.2':0.25,'Z0|Z2':0.20,
+  'Z1|Z1.1':0.55,'Z1|Z1.2':0.45,'Z1|Z2':0.30,
+  'Z1.1|Z1.2':0.60,'Z1.1|Z2':0.35,'Z1.2|Z2':0.40,
+  'BM-0|Z0':0.70,'BM-1|Z1':0.60,'BM-2|Z2':0.55,
+  'DK-0|DK-I':0.35,'DK-I|DK-II':0.30,'DK-II|DK-III':0.30,'DK-III|DK-IV':0.35,
+  'DK-0|DK-II':0.20,'DK-0|DK-III':0.15,'DK-I|DK-III':0.20,
+};
+function ebvCompat(ca,cb){
+  if(ca===cb)return 1.0;
+  const key=ca<cb?ca+'|'+cb:cb+'|'+ca;
+  return EBV_COMPAT[key]??0.15;
 }
 function strSim(a,b){
   a=normalizeConstructionTerms(a);
@@ -832,47 +1006,100 @@ function buildReasonText(debug){
   if(debug.unitScore>=80)parts.push('Einheit '+(debug.newUnit||'-')+' passt');
   else if(debug.unitScore<=10)parts.push('Einheit '+(debug.newUnit||'-')+' vs '+(debug.refUnit||'-')+' unpassend');
   if(debug.quantityScore>=80)parts.push('Mengenbild plausibel');
+  if((debug.holdingPenalty||0)>0)parts.push('Vorhaltungslogik weicht ab');
+  if((debug.docPenalty||0)>0)parts.push('Dokument-/Ausführungslogik weicht ab');
+  if((debug.assetPenalty||0)>0)parts.push('BE-Anlage fachlich nicht dieselbe');
+  if((debug.surchargePenalty||0)>0)parts.push('Kosten-/Zuschlagslogik weicht ab');
   if(debug.learningBoost>0)parts.push('Lernbonus '+debug.learningBoost+'%');
   if(debug.topMatchBoost>0)parts.push('Top-Signal '+debug.topMatchBoost+'%');
   if(debug.hardCapsApplied.length)parts.push('Deckel: '+debug.hardCapsApplied.join(', '));
   return parts.join(', ');
 }
+function getReferenceMatchQty(rp){
+  if(rp?.linkedD83&&Number(rp.linkedD83.menge)>0)return Number(rp.linkedD83.menge);
+  return Number(rp?.menge)||0;
+}
+function getReferenceMatchUnit(rp){
+  return rp?.linkedD83?.me||rp?.me||'';
+}
 function calcScore(np,rp,meta={}){
   const shortScore=tokSim(np.kurztext||'',rp.kurztext||'');
-  const longScore=Math.max(strSim(np.langtext||np.outlineSpecs||np.kurztext||'',rp.langtext||rp.outlineSpecs||rp.kurztext||''),tokSim(np.langtext||np.outlineSpecs||np.kurztext||'',rp.langtext||rp.outlineSpecs||rp.kurztext||''));
+  const longScore=Math.max(strSim(np.langtext||np.outlineSpecs||np.kurztext||'',rp.langtext||rp.outlineSpecs||rp.kurztext||''),tokSim(np.langtext||np.outlineSpecs||np.kurztext||'',rp.langtext||rp.outlineSpecs||rp.kurztext||'')); 
   const synScore=synonymScore(np.kurztext||'',(rp.kurztext||'')+' '+(rp.langtext||rp.outlineSpecs||''));
   const categoryNew=positionCategory(np);
   const categoryRef=positionCategory(rp);
   const categoryScore=categoryCompatibility(categoryNew,categoryRef,np,rp);
-  const unitScore=unitCompatibilityScore(np.me,rp.me);
-  const quantityScore=quantitySimilarityScore(np.menge,rp.menge,np.me,rp.me);
+  const refMatchUnit=getReferenceMatchUnit(rp);
+  const refMatchQty=getReferenceMatchQty(rp);
+  const unitScore=unitCompatibilityScore(np.me,refMatchUnit);
+  const quantityScore=quantitySimilarityScore(np.menge,refMatchQty,np.me,refMatchUnit);
   const ozBoost=(np.ozCanon&&rp.ozCanon&&np.ozCanon===rp.ozCanon&&np.ozCanon.length>2)?0.03:0;
   const genericWrongCategory=isGenericReference(rp)&&!isGenericLikePosition(np);
   const topBoost=topMatchBoost(np,rp,{categoryScore,genericWrongCategory,isTextOnly:!!meta.isTextOnly});
   const learnBoost=learningBoost(np,rp,{categoryScore,genericWrongCategory,isTextOnly:!!meta.isTextOnly});
   const swSubNew=categoryNew==='ARBEITSSCHUTZ_SW'?swSubcategory((np.kurztext||'')+' '+(np.langtext||'')):'';
   const swSubRef=categoryRef==='ARBEITSSCHUTZ_SW'?swSubcategory((rp.kurztext||'')+' '+(rp.langtext||rp.outlineSpecs||'')):'';
+  const newText=(np.kurztext||'')+' '+(np.langtext||'')+' '+(np.outlineSpecs||'');
+  const refText=(rp.kurztext||'')+' '+(rp.langtext||rp.outlineSpecs||'');
+  const holdingMismatch=hasHoldingSemantics(newText)!==hasHoldingSemantics(refText);
+  const docMismatch=isDocLikeText(newText)!==isDocLikeText(refText);
+  const beAssetNew=categoryNew==='BE'?detectBeAsset(newText):'';
+  const beAssetRef=categoryRef==='BE'?detectBeAsset(refText):'';
+  const beAssetMismatch=beAssetNew&&beAssetRef&&beAssetNew!==beAssetRef;
+  const surchargeMismatch=hasSurchargeSemantics(newText)!==hasSurchargeSemantics(refText);
+  const baugrubeSignal=/\bbaugrube\b|\bboden fuer baugrube\b/.test(normalizeConstructionTerms(newText))&&/\bbaugrube\b|\bboden loesen\b|\bboden laden\b/.test(normalizeConstructionTerms(refText));
+  const ebvNew=getEbvClass(newText);
+  const ebvRef=getEbvClass(refText);
+  const depvNew=getDepvClass(newText);
+  const depvRef=getDepvClass(refText);
+  const ebvSignal=/\b170504\b|\bbm[\s-]?0\b|\bersatzbaustoffverordnung\b|\blaga[\s-]*z0\b|\bbm[\s-]?1\b|\bbm[\s-]?2\b|\bz[\s-]?1\b|\bz[\s-]?2\b/.test(normalizeConstructionTerms(newText))&&/\b170504\b|\bbm[\s-]?0\b|\bersatzbaustoffverordnung\b|\blaga[\s-]*z0\b|\bbm[\s-]?1\b|\bbm[\s-]?2\b|\bz[\s-]?1\b|\bz[\s-]?2\b/.test(normalizeConstructionTerms(refText))&&ebvNew&&ebvRef&&ebvNew===ebvRef;
+  const oberbodenSignal=/\boberboden\b|\bmutterboden\b|\bhumosen\b/.test(normalizeConstructionTerms(newText))&&/\boberboden\b|\bmutterboden\b|\bhumosen\b/.test(normalizeConstructionTerms(refText));
   const exactBoost=categoryScore===1&&unitScore===1&&synScore>=1?0.12:
     (categoryScore===1&&unitScore===1&&(shortScore>=0.95||longScore>=0.95)?0.06:
     (categoryScore===1&&unitScore===1&&(synScore>=0.80||shortScore>=0.80||longScore>=0.80)?0.03:0));
-  let penalties=0,genericPenalty=0,textOnlyPenalty=0,unitPenalty=0,quantityPenalty=0,swPenalty=0;
+  let penalties=0,genericPenalty=0,textOnlyPenalty=0,unitPenalty=0,quantityPenalty=0,swPenalty=0,holdingPenalty=0,docPenalty=0,assetPenalty=0,surchargePenalty=0;
   const hardCapsApplied=[];
   if(genericWrongCategory){genericPenalty=0.20;penalties+=genericPenalty;}
   if(meta.isTextOnly){textOnlyPenalty=0.05;penalties+=textOnlyPenalty;}
   if(unitScore<=0.10&&categoryScore<1.0){unitPenalty=0.08;penalties+=unitPenalty;}
-  if(quantityScore<=0.20&&unitScore>=0.45&&!['psch','st','h','wo'].includes(normUnit(np.me))){quantityPenalty=0.04;penalties+=quantityPenalty;}
+  if(quantityScore<=0.20&&unitScore>=0.45&&!['psch','st','h','wo','mt','stmt','stwo','mmt'].includes(normUnit(np.me))){quantityPenalty=0.04;penalties+=quantityPenalty;}
   if(categoryNew==='ARBEITSSCHUTZ_SW'&&categoryRef==='ARBEITSSCHUTZ_SW'&&swSubNew&&swSubRef&&swSubNew!==swSubRef&&swSubNew!=='GENERIC'&&swSubRef!=='GENERIC'){swPenalty=0.14;penalties+=swPenalty;}
+  if(holdingMismatch){holdingPenalty=0.08;penalties+=holdingPenalty;}
+  if(docMismatch&&Math.max(shortScore,synScore)<0.90){docPenalty=0.12;penalties+=docPenalty;}
+  if(beAssetMismatch&&Math.max(shortScore,synScore)<0.95){assetPenalty=0.16;penalties+=assetPenalty;}
+  if(surchargeMismatch&&Math.max(shortScore,synScore)<0.95){surchargePenalty=0.10;penalties+=surchargePenalty;}
   let final=0.28*shortScore+0.17*longScore+0.15*synScore+0.15*categoryScore+0.10*unitScore+0.07*quantityScore+Math.min(0.03,ozBoost)+learnBoost+topBoost+exactBoost-penalties;
+  if(baugrubeSignal)final+=0.08;
+  if(ebvSignal)final+=0.10;
+  if(oberbodenSignal)final+=0.06;
   final=Math.max(0,Math.min(1,final));
   if(categoryScore===0&&shortScore<0.80&&synScore<0.80){final=Math.min(final,0.39);hardCapsApplied.push('Kategorie unvereinbar');}
   if(genericWrongCategory){final=Math.min(final,0.35);hardCapsApplied.push('Generische Referenz');}
   if(meta.isTextOnly){final=Math.min(final,0.74);hardCapsApplied.push('D83-only');}
   if(unitScore<=0.10&&categoryScore<1.0){final=Math.min(final,0.59);hardCapsApplied.push('Einheit schwach');}
   if(swPenalty>0&&Math.max(shortScore,synScore)<0.85){final=Math.min(final,0.39);hardCapsApplied.push('SW-Untergruppe unpassend');}
+  if(holdingMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Vorhaltung unpassend');}
+  if(docMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.39);hardCapsApplied.push('Dokumenttyp unpassend');}
+  if(beAssetMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.45);hardCapsApplied.push('BE-Anlage unpassend');}
+  if(surchargeMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Kosten/Zuschlag unpassend');}
+  if(ebvNew&&ebvRef&&ebvNew!==ebvRef){
+    const ebvCap=ebvCompat(ebvNew,ebvRef);
+    final=Math.min(final,ebvCap);
+    hardCapsApplied.push('EBV '+ebvNew+'≠'+ebvRef+' (max '+Math.round(ebvCap*100)+'%)');
+  }
+  if(ebvNew&&!ebvRef&&categoryRef==='ENTSORGUNG'){
+    final=Math.min(final,0.45);
+    hardCapsApplied.push('EBV '+ebvNew+' vs. unklassifiziert');
+  }
+  if(depvNew&&depvRef&&depvNew!==depvRef&&depvNew!=='DEPV_UNSPEC'&&depvRef!=='DEPV_UNSPEC'){
+    const depvCap=ebvCompat(depvNew,depvRef);
+    final=Math.min(final,depvCap);
+    hardCapsApplied.push('DepV '+depvNew+'≠'+depvRef+' (max '+Math.round(depvCap*100)+'%)');
+  }
   const textGate=Math.max(shortScore,longScore,synScore);
   if(textGate<0.25){final=Math.min(final,0.19);hardCapsApplied.push('Textbasis schwach');}
   const score=Math.max(0,Math.min(100,Math.round(final*100)));
-  const debug={shortScore:Math.round(shortScore*100),longScore:Math.round(longScore*100),synonymScore:Math.round(synScore*100),categoryNew,categoryRef,categoryScore:Math.round(categoryScore*100),unitScore:Math.round(unitScore*100),quantityScore:Math.round(quantityScore*100),learningBoost:Math.round(learnBoost*100),topMatchBoost:Math.round(topBoost*100),linkedReferenceBoost:0,genericPenalty:Math.round(genericPenalty*100),textOnlyPenalty:Math.round(textOnlyPenalty*100),unitPenalty:Math.round(unitPenalty*100),quantityPenalty:Math.round(quantityPenalty*100),hardCapsApplied,finalScore:score,newUnit:normUnit(np.me),refUnit:normUnit(rp.me),reasonText:''};
+  const debug={shortScore:Math.round(shortScore*100),longScore:Math.round(longScore*100),synonymScore:Math.round(synScore*100),categoryNew,categoryRef,categoryScore:Math.round(categoryScore*100),unitScore:Math.round(unitScore*100),quantityScore:Math.round(quantityScore*100),learningBoost:Math.round(learnBoost*100),topMatchBoost:Math.round(topBoost*100),linkedReferenceBoost:0,genericPenalty:Math.round(genericPenalty*100),textOnlyPenalty:Math.round(textOnlyPenalty*100),unitPenalty:Math.round(unitPenalty*100),quantityPenalty:Math.round(quantityPenalty*100),holdingPenalty:Math.round(holdingPenalty*100),docPenalty:Math.round(docPenalty*100),assetPenalty:Math.round(assetPenalty*100),surchargePenalty:Math.round(surchargePenalty*100),hardCapsApplied,finalScore:score,newUnit:normUnit(np.me),refUnit:normUnit(refMatchUnit),reasonText:''};
   debug.reasonText=buildReasonText(debug);
   return{score,debug};
 }
@@ -1121,8 +1348,9 @@ function mergeD83andXML(d83Pos,xmlPos,projName){
 
   const xmlMap=new Map();
   xmlPos.forEach(p=>{
-    const key=p.ozCanon;
-    if(key&&!xmlMap.has(key))xmlMap.set(key,p);
+    ozLookupKeys(p.oz||p.ozCanon).forEach(key=>{
+      if(key&&!xmlMap.has(key))xmlMap.set(key,p);
+    });
   });
 
   const xmlTextMap=new Map();
@@ -1132,13 +1360,13 @@ function mergeD83andXML(d83Pos,xmlPos,projName){
   });
 
   const merged=new Array(d83Pos.length);
-  const usedXmlOZ=new Set();
+  const usedXmlRefs=new Set();
   const unmatched=[];
 
   d83Pos.forEach((dp,idx)=>{
-    const xp=xmlMap.get(dp.ozCanon);
-    if(xp&&!usedXmlOZ.has(xp.ozCanon)){
-      usedXmlOZ.add(xp.ozCanon);
+    const xp=ozLookupKeys(dp.oz||dp.ozCanon).map(key=>xmlMap.get(key)).find(Boolean);
+    if(xp&&!usedXmlRefs.has(xp)){
+      usedXmlRefs.add(xp);
       merged[idx]={
         ...xp,
         source:projName,
@@ -1165,8 +1393,8 @@ function mergeD83andXML(d83Pos,xmlPos,projName){
   unmatched.forEach(({dp,idx})=>{
     const textKey=norm(dp.kurztext).substring(0,30);
     const xp=xmlTextMap.get(textKey);
-    if(xp&&!usedXmlOZ.has(xp.ozCanon)){
-      usedXmlOZ.add(xp.ozCanon);
+    if(xp&&!usedXmlRefs.has(xp)){
+      usedXmlRefs.add(xp);
       merged[idx]={
         ...xp,
         source:projName,
@@ -1191,7 +1419,7 @@ function mergeD83andXML(d83Pos,xmlPos,projName){
   });
 
   xmlPos.forEach(xp=>{
-    if(!usedXmlOZ.has(xp.ozCanon))merged.push({...xp,source:projName,matchedD83:false,matchedXML:true});
+    if(!usedXmlRefs.has(xp))merged.push({...xp,source:projName,matchedD83:false,matchedXML:true});
   });
 
   return merged.filter(Boolean);
@@ -1200,9 +1428,9 @@ function mergeD83andXML(d83Pos,xmlPos,projName){
 function linkedD83MatchScore(newPos, refPos){
   const linked=refPos?.linkedD83;
   if(!linked)return 0;
-  const newOz=canonOZ(newPos?.oz||newPos?.ozCanon||'');
-  const linkedOz=canonOZ(linked.oz||linked.ozCanon||'');
-  if(!newOz||!linkedOz||newOz!==linkedOz)return 0;
+  const newOz=newPos?.oz||newPos?.ozCanon||'';
+  const linkedOz=linked.oz||linked.ozCanon||'';
+  if(!newOz||!linkedOz||!sameOZ(newOz,linkedOz))return 0;
   const newShort=normalizeConstructionTerms(newPos?.kurztext||'');
   const linkedShort=normalizeConstructionTerms(linked.kurztext||'');
   if(!newShort||!linkedShort)return 0;
@@ -1628,14 +1856,103 @@ function cloneRawWBSItemXml(rp, newOz, newKurztext){
       [...node.children].forEach(reseedXrefs);
     };
     reseedXrefs(item);
-    const nameNode=item.querySelector('NameWBSItem');
+    const nameNode=item.querySelector(':scope > NameWBSItem');
     if(nameNode)nameNode.textContent=newOz;
-    const textNode=item.querySelector('SubItem > Text');
+    const textNode=item.querySelector(':scope > EstDetails > SubItem > Text');
     if(textNode)textNode.textContent=newKurztext;
     return new XMLSerializer().serializeToString(item);
   }catch(_err){
     return null;
   }
+}
+
+function countXmlEstimateNodes(node){
+  if(!node)return{topSubItems:0,nestedSubItems:0,cocDetails:0,assemblyDetails:0};
+  const topSubItems=node.querySelectorAll(':scope > EstDetails > SubItem').length;
+  const nestedSubItems=node.querySelectorAll(':scope > EstDetails SubItem EstDetails SubItem').length;
+  const cocDetails=node.querySelectorAll('CoCDetail').length;
+  const assemblyDetails=node.querySelectorAll('AssemblyDetail').length;
+  return{topSubItems,nestedSubItems,cocDetails,assemblyDetails};
+}
+
+function textContainsDrainageHints(text=''){
+  const t=normalizeConstructionTerms(text);
+  return /\bsickerwasserrohr\b|\bdraenrohr\b|\bdrainagerohr\b|\bdrainage\b|\bleitungsbau\b|\brohrleitung\b/.test(t);
+}
+
+function runExportSelfTest(showUI=false,verbose=false){
+  const accepted=S.results.filter(r=>r.accepted&&hasExportableMatch(r));
+  const audits=[];
+  accepted.forEach(r=>{
+    const best=r.matches?.[r.sel||0];
+    const rp=best?.pos;
+    if(!rp?.rawWBSItemXml)return;
+    try{
+      const srcDoc=new DOMParser().parseFromString(rp.rawWBSItemXml,'text/xml');
+      const exportXml=cloneRawWBSItemXml(rp,r.newPos.oz,r.newPos.kurztext);
+      const outDoc=exportXml?new DOMParser().parseFromString(exportXml,'text/xml'):null;
+      if(!outDoc || outDoc.querySelector('parsererror')){
+        audits.push({newOz:r.newPos.oz,refOz:rp.oz,project:rp.source,ok:false,issue:'Export-Rohkopie nicht parsebar'});
+        return;
+      }
+      const srcItem=srcDoc.documentElement;
+      const outItem=outDoc.documentElement;
+      const srcCounts=countXmlEstimateNodes(srcItem);
+      const outCounts=countXmlEstimateNodes(outItem);
+      const issues=[];
+      if(textOf(outItem,':scope > NameWBSItem','')!==r.newPos.oz)issues.push('Ziel-OZ nicht korrekt eingesetzt');
+      if(textOf(outItem,':scope > EstDetails > SubItem > Text','')!==r.newPos.kurztext)issues.push('Ziel-Kurztext nicht korrekt eingesetzt');
+      if(textOf(outItem,':scope > OutlineSpecs','')!==textOf(srcItem,':scope > OutlineSpecs',''))issues.push('OutlineSpecs abweichend');
+      if(srcCounts.topSubItems!==outCounts.topSubItems)issues.push(`Top-SubItems ${srcCounts.topSubItems}→${outCounts.topSubItems}`);
+      if(srcCounts.nestedSubItems!==outCounts.nestedSubItems)issues.push(`Nested-SubItems ${srcCounts.nestedSubItems}→${outCounts.nestedSubItems}`);
+      if(srcCounts.cocDetails!==outCounts.cocDetails)issues.push(`CoCDetail ${srcCounts.cocDetails}→${outCounts.cocDetails}`);
+      if(srcCounts.assemblyDetails!==outCounts.assemblyDetails)issues.push(`AssemblyDetail ${srcCounts.assemblyDetails}→${outCounts.assemblyDetails}`);
+      const refHint=textContainsDrainageHints((rp.kurztext||'')+' '+(rp.langtext||rp.outlineSpecs||''));
+      if(refHint&&(srcCounts.cocDetails!==outCounts.cocDetails||srcCounts.nestedSubItems!==outCounts.nestedSubItems))issues.push('Drainage/Leitungsbau-Hinweis mit Strukturabweichung');
+      audits.push({
+        newOz:r.newPos.oz,
+        refOz:rp.oz,
+        project:rp.source,
+        ok:!issues.length,
+        issue:issues.join('; '),
+        refHint,
+        srcCounts,
+        outCounts
+      });
+    }catch(err){
+      audits.push({newOz:r.newPos.oz,refOz:rp.oz,project:rp.source,ok:false,issue:'Export-Selbsttest Fehler: '+err.message});
+    }
+  });
+  const rawBacked=accepted.filter(r=>r.matches?.[r.sel||0]?.pos?.rawWBSItemXml).length;
+  const failed=audits.filter(a=>!a.ok);
+  const result={
+    accepted:accepted.length,
+    rawBacked,
+    audited:audits.length,
+    passed:audits.length-failed.length,
+    failed:failed.length,
+    audits
+  };
+  if(showUI){
+    const lines=[
+      `Export-Selbsttest (${new Date().toLocaleTimeString()})`,
+      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `Übernommen exportierbar: ${result.accepted}`,
+      `Mit Rohkopie prüfbar:    ${result.rawBacked}`,
+      `Geprüfte Exporte:        ${result.audited}`,
+      `Bestanden:               ${result.passed}`,
+      `Fehler:                  ${result.failed}`,
+    ];
+    if(verbose&&failed.length){
+      lines.push('','Fehlerdetails:');
+      failed.slice(0,30).forEach(a=>lines.push(`- NEW ${a.newOz} | REF ${a.refOz} | ${a.project}: ${a.issue}`));
+    }
+    const area=document.getElementById('reviewPromptArea');
+    if(area)area.value=lines.join('\n');
+    document.getElementById('reviewModal')?.classList.add('open');
+    log(`Export-Selbsttest: ${result.passed}/${result.audited} bestanden, ${result.failed} Fehler`,result.failed?'w':'s');
+  }
+  return result;
 }
 
 function parseRawWBSItemXml(rawWBSItemXml){
@@ -1809,7 +2126,7 @@ function buildMatchSignature(newPos,refPos){
   const newCategory=positionCategory(newPos);
   const refCategory=positionCategory(refPos);
   const newUnit=normUnit(newPos?.me);
-  const refUnit=normUnit(refPos?.me);
+  const refUnit=normUnit(getReferenceMatchUnit(refPos));
   return {
     signature:[newCategory,refCategory,newUnit,refUnit,newShortNorm.slice(0,80),refShortNorm.slice(0,80)].join('|'),
     newShortNorm,refShortNorm,newCategory,refCategory,newUnit,refUnit
@@ -1825,6 +2142,7 @@ function getTopMatchStore(){
 }
 function saveTopMatchStore(store){
   localStorage.setItem(TOP_MATCH_KEY,JSON.stringify(pruneEntryMap(store,500)));
+  updateMatchMemoryUI();
 }
 function recordTopMatch(newPos,refPos){
   if(!refPos)return;
@@ -1870,6 +2188,18 @@ function getLearningStore(){
 }
 function saveLearningStore(store){
   localStorage.setItem(LEARNING_KEY,JSON.stringify(pruneEntryMap(store,500)));
+  updateMatchMemoryUI();
+}
+function updateMatchMemoryUI(){
+  const summary=document.getElementById('matchMemorySummary');
+  if(!summary)return;
+  const topCount=Object.keys(getTopMatchStore()||{}).length;
+  const learningCount=Object.keys(getLearningStore()||{}).length;
+  if(!topCount&&!learningCount){
+    summary.innerHTML='<b>Matching-Wissen:</b> Noch nichts geladen oder gespeichert. Für den Kollegentest kann hier ein gemeinsamer Wissensstand geladen werden.';
+    return;
+  }
+  summary.innerHTML=`<b>Matching-Wissen:</b> ${topCount} Top-Treffer, ${learningCount} Lernsignaturen aktiv. Dieses Wissen beeinflusst die Bewertung direkt beim automatischen Matching.`;
 }
 function learningBoost(newPos,refPos,ctx={}){
   if(ctx.categoryScore===0||ctx.genericWrongCategory||ctx.isTextOnly)return 0;
@@ -1906,6 +2236,36 @@ function saveReviewNotes(){
   }catch(err){
     log('⚠ Review-Notizen konnten nicht gespeichert werden: '+err.message,'w');
   }
+}
+function exportMatchMemoryJSON(){
+  const payload={
+    exportedAt:new Date().toISOString(),
+    version:1,
+    topMatches:getTopMatchStore(),
+    learning:getLearningStore()
+  };
+  dl(JSON.stringify(payload,null,2),`KalkPilot_by_Janek_Matching_Wissen_${new Date().toISOString().slice(0,10)}.json`,'application/json');
+  log(`Matching-Wissen exportiert: ${Object.keys(payload.topMatches||{}).length} Top-Treffer, ${Object.keys(payload.learning||{}).length} Lernsignaturen`,'s');
+}
+function importMatchMemoryJSON(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const payload=JSON.parse(e.target.result);
+      const topMatches=payload?.topMatches;
+      const learning=payload?.learning;
+      if(!topMatches||typeof topMatches!=='object'||!learning||typeof learning!=='object')throw new Error('JSON enthält kein gültiges Matching-Wissen');
+      saveTopMatchStore(topMatches);
+      saveLearningStore(learning);
+      renderMatch();
+      updateExport();
+      log(`✓ Matching-Wissen geladen: ${Object.keys(topMatches).length} Top-Treffer, ${Object.keys(learning).length} Lernsignaturen`,'s');
+    }catch(err){
+      alert('Matching-Wissen konnte nicht geladen werden: '+err.message);
+      log('⚠ Laden des Matching-Wissens fehlgeschlagen: '+err.message,'w');
+    }
+  };
+  reader.readAsText(file,'utf-8');
 }
 
 function exportRefJSON(){
@@ -2263,6 +2623,17 @@ function renderPills(kosten){
   return'<div class="pills">'+Object.entries(by).map(([t,v])=>`<span class="pill p${t}">${t}: ${v>0?v.toFixed(0)+'€':'-'}</span>`).join('')+'</div>';
 }
 
+function formatLeistungsansatz(detail){
+  if(!detail)return'-';
+  const factor=Number(detail.factor);
+  const costFactor=Number(detail.costFactor);
+  const perf=Number(detail.factorIsPerformanceFactor)||0;
+  const parts=[];
+  if(Number.isFinite(factor)&&factor!==1)parts.push(`${perf===1?'Faktor':'Ansatz'} ${factor}`);
+  if(Number.isFinite(costFactor)&&costFactor!==1)parts.push(`Divisor ${costFactor}`);
+  return parts.length?parts.join(' · '):'-';
+}
+
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // REFERENZ-DETAIL (Positionsvorschau Tab 1)
@@ -2287,17 +2658,18 @@ function showRefDetail(idx){
       <div class="ctitle" style="margin-bottom:8px">Kalkulationsaufgliederung (aus XML-Referenz)</div>
       ${(rp.kosten||[]).length?`
       <table class="cost-tbl">
-        <thead><tr><th>Typ</th><th>Name</th><th>Beschreibung</th><th style="text-align:right">Menge</th><th style="text-align:right">UR-Preis</th><th>Einh.</th><th style="text-align:right">Wert</th></tr></thead>
+        <thead><tr><th>Typ</th><th>Name</th><th>Beschreibung</th><th>Ansatz</th><th style="text-align:right">Menge</th><th style="text-align:right">UR-Preis</th><th>Einh.</th><th style="text-align:right">Wert</th></tr></thead>
         <tbody>${(rp.kosten||[]).map(k=>`<tr>
           <td><span class="pill p${k.typ}">${k.typ}</span></td>
           <td style="font-size:10px;color:var(--muted)">${h(k.nameCoC||k.typ)}</td>
           <td>${h(k.descr)}</td>
+          <td>${h(formatLeistungsansatz(k))}</td>
           <td style="text-align:right">${k.menge}</td>
           <td style="text-align:right">${typeof k.preis==='number'?k.preis.toFixed(4):'-'}</td>
           <td>${h(k.einheit||'')}</td>
           <td style="text-align:right;font-weight:600">${typeof k.preis==='number'?(k.menge*k.preis).toFixed(2)+' €':'-'}</td>
         </tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="6" style="text-align:right">Gesamt EP:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
+        <tfoot><tr><td colspan="7" style="text-align:right">Gesamt EP:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
       </table>`:'<div style="color:var(--muted);font-size:11px">Keine Kalkulationsdaten vorhanden.</div>'}
     </div>`;
   document.getElementById('detailModal').classList.add('open');
@@ -2338,17 +2710,18 @@ function showDetail(idx){
       <div class="ctitle" style="margin-bottom:8px">Kalkulationsaufgliederung (aus XML-Referenz)</div>
       ${rp.kosten.length?`
       <table class="cost-tbl">
-        <thead><tr><th>Typ</th><th>Name</th><th>Beschreibung</th><th style="text-align:right">Menge</th><th style="text-align:right">UR-Preis</th><th>Einh.</th><th style="text-align:right">Wert</th></tr></thead>
+        <thead><tr><th>Typ</th><th>Name</th><th>Beschreibung</th><th>Ansatz</th><th style="text-align:right">Menge</th><th style="text-align:right">UR-Preis</th><th>Einh.</th><th style="text-align:right">Wert</th></tr></thead>
         <tbody>${rp.kosten.map(k=>`<tr>
           <td><span class="pill p${k.typ}">${k.typ}</span></td>
           <td style="font-size:10px;color:var(--muted)">${h(k.nameCoC||k.typ)}</td>
           <td>${h(k.descr)}</td>
+          <td>${h(formatLeistungsansatz(k))}</td>
           <td style="text-align:right">${k.menge}</td>
           <td style="text-align:right">${typeof k.preis==='number'?k.preis.toFixed(4):'-'}</td>
           <td>${h(k.einheit||'')}</td>
           <td style="text-align:right;font-weight:600">${typeof k.preis==='number'?(k.menge*k.preis).toFixed(2)+' €':'-'}</td>
         </tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="6" style="text-align:right">Gesamt EP:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
+        <tfoot><tr><td colspan="7" style="text-align:right">Gesamt EP:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
       </table>`:'<div style="color:var(--muted);font-size:11px">Keine Kalkulationsdaten (nur D83-Position ohne XML-Match).</div>'}
     </div>`;
   document.getElementById('detailModal').classList.add('open');
@@ -2414,7 +2787,10 @@ function renderManualMatch(){
     return;
   }
   if(!targetRows.some(entry=>entry.idx===S.manualTargetIdx))S.manualTargetIdx=targetRows[0].idx;
-  targetEl.innerHTML=targetRows.map(({r,idx})=>{
+  const targetScrollTop=targetEl.scrollTop;
+  const targetSignature=targetRows.map(({r,idx})=>`${idx}:${r.accepted?1:0}:${r.sel||0}:${r.matches?.[r.sel||0]?.score||0}`).join('|')+`|active:${S.manualTargetIdx}|pending:${pendingOnly}`;
+  if(targetEl.dataset.renderKey!==targetSignature){
+    targetEl.innerHTML=targetRows.map(({r,idx})=>{
     const best=r.matches?.[r.sel||0];
     const sc=best?.score||0;
     const badge=sc?`<span class="badge ${scoreBadge(sc)}">${sc}%</span>`:'<span style="font-size:10px;color:var(--muted)">kein Treffer</span>';
@@ -2426,13 +2802,17 @@ function renderManualMatch(){
     const autoChip=autoExportable
       ?`<span class="src" style="color:#4ade80">Auto-Match mit XML</span>`
       :`<span class="src" style="color:#fbbf24">Manuell prüfen</span>`;
+    const qtyLabel=r.newPos.menge>0?`${r.newPos.menge.toLocaleString('de-DE',{maximumFractionDigits:3})} ${h(r.newPos.me||'')}`:`ME ${h(r.newPos.me||'-')}`;
     return `<div class="manual-item ${statusCls} ${idx===S.manualTargetIdx?'active':''}" onclick="openManualMatch(${idx})">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div class="oz">${h(r.newPos.oz)}</div>${badge}</div>
       <div class="kt">${h(r.newPos.kurztext)}</div>
       <div class="lt">${h((r.newPos.langtext||'').substring(0,80))}${(r.newPos.langtext||'').length>80?'...':''}</div>
-      <div class="manual-badges">${statusChip}${autoChip}</div>
+      <div class="manual-badges"><span class="me-tag me-none">${qtyLabel}</span>${statusChip}${autoChip}</div>
     </div>`;
-  }).join('');
+    }).join('');
+    targetEl.dataset.renderKey=targetSignature;
+    targetEl.scrollTop=targetScrollTop;
+  }
 
   const target=S.results[S.manualTargetIdx];
   const visibleIndex=Math.max(0,targetRows.findIndex(entry=>entry.idx===S.manualTargetIdx));
@@ -2701,6 +3081,7 @@ function buildReviewBuckets(){
 function generateChatGPTReviewPrompt(){
   const refs=getActiveRef();
   const buckets=buildReviewBuckets();
+  const exportAudit=runExportSelfTest(false,false);
   const topHits=[...S.results].filter(r=>r.matches?.length).sort((a,b)=>(b.matches[b.sel||0]?.score||0)-(a.matches[a.sel||0]?.score||0)).slice(0,30);
   const risky=[...S.results].filter(r=>r.matches?.length).sort((a,b)=>{
     const ad=a.matches[a.sel||0]?.debug||{},bd=b.matches[b.sel||0]?.debug||{};
@@ -2716,6 +3097,7 @@ function generateChatGPTReviewPrompt(){
   lines.push(`- Neues LV Positionen: ${S.newLV.length}`);
   lines.push(`- Referenzpositionen aktiv: ${refs.length}`);
   lines.push(`- Treffer grün/gelb/orange/rot/kein Treffer: ${buckets.green.length}/${buckets.yellow.length}/${buckets.orange.length}/${buckets.red.length}/${buckets.nomatch.length}`);
+  lines.push(`- Export-Selbsttest bestanden/fehlerhaft: ${exportAudit.passed}/${exportAudit.failed} (bei ${exportAudit.audited} geprüften Rohkopie-Exporten)`);
   lines.push('');
   lines.push('Bitte identifiziere:');
   lines.push('- False Positives');
@@ -2724,13 +3106,23 @@ function generateChatGPTReviewPrompt(){
   lines.push('- zu starke oder zu schwache Synonymgruppen');
   lines.push('- sinnvolle harte Sperren');
   lines.push('- konkrete Regel-/Codeverbesserungen');
+  lines.push('- Exportlücken, Strukturabweichungen und OZ-Zuordnungsprobleme');
+  lines.push('');
+  lines.push('Export-Auffälligkeiten:');
+  if(exportAudit.failed){
+    exportAudit.audits.filter(a=>!a.ok).slice(0,20).forEach((a,i)=>{
+      lines.push(`${i+1}. NEW ${a.newOz} | REF ${a.refOz} | ${a.project} | ${a.issue}`);
+    });
+  }else{
+    lines.push('- keine unmittelbaren Strukturfehler im Rohkopie-Export erkannt');
+  }
   lines.push('');
   lines.push('Top 30 Treffer:');
   topHits.forEach((r,i)=>{
     const best=r.matches[r.sel||0],d=best.debug||{};
     lines.push(`${i+1}. NEW ${r.newPos.oz} | ${r.newPos.kurztext}`);
     lines.push(`   REF ${best.pos.oz} | ${best.pos.kurztext} | ${best.score}% | ${best.kind}`);
-    lines.push(`   debug: short=${d.shortScore}, long=${d.longScore}, syn=${d.synonymScore}, cat=${d.categoryNew}->${d.categoryRef} (${d.categoryScore}), unit=${d.unitScore}, qty=${d.quantityScore}, learn=${d.learningBoost}, top=${d.topMatchBoost}, penalties=[g:${d.genericPenalty}, t:${d.textOnlyPenalty}, u:${d.unitPenalty}, q:${d.quantityPenalty}], caps=${(d.hardCapsApplied||[]).join('/')||'-'}`);
+    lines.push(`   debug: short=${d.shortScore}, long=${d.longScore}, syn=${d.synonymScore}, cat=${d.categoryNew}->${d.categoryRef} (${d.categoryScore}), unit=${d.unitScore}, qty=${d.quantityScore}, learn=${d.learningBoost}, top=${d.topMatchBoost}, penalties=[g:${d.genericPenalty}, t:${d.textOnlyPenalty}, u:${d.unitPenalty}, q:${d.quantityPenalty}, h:${d.holdingPenalty||0}, d:${d.docPenalty||0}, a:${d.assetPenalty||0}, z:${d.surchargePenalty||0}], caps=${(d.hardCapsApplied||[]).join('/')||'-'}`);
     lines.push(`   reason: ${d.reasonText||'-'}`);
   });
   lines.push('');
@@ -2739,7 +3131,7 @@ function generateChatGPTReviewPrompt(){
     const best=r.matches[r.sel||0],d=best.debug||{};
     lines.push(`${i+1}. NEW ${r.newPos.oz} | ${r.newPos.kurztext}`);
     lines.push(`   REF ${best.pos.oz} | ${best.pos.kurztext} | ${best.score}% | ${best.kind}`);
-    lines.push(`   debug: short=${d.shortScore}, long=${d.longScore}, syn=${d.synonymScore}, cat=${d.categoryNew}->${d.categoryRef} (${d.categoryScore}), unit=${d.unitScore}, qty=${d.quantityScore}, learn=${d.learningBoost}, top=${d.topMatchBoost}, penalties=[g:${d.genericPenalty}, t:${d.textOnlyPenalty}, u:${d.unitPenalty}, q:${d.quantityPenalty}], caps=${(d.hardCapsApplied||[]).join('/')||'-'}`);
+    lines.push(`   debug: short=${d.shortScore}, long=${d.longScore}, syn=${d.synonymScore}, cat=${d.categoryNew}->${d.categoryRef} (${d.categoryScore}), unit=${d.unitScore}, qty=${d.quantityScore}, learn=${d.learningBoost}, top=${d.topMatchBoost}, penalties=[g:${d.genericPenalty}, t:${d.textOnlyPenalty}, u:${d.unitPenalty}, q:${d.quantityPenalty}, h:${d.holdingPenalty||0}, d:${d.docPenalty||0}, a:${d.assetPenalty||0}, z:${d.surchargePenalty||0}], caps=${(d.hardCapsApplied||[]).join('/')||'-'}`);
     lines.push(`   reason: ${d.reasonText||'-'}`);
   });
   lines.push('');
@@ -2782,6 +3174,7 @@ function runReferenceLinkSelfTest(showUI=false,verbose=false){
   linked.forEach(r=>{
     if(!r.linkedD83?.kurztext)issues.push({oz:r.oz,issue:'linkedD83 kein Kurztext'});
     if(!r.linkedD83?.ozCanon)issues.push({oz:r.oz,issue:'linkedD83 keine OZ'});
+    if(r.linkedD83?.oz && !sameOZ(r.oz,r.linkedD83.oz))issues.push({oz:r.oz,issue:`OZ-Zuordnung abweichend (${r.linkedD83.oz} ↔ ${r.oz})`});
     if(!r.kosten||!r.kosten.length)issues.push({oz:r.oz,issue:'verknüpfte Position ohne Kosten'});
   });
   const d83Total=linked.length+d83Only.length;
@@ -2812,7 +3205,9 @@ function runMatchingSelfTest(showUI=false){
     {kind:'good',a:{kurztext:'Bauzaun',me:'m'},b:{kurztext:'Bauzaun liefern und aufstellen',me:'m'},min:70},
     {kind:'good',a:{kurztext:'Schwarz-Weiß-Anlage einrichten',me:'st'},b:{kurztext:'Schwarz-Weiß-Anlage liefern und aufstellen',me:'st'},min:70},
     {kind:'good',a:{kurztext:'Bodenaushub',me:'m3'},b:{kurztext:'Boden lösen und laden',me:'m3'},min:70},
+    {kind:'good',a:{kurztext:'Boden für Baugrube lösen und laden',me:'m3'},b:{kurztext:'Baugrube herstellen, Boden lösen und laden',me:'m3'},min:75},
     {kind:'good',a:{kurztext:'Wiedereinbau Boden',me:'m3'},b:{kurztext:'Boden einbauen und verdichten',me:'m3'},min:70},
+    {kind:'good',a:{kurztext:'Nicht gefährlicher Abfall BM0, 170504 entsorgen',me:'t'},b:{kurztext:'N.gefährl. Abfall entsorgen BM0 170504',me:'t'},min:80},
     {kind:'good',a:{kurztext:'PEHD-Kunststoffdichtungsbahn',me:'m2'},b:{kurztext:'KDB liefern und verlegen',me:'m2'},min:70},
     {kind:'good',a:{kurztext:'Sickerwasserrohr',me:'m'},b:{kurztext:'PEHD-Dränrohr',me:'m'},min:70},
     {kind:'good',a:{kurztext:'Baufacharbeiter',me:'h'},b:{kurztext:'Baufacharbeiter',me:'h'},min:90},
@@ -2827,6 +3222,9 @@ function runMatchingSelfTest(showUI=false){
     {kind:'bad',a:{kurztext:'Pumpen',me:'st'},b:{kurztext:'Container',me:'st'},max:39},
     {kind:'bad',a:{kurztext:'Probefeldkonzept',me:'psch'},b:{kurztext:'Stiefelwaschanlage',me:'st'},max:39},
     {kind:'bad',a:{kurztext:'Gefährdungsbeurteilung',me:'psch'},b:{kurztext:'Reifenwaschanlage',me:'st'},max:39}
+    ,{kind:'bad',a:{kurztext:'Beleuchtung Fluchtweg außerhalb Bauzaun',me:'m'},b:{kurztext:'Bauzaun liefern und aufstellen',me:'m'},max:45}
+    ,{kind:'bad',a:{kurztext:'Baustelleneinrichtungsplan',me:'psch'},b:{kurztext:'Baustelle einrichten, betreiben, räumen',me:'psch'},max:39}
+    ,{kind:'bad',a:{kurztext:'Verlängerte Vorhaltung Bauzaun',me:'mMt'},b:{kurztext:'Bauzaun liefern und aufstellen',me:'m'},max:45}
   ];
   const results=cases.map(c=>{
     const ev=calcScore(c.a,c.b,{isTextOnly:false});
@@ -2841,6 +3239,50 @@ function runMatchingSelfTest(showUI=false){
     document.getElementById('reviewModal')?.classList.add('open');
   }
   return results;
+}
+
+function runDiagnosticsSelfTest(showUI=false,verbose=false){
+  const ref=runReferenceLinkSelfTest(false,verbose);
+  const match=runMatchingSelfTest(false);
+  const exportAudit=runExportSelfTest(false,verbose);
+  const matchOk=match.filter(x=>x.ok).length;
+  const matchBad=match.length-matchOk;
+  const lines=[
+    `Gesamtdiagnose (${new Date().toLocaleTimeString()})`,
+    `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+    `Referenzen`,
+    `- Gesamt: ${ref.total}`,
+    `- D83+XML verknüpft: ${ref.linked}`,
+    `- Nur D83: ${ref.d83Only}`,
+    `- Nur XML: ${ref.xmlOnly}`,
+    `- Mit Kalkulation: ${ref.withCosts}`,
+    `- Link-Fehler: ${ref.issues}`,
+    ``,
+    `Matching-Selbsttest`,
+    `- Bestanden: ${matchOk}/${match.length}`,
+    `- Fehlgeschlagen: ${matchBad}`,
+    ...match.filter(x=>!x.ok).slice(0,10).map(x=>`  • ${x.a.kurztext} ↔ ${x.b.kurztext} = ${x.score}%`),
+    ``,
+    `Export-Selbsttest`,
+    `- Geprüft: ${exportAudit.total}`,
+    `- Bestanden: ${exportAudit.passed}`,
+    `- Fehler: ${exportAudit.failed}`
+  ];
+  if(exportAudit.issues?.length&&verbose){
+    lines.push('', 'Export-Auffälligkeiten:');
+    exportAudit.issues.slice(0,15).forEach(i=>lines.push(`  • ${i.oz}: ${i.issue}`));
+  }
+  if(ref.issueList?.length&&verbose){
+    lines.push('', 'Referenz-Auffälligkeiten:');
+    ref.issueList.slice(0,15).forEach(i=>lines.push(`  • ${i.oz}: ${i.issue}`));
+  }
+  if(showUI){
+    const area=document.getElementById('reviewPromptArea');
+    if(area)area.value=lines.join('\n');
+    document.getElementById('reviewModal')?.classList.add('open');
+    log(`Diagnose: Referenzen ${ref.linked}/${ref.total}, Matching ${matchOk}/${match.length}, Export ${exportAudit.passed}/${exportAudit.total}`,(ref.issues||matchBad||exportAudit.failed)?'w':'s');
+  }
+  return {ref,match,exportAudit,summary:lines.join('\n')};
 }
 
 function dl(data,filename,mime){
@@ -2925,12 +3367,14 @@ function applyLayoutPolish(){
   document.getElementById('buildStamp').textContent='Stand: '+formatBuildStamp(stamp);
 })();
 document.getElementById('siScore').textContent='↓';
+updateMatchMemoryUI();
 
 // File-Input Event-Handler
 document.getElementById('fileD83').onchange=e=>{if(e.target.files[0])loadPendingFile(e.target.files[0],'d83');};
 document.getElementById('fileXML').onchange=e=>{if(e.target.files[0])loadPendingFile(e.target.files[0],'xml');};
 document.getElementById('fNew').onchange=e=>{if(e.target.files[0])loadNewLV(e.target.files[0]);};
 document.getElementById('fileRefJSON').onchange=e=>{if(e.target.files[0])importRefFromJSON(e.target.files[0]);};
+document.getElementById('fileMatchMemoryJSON').onchange=e=>{if(e.target.files[0])importMatchMemoryJSON(e.target.files[0]);};
 
 // Drag-Drop Zonen
 setupDrop2('dropD83','d83');
