@@ -9,6 +9,7 @@
   --bg:#0f1117;--card:#1a1d27;--input:#252836;--border:#2e3348;
   --text:#e8ecf0;--muted:#8892a4;--accent:#4f8ef7;--accent2:#3d7ae6;
   --green:#22c55e;--yellow:#f59e0b;--orange:#ea580c;--red:#ef4444;
+  --manual-left-width:320px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -145,8 +146,13 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .match-progress-strong{color:var(--text);font-weight:600}
 .match-progress-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
 .match-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#4f8ef7,#22c55e);transition:width .15s ease}
-.manual-layout{display:grid;grid-template-columns:minmax(260px,320px) 1fr;gap:14px;flex:1;min-height:0}
+.manual-layout{display:grid;grid-template-columns:minmax(260px,var(--manual-left-width)) 10px minmax(320px,1fr);gap:0;flex:1;min-height:0}
 .manual-list,.manual-results{background:var(--card);border:1px solid var(--border);border-radius:8px;min-height:0;display:flex;flex-direction:column}
+.manual-list{border-top-right-radius:0;border-bottom-right-radius:0}
+.manual-results{border-top-left-radius:0;border-bottom-left-radius:0}
+.manual-splitter{position:relative;cursor:col-resize;display:flex;align-items:stretch;justify-content:center}
+.manual-splitter::before{content:'';width:2px;border-radius:999px;background:rgba(79,142,247,.22);margin:8px 0;transition:background .15s ease,width .15s ease}
+.manual-splitter:hover::before,.manual-splitter.dragging::before{background:rgba(79,142,247,.65);width:4px}
 .manual-scroll{overflow:auto;min-height:0;flex:1}
 .manual-item{padding:10px 12px;border-bottom:1px solid rgba(46,51,72,.4);cursor:pointer;display:flex;flex-direction:column;gap:4px}
 .manual-item:hover{background:rgba(79,142,247,.04)}
@@ -157,6 +163,9 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .manual-item.accepted{box-shadow:inset 3px 0 0 #22c55e}
 .manual-item.matched.active{background:rgba(22,163,74,.14)}
 .manual-item.needs-manual.active{background:rgba(245,158,11,.14)}
+.manual-more{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#93c5fd;background:transparent;border:0;padding:0;cursor:pointer}
+.manual-more:hover{text-decoration:underline}
+.manual-lang-open{margin-top:4px;padding-top:4px;border-top:1px dashed rgba(147,197,253,.25)}
 .manual-result{padding:10px 12px;border-bottom:1px solid rgba(46,51,72,.4);display:flex;gap:10px;align-items:flex-start}
 .manual-result-copy{flex:1;min-width:0}
 .manual-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
@@ -167,6 +176,12 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .ref-notice{display:none;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(245,158,11,.28);background:rgba(245,158,11,.08);color:#fcd34d;font-size:11px;line-height:1.5}
 .ref-notice.show{display:flex}
 .ref-notice b{color:#fde68a}
+.mini-modal{display:none;position:fixed;inset:0;z-index:1001;background:rgba(0,0,0,.62);align-items:center;justify-content:center}
+.mini-modal.open{display:flex}
+.mini-box{background:var(--card);border:1px solid var(--border);border-radius:10px;width:min(760px,94vw);max-height:72vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.mini-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.mini-head h3{font-size:14px;font-weight:700;flex:1}
+.mini-body{padding:14px 16px;overflow:auto;white-space:pre-wrap;font-size:12px;line-height:1.55}
 /* DETAIL MODAL */
 #detailModal{display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.7);align-items:center;justify-content:center}
 #detailModal.open{display:flex}
@@ -195,7 +210,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .donation-paypal span{color:var(--muted)}
 .donation-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .donation-note{margin-top:12px;color:var(--muted);font-size:11px}
-@media(max-width:900px){.grid2{grid-template-columns:1fr}.sum-grid{grid-template-columns:repeat(2,1fr)}.drop-pair{grid-template-columns:1fr}.manual-layout{grid-template-columns:1fr}}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}.sum-grid{grid-template-columns:repeat(2,1fr)}.drop-pair{grid-template-columns:1fr}.manual-layout{grid-template-columns:1fr}.manual-splitter{display:none}.manual-list,.manual-results{border-radius:8px}}
 </style>
 </head>
 <body>
@@ -474,9 +489,10 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         <div class="empty"><div class="empty-i">🧭</div>Erst Matching starten, dann eine Position auswählen.</div>
       </div>
     </div>
+    <div class="manual-splitter" id="manualSplitter" onmousedown="startManualSplit(event)" title="Breite ziehen"></div>
     <div class="manual-results">
       <div class="manual-toolbar">
-        <input type="search" id="manualSearch" placeholder="🔍 Referenz nach OZ, Kurztext oder Langtext suchen..." oninput="renderManualMatch()" style="flex:1;min-width:220px">
+        <input type="search" id="manualSearch" placeholder="🔍 Referenz nach OZ, Kurztext oder Langtext suchen..." oninput="scheduleManualSearch()" style="flex:1;min-width:220px">
         <label class="unit-toggle on" id="manualCalcOnlyLbl" title="Nur Referenzen mit Kalkulationsdaten zeigen">
           <input type="checkbox" id="manualCalcOnly" checked onchange="onManualCalcToggle()" style="width:13px;height:13px">
           Nur Kalkulation
@@ -490,6 +506,17 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         <div class="empty"><div class="empty-i">🔎</div>Wähle links eine neue Position aus.</div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- MANUAL LANGTEXT MODAL -->
+<div id="manualLangModal" class="mini-modal" onclick="if(event.target===this)closeManualLangModal()">
+  <div class="mini-box">
+    <div class="mini-head">
+      <h3 id="manualLangHdr">Langtext</h3>
+      <button class="btn btn-s btn-sm" onclick="closeManualLangModal()">✕ Schließen</button>
+    </div>
+    <div class="mini-body" id="manualLangBody"></div>
   </div>
 </div>
 
@@ -551,7 +578,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 
 <script>
 const APP_VERSION='1.0.1';
-const APP_BUILD_DATE='2026-05-23T22:43:00+02:00';
+const APP_BUILD_DATE='2026-05-27T12:00:00+02:00';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // STATE
@@ -564,7 +591,17 @@ const S={
   sortCol:'score',
   sortDir:'desc',
   manualTargetIdx:-1,
+  manualShowLangIdx:-1,
+  manualSplitDragging:false,
   manualCandidates:[],
+  manualCacheKey:'',
+  manualCacheRows:[],
+  manualBucketKey:'',
+  manualBuckets:null,
+  manualRefPoolKey:'',
+  manualRefPool:null,
+  manualRefIndexMap:null,
+  manualSearchTimer:null,
   lastReferenceSelfTest:null,
   matching:false,
   exportRef:null,
@@ -578,6 +615,7 @@ const P={
 const TOP_MATCH_KEY='KalkPilot_TopMatches_v1';
 const LEARNING_KEY='KalkPilot_MatchLearning_v1';
 const REVIEW_NOTES_KEY='KalkPilot_ReviewNotes_v1';
+const MANUAL_SPLIT_KEY='KalkPilot_ManualSplit_v1';
 function getActiveRef(){
   return S.refProjects.filter(p=>p.active).flatMap(p=>p.positions);
 }
@@ -642,13 +680,18 @@ function sameOZ(a,b){
 }
 function lev(a,b){
   if(!a.length)return b.length;if(!b.length)return a.length;
-  const dp=[];
-  for(let i=0;i<=b.length;i++)dp[i]=[i,...Array(a.length).fill(0)];
-  for(let j=0;j<=a.length;j++)dp[0][j]=j;
-  for(let i=1;i<=b.length;i++)
-    for(let j=1;j<=a.length;j++)
-      dp[i][j]=b[i-1]===a[j-1]?dp[i-1][j-1]:1+Math.min(dp[i-1][j-1],dp[i][j-1],dp[i-1][j]);
-  return dp[b.length][a.length];
+  let prev=Array.from({length:a.length+1},(_,i)=>i);
+  let curr=new Array(a.length+1);
+  for(let j=1;j<=b.length;j++){
+    curr[0]=j;
+    for(let i=1;i<=a.length;i++){
+      curr[i]=b[j-1]===a[i-1]
+        ?prev[i-1]
+        :1+Math.min(prev[i-1],prev[i],curr[i-1]);
+    }
+    [prev,curr]=[curr,prev];
+  }
+  return prev[a.length];
 }
 
 // â”€â”€â”€ Bau-Synonymgruppen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -681,12 +724,32 @@ const BAU_SYNONYMS=[
   ['vermessungsarbeiten','abstecken','hauptachsen abstecken'],
   ['bodenaushub','aushub','erdaushub','boden loesen','boden laden','boden fuer baugrube loesen','boden fuer baugrube laden'],
   ['baugrube herstellen','baugrubeherstellen','baugrube loesen','baugrube ausheben','boden fuer baugrube loesen','boden fuer baugrube laden'],
+  ['leitungsgraben herstellen','leitungsgraben','rohrgraben','kabelgraben','grabenaushub','grabensohle'],
+  ['baugrube fuer schacht herstellen','schachtbaugrube','schachtbaugruben'],
+  ['leitungsgraben verfuellen','grabenverfuellung','graben verfuellen','graben verfuellen','rohrgraben verfuellen'],
+  ['graben fuer sickerleitung herstellen','sickerleitung','kabelgraben herstellen','graben fuer kabel herstellen'],
+  ['oberhalb leitungszone','oberh leitungszone','leitungszone oberhalb'],
+  ['einschliesslich leitungszone','einschl leitungszone','in leitungszone'],
+  ['verfuellboden gesondert','verfuellen gesondert','verfuellung gesondert'],
+  ['grabenverbau herstellen','verbau leitungsgraben','schachtbaugrubenverbau'],
   ['bauwerkshinterfuellung','bauwerkshinterfuellung','hinterfuellung','hinterfullung','bw hinterfuellung','bw hinterfullung','bauwerkshinterfuellung einbauen'],
   ['oberboden abtragen','oberboden abtragen laden','oberboden abtragen beseitigen','oberboden abtragen abfahren','oberboden loesen','oberboden loesen laden','mutterboden abtragen','mutterboden loesen','mutterboden beseitigen','oberboden beseitigen','humosen oberboden'],
+  ['oberboden andecken','oberboden liefern und andecken','oberboden des ag andecken','andeckung oberboden'],
+  ['oberboden lagern','oberboden weiterverwenden','oberboden mieten','oberboden haufen'],
   ['wiedereinbau boden','boden einbauen','verfuellen','boden verfuellen','arbeitsraum verfuellen','leerschlitz verfuellen'],
   ['rasenansaat','graseinsaat','begruenen','begruenung','nassansaat','ansaat'],
   ['planum','profilieren','verdichten'],
-  ['frostschutzschicht','frostschutz','tragschicht frostschutz','ura','urm'],
+  ['frostschutzschicht','frostschutz','tragschicht frostschutz','ura','urm','fss'],
+  ['schichten ohne bindemittel','sob','sob stb','ungebundene tragschicht','ungebundene schicht'],
+  ['baustoffgemisch','mineralgemisch','schottertragschicht','kiestragschicht'],
+  ['fss','frostschutzschicht','sfm','frostunempfindliches baustoffgemisch'],
+  ['kts','kiestragschicht'],
+  ['sts','schottertragschicht'],
+  ['dob','deckschicht ohne bindemittel'],
+  ['unterlage profilieren','profilausgleich','planum gesondert','planum nicht gesondert'],
+  ['bankett','bankett profilgerecht herstellen','schälgut','bankett abtragen'],
+  ['uf3','feinanteil uf3'],
+  ['hinterfuellbereich','gesamter hinterfuellbereich','entwaesserungsbereich','ohne entwaesserungsbereich'],
   ['entsorgung','verwertung','abfahren','deponieren','entsorgen'],
   ['nicht gefaehrlicher abfall','n gefaehrl abfall','abfall nicht gefaehrlich'],
   ['bm 0','bm0','bm-0','einbauklasse bm0','avv 170504','170504','laga rc','laga z0 rc','ersatzbaustoffverordnung'],
@@ -718,8 +781,32 @@ const BAU_SYNONYMS=[
   ['walze','glattmantelwalze','vibrationswalze'],
   ['radlader','dumper','lkw'],
   ['baufacharbeiter','facharbeiter','stundenlohn'],
+  // --- Fachterme Straßenbau / Einbau ---
+  ['frostschutzschicht einbauen','frostschutz einbauen','ura einbauen','urm einbauen','frostschutz tragschicht','schottertragschicht frostschutz'],
+  ['tragschicht einbauen','schottertragschicht einbauen','mineralbeton einbauen','kiestragschicht einbauen'],
+  // --- Begrünung / Ansaat ---
+  ['boeschungsansaat','boeschungsbegruenung','nassansaat boeschung','hydrosaat boeschung','ansaat boeschung','hydraulische begruenung'],
+  // --- Erdbau Verfüllung ---
+  ['arbeitsraum verfuellung','verfuellung arbeitsraum','hinterfuellung arbeitsraum','hinterfuellung herstellen'],
+  ['boden loesen laden','loesen und laden','bodenaushub loesen laden','erdaushub loesen laden'],
+  ['boden seitlich lagern','bodenmiete','zwischenlagern','lagern einbauen'],
+  // --- Qualitätssicherung / Prüfungen ---
+  ['proctor','proctorversuch','verdichtungsgrad','ev2 wert','plattendruckversuch','lastplattenversuch'],
+  // --- Entsorgung / Abfall ---
+  ['abfall avv','avv schluessel','abfallverzeichnisverordnung'],
+  ['nicht gefaehrlicher abfall','nga','nicht gefaehrlich avv','abfall nicht gefaehrlich'],
+  ['gefaehrlicher abfall','gefaehrlich avv','gefaehrliche abfaelle avv'],
 ];
 const SYNONYM_IGNORE=new Set(['be','bau','boden','material','leitung','anlage','arbeiten','herstellen','liefern','einbauen','ausfuehren','position']);
+const SYNONYM_MAP=new Map();
+BAU_SYNONYMS.forEach((group,groupIdx)=>{
+  group.forEach(term=>{
+    const normalized=norm(term);
+    if(normalized.length>=4&&!SYNONYM_IGNORE.has(normalized)&&!SYNONYM_MAP.has(normalized)){
+      SYNONYM_MAP.set(normalized,groupIdx);
+    }
+  });
+});
 const GENERIC_REFERENCE_PATTERNS=[
   /\bbauleitung\b/,/\bsonstige kosten\b/,/\ballgemeine kosten\b/,/\bbaustellengemeinkosten\b/,
   /\bprojektleitung\b/,/\bkalkulationspauschale\b/,/\ballgemeine vorhaltung\b/,
@@ -768,6 +855,44 @@ const TERM_NORMS=[
   [/boden[\s-]*(verfuellen|verfüllen)/g,'boden verfuellen'],
   [/arbeitsraum[\s-]*(verfuellen|verfüllen)/g,'arbeitsraum verfuellen'],
   [/leerschlitz[\s-]*(verfuellen|verfüllen)/g,'leerschlitz verfuellen'],
+  [/oberboden[\s-]*(andecken|andeckung)/g,'oberboden andecken'],
+  [/oberboden[\s-]*(lagern|weiterverwenden)/g,'oberboden lagern'],
+  [/leitungs[\s-]*graben/g,'leitungsgraben'],
+  [/rohr[\s-]*graben/g,'rohrgraben'],
+  [/kabel[\s-]*graben/g,'kabelgraben'],
+  [/schacht[\s-]*baugrube(n)?/g,'schachtbaugrube'],
+  [/baugrube[\s-]*fuer[\s-]*schacht/g,'baugrube fuer schacht'],
+  [/graben[\s-]*(verfuellen|verfüllen|fuellen|füllen)/g,'graben verfuellen'],
+  [/graben[\s-]*fuer[\s-]*sickerleitung(en)?/g,'graben fuer sickerleitung'],
+  [/oberhalb[\s-]*der[\s-]*leitungszone|oberhalb[\s-]*leitungszone/g,'oberhalb leitungszone'],
+  [/einschliesslich[\s-]*der[\s-]*leitungszone|einschl[\s-]*leitungszone/g,'einschliesslich leitungszone'],
+  [/in[\s-]*der[\s-]*leitungszone/g,'in leitungszone'],
+  [/verfuellboden[\s-]*ges(?:ondert)?|verf[üu]llen[\s-]*des[\s-]*grabens[\s-]*wird[\s-]*gesondert/g,'verfuellboden gesondert'],
+  [/graben[\s-]*verbau/g,'grabenverbau'],
+  [/schichten?[\s-]*ohne[\s-]*bindemittel/g,'schichten ohne bindemittel'],
+  [/\bsfm\b/g,'frostunempfindliches baustoffgemisch'],
+  [/\bkts\b/g,'kiestragschicht'],
+  [/\bsts\b/g,'schottertragschicht'],
+  [/\bdob\b/g,'deckschicht ohne bindemittel'],
+  [/unterlage[\s-]*profilieren/g,'unterlage profilieren'],
+  [/profil[\s-]*ausgleich/g,'profilausgleich'],
+  [/planum[\s-]*gesondert/g,'planum gesondert'],
+  [/planum[\s-]*(n\.\s*ges\.?|nicht[\s-]*gesondert)/g,'planum nicht gesondert'],
+  [/feinanteil[\s-]*uf3|\buf3\b/g,'feinanteil uf3'],
+  [/gesamter[\s-]*hinterfuellbereich/g,'gesamter hinterfuellbereich'],
+  [/entwaesserungsbereich|entwässerungsbereich/g,'entwaesserungsbereich'],
+  [/ohne[\s-]*entwaesserungsbereich|ohne[\s-]*entwässerungsbereich/g,'ohne entwaesserungsbereich'],
+  [/\bbankett\b/g,'bankett'],
+  [/ungebundene[\s-]*tragschicht/g,'ungebundene tragschicht'],
+  [/baustoff[\s-]*gemisch/g,'baustoffgemisch'],
+  [/mineral[\s-]*gemisch/g,'mineralgemisch'],
+  [/\bfss\b/g,'frostschutzschicht'],
+  [/frostschutz[\s-]*schicht/g,'frostschutzschicht'],
+  [/boesch(?:ungs)?[\s-]*ansaat|boesch(?:ungs)?[\s-]*begruen/g,'boeschungsansaat'],
+  [/hydro[\s-]*saat/g,'hydrosaat'],
+  [/loesen[\s-]*und[\s-]*laden|loesen[\s-]*laden/g,'loesen und laden'],
+  [/bauwerkshinter[\s-]*fuellung/g,'bauwerkshinterfuellung'],
+  [/erdaushub|bodenaushub/g,'bodenaushub'],
   [/kdb/g,'kunststoffdichtungsbahn'],
   [/pehd[\s-]*dr[aäÃ¤]nrohr/g,'pehd draenrohr'],
   [/dr[aäÃ¤]nrohr/g,'draenrohr'],
@@ -857,14 +982,12 @@ function hasTerm(text,term){
 function synonymScore(a,b){
   const na=normalizeConstructionTerms(a);
   const nb=normalizeConstructionTerms(b);
-  let best=0;
-  for(const grp of BAU_SYNONYMS){
-    const clean=grp.map(g=>norm(g)).filter(g=>g.length>=4&&!SYNONYM_IGNORE.has(g));
-    const inA=clean.some(g=>hasTerm(na,g));
-    const inB=clean.some(g=>hasTerm(nb,g));
-    if(inA&&inB)best=Math.max(best,1);
-  }
-  return Math.max(best,tokSim(na,nb)*0.30);
+  const wordsA=na.split(/\s+/).filter(w=>w.length>=4&&!SYNONYM_IGNORE.has(w));
+  const wordsB=nb.split(/\s+/).filter(w=>w.length>=4&&!SYNONYM_IGNORE.has(w));
+  const groupsA=new Set(wordsA.map(w=>SYNONYM_MAP.get(w)).filter(g=>g!==undefined));
+  const groupsB=new Set(wordsB.map(w=>SYNONYM_MAP.get(w)).filter(g=>g!==undefined));
+  for(const g of groupsA){if(groupsB.has(g))return 1.0;}
+  return tokSim(na,nb)*0.30;
 }
 function swSubcategory(text){
   const t=normalizeConstructionTerms(text);
@@ -898,7 +1021,11 @@ function buildPositionMatchProfile(p){
     demolitionFamily:'',
     surcharge:false,
     ebv:null,
-    depv:null
+    depv:null,
+    siteContext:'',
+    materialBand:'',
+    compactionSpec:'',
+    actionFlags:null
   };
   profile.category=positionCategory({...p,kurztext:shortRaw,langtext:longRaw,outlineSpecs:p?.outlineSpecs||''});
   profile.generic=isGenericReference({...p,kurztext:shortRaw,langtext:longRaw});
@@ -913,6 +1040,10 @@ function buildPositionMatchProfile(p){
   profile.surcharge=hasSurchargeSemantics(fullRaw);
   profile.ebv=getEbvClass(fullNorm);
   profile.depv=getDepvClass(fullNorm);
+  profile.siteContext=detectSiteContext(fullNorm);
+  profile.materialBand=detectMaterialBand(fullNorm);
+  profile.compactionSpec=detectCompactionSpec(fullNorm);
+  profile.actionFlags=detectActionFlags(fullNorm);
   return profile;
 }
 function getMatchProfile(p){
@@ -949,12 +1080,20 @@ function detectBeAsset(text){
 function detectEarthworkFamily(text){
   const t=normalizeConstructionTerms(text);
   if(/\boberboden\b|\bmutterboden\b|\bhumosen\b/.test(t))return'OBERBODEN';
+  if(/\bbankett\b|\bschaelgut\b|\bschalgut\b|\bbankett abtragen\b|\bbankett profilgerecht herstellen\b/.test(t))return'BANKETT';
   if(/\bplanum\b|\bprofilier\b|\bev2\b|\bkontrollpruefung planum\b|\bkontrollprufung planum\b/.test(t))return'PLANUM';
+  if(/\bschachtbaugrube\b|\bbaugrube fuer schacht\b/.test(t))return'SCHACHTBAUGRUBE';
+  if(/\bleitungsgraben\b|\brohrgraben\b|\bkabelgraben\b|\bgrabenaushub\b|\bgrabensohle\b/.test(t))return'LEITUNGSGRABEN';
   if(/\bbauwerkshinterfuellung\b|\bbw hinterfuellung\b|\bhinterfuellung\b|\bhinterfullung\b|\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b/.test(t))return'HINTERFUELLUNG';
-  if(/\bbaugrube\b|\bboden fuer baugrube\b|\baushub\b|\bboden loesen\b|\bboden laden\b|\bloesen und laden\b|\bverwert an\b|\bverwert\.? an\b/.test(t))return'BAUGRUBE_AUSHUB';
+  // BAUGRUBE_AUSHUB: erweitert um erdaushub, bodenaushub, loesen und laden-Varianten
+  if(/\bbaugrube\b|\bboden fuer baugrube\b|\baushub\b|\bboden loesen\b|\bboden laden\b|\bloesen und laden\b|\bverwert an\b|\bverwert\.? an\b|\berdaushub\b|\bbodenaushub\b|\berdaushub loesen\b/.test(t))return'BAUGRUBE_AUSHUB';
   if(/\barbeitsraum\b|\bleerschlitz\b|\bverfuell\b|\bwiedereinbau\b|\bbodeneinbau\b|\bboden einbauen\b/.test(t))return'VERFUELLUNG';
-  if(/\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b/.test(t))return'ANSAAT_BEGRUENUNG';
-  if(/\barbeitsebene\b/.test(t))return'ARBEITSEBENE';
+  // ANSAAT_BEGRUENUNG: erweitert um Hydrosaat, Böschungsansaat, Randstreifen-Varianten
+  if(/\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b|\bboeschungsansaat\b|\bboeschungsbegruenung\b|\bhydrosaat\b|\bansaaten\b|\bgrasnarbe\b|\bhydraulische begruenung\b/.test(t))return'ANSAAT_BEGRUENUNG';
+  // STRASSENBAU_SCHICHT: Frostschutz, Tragschicht, RC-Material, Asphalt (als Einbau-Familie)
+  if(/\bfrostschutzschicht\b|\bfrostschutz einbauen\b|\btragschicht einbauen\b|\bura\b|\burm\b|\bfss\b|\bschichten ohne bindemittel\b|\bsob\b|\bungebundene tragschicht\b|\bbaustoffgemisch\b|\bmineralgemisch\b|\brc material einbauen\b|\bschottertragschicht\b|\bkiestragschicht\b/.test(t))return'STRASSENBAU_SCHICHT';
+  // ARBEITSEBENE: Arbeitsplattform, Arbeitsebene herstellen
+  if(/\barbeitsebene\b|\barbeitsplattform\b/.test(t))return'ARBEITSEBENE';
   if(/\bbaustoff liefern und einbauen\b|\btragschicht\b|\bfrostschutz\b|\brc material\b|\bkiesiger boden\b/.test(t))return'BODEN_EINBAU';
   return'';
 }
@@ -963,13 +1102,20 @@ function detectDisposalSignature(text){
   const parts=[];
   const ebv=getEbvClass(t);
   const depv=getDepvClass(t);
+  // AVV-Schlüssel: Böden und Steine
   if(/\b170504\b/.test(t))parts.push('AVV170504');
   if(/\b170503\b/.test(t))parts.push('AVV170503');
+  if(/\b170505\b/.test(t))parts.push('AVV170505');
+  if(/\b170506\b/.test(t))parts.push('AVV170506');
+  if(/\b170507\b/.test(t))parts.push('AVV170507');
+  if(/\b170508\b/.test(t))parts.push('AVV170508');
   if(/\bzwischenlager\b/.test(t))parts.push('ZWISCHENLAGER');
   if(/\bverwert/.test(t))parts.push('VERWERTUNG');
   if(/\bdeponi/.test(t))parts.push('DEPONIE');
-  if(/\bnicht gefaehrlicher abfall\b|\bn gefaehrl abfall\b/.test(t))parts.push('NGA');
-  if(/\bgefaehrlicher abfall\b/.test(t))parts.push('GA');
+  // NGA: "nicht gefährlicher Abfall" - mit und ohne Leerzeichen/Bindestrich
+  if(/\bnicht[\s-]*gefaehrlicher[\s-]*abfall\b|\bn[\s-]*gefaehrl[\s-]*abfall\b|\bnga\b/.test(t))parts.push('NGA');
+  // GA: "gefährlicher Abfall" - mit und ohne Bindestrich
+  if(/\bgefaehrlicher[\s-]*abfall\b|\bgefaehrliche[\s-]*abfaelle\b/.test(t)&&!/\bnicht[\s-]*gefaehrlicher\b/.test(t))parts.push('GA');
   if(ebv)parts.push(ebv);
   if(depv)parts.push(depv);
   return parts.join('|');
@@ -993,6 +1139,61 @@ function detectDemolitionFamily(text){
   if(/\bbeton\b|\bstahlbeton\b/.test(t))return'BETON';
   if(/\bzaun\b|\bgelaender\b|\bgeländer\b/.test(t))return'ANLAGE';
   return'GENERIC';
+}
+function detectSiteContext(text){
+  const t=normalizeConstructionTerms(text);
+  if(/\bbaugrube\b/.test(t))return'BAUGRUBE';
+  if(/\bschachtbaugrube\b|\bbaugrube fuer schacht\b|\bschachtdurchmesser\b/.test(t))return'SCHACHTBAUGRUBE';
+  if(/\bleitungsgraben\b|\brohrgraben\b|\bkabelgraben\b|\bgrabensohle\b/.test(t))return'LEITUNGSGRABEN';
+  if(/\bbankett\b/.test(t))return'BANKETT';
+  if(/\barbeitsraum\b/.test(t))return'ARBEITSRAUM';
+  if(/\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b|\bbauwerkshinterfuellung\b/.test(t))return'INGENIEURBAU';
+  if(/\bboeschung\b|\bhang\b/.test(t))return'BOESCHUNG';
+  if(/\btrennstreifen\b|\bmittelstreifen\b|\brandstreifen\b/.test(t))return'TRENNSTREIFEN';
+  if(/\bverkehrsflaeche\b|\bverkehrsflache\b|\bfahrbahn\b|\bbaustra(s|ß)e\b/.test(t))return'VERKEHRSFLAECHE';
+  return'';
+}
+function detectMaterialBand(text){
+  const t=normalizeConstructionTerms(text);
+  const exact=t.match(/\b(\d{1,3})\s*\/\s*(\d{1,3})\b/);
+  if(exact)return `${exact[1]}/${exact[2]}`;
+  if(/\bura\b/.test(t))return'URA';
+  if(/\burm\b/.test(t))return'URM';
+  return'';
+}
+function detectCompactionSpec(text){
+  const t=normalizeConstructionTerms(text);
+  const ev2=t.match(/\bev2\s*(?:=|bis|mind(?:estens)?|von)?\s*(\d{2,3})\b/);
+  if(ev2)return `EV2-${ev2[1]}`;
+  if(/\bproctor\b|\bdpr\b|\bverdichtungsgrad\b/.test(t))return'PROCTOR';
+  return'';
+}
+function detectActionFlags(text){
+  const t=normalizeConstructionTerms(text);
+  return{
+    agProvided:/\bdurch ag gestellt\b|\bvom ag gestellt\b|\bag stellt\b/.test(t),
+    controlTest:/\bkontrollpruefung\b|\bkontrollprufung\b|\bplattendruckversuch\b|\blastplattenversuch\b|\bpruefplan\b/.test(t),
+    loading:/\bladen\b/.test(t),
+    loosening:/\bloesen\b/.test(t),
+    delivery:/\bliefern\b/.test(t),
+    storage:/\bzwischenlager\b|\blagern\b|\bseitlich lagern\b|\bbodenmiete\b/.test(t),
+    recovery:/\bverwert/.test(t),
+    lineZoneAbove:/\boberhalb leitungszone\b/.test(t),
+    lineZoneIncl:/\beinschliesslich leitungszone\b/.test(t),
+    lineZoneOnly:/\bin leitungszone\b/.test(t),
+    separateBackfill:/\bverfuellboden gesondert\b/.test(t),
+    separateShoring:/\bohne verbau\b|\bverbau gesondert\b|\bo verb\b/.test(t),
+    separateWater:/\bohne wasserhalt|\bwasserhaltung gesondert\b|\bo wassrh\b/.test(t),
+    reuseOnSite:/\binnerhalb der baustelle\b/.test(t),
+    reuseOffSite:/\bau[ßs]erhalb der baustelle\b/.test(t),
+    planumSeparate:/\bplanum gesondert\b/.test(t),
+    planumIncluded:/\bplanum nicht gesondert\b|\bplanum n ges\b|\bplanum n\. ges\b/.test(t),
+    profileAdjustment:/\bprofilausgleich\b|\bunterlage profilieren\b|\bprofilieren\b/.test(t),
+    uf3:/\bfeinanteil uf3\b|\buf3\b/.test(t),
+    drainageArea:/\bentwaesserungsbereich\b/.test(t),
+    drainageAreaExcluded:/\bohne entwaesserungsbereich\b/.test(t),
+    totalBackfillArea:/\bgesamter hinterfuellbereich\b/.test(t),
+  };
 }
 function quickTokenOverlap(aTokens,bTokens){
   if(!aTokens?.length||!bTokens?.length)return 0;
@@ -1124,6 +1325,8 @@ function hasSurchargeSemantics(text){
 }
 function isPlausibleCandidate(npProf,rpProf){
   if(!npProf||!rpProf)return true;
+  // BE: Verschiedene Anlagen (beAsset) sind nie matchbar - unabhängig davon ob Kategorien gleich sind
+  if(npProf.category==='BE'&&rpProf.category==='BE'&&npProf.beAsset&&rpProf.beAsset&&npProf.beAsset!==rpProf.beAsset)return false;
   if(npProf.category===rpProf.category){
     if(npProf.category==='ERDBAU'&&npProf.earthFamily&&rpProf.earthFamily&&npProf.earthFamily!==rpProf.earthFamily)return false;
     if(npProf.category==='ENTSORGUNG'&&npProf.disposalSig&&rpProf.disposalSig&&npProf.disposalSig!==rpProf.disposalSig)return false;
@@ -1150,7 +1353,7 @@ function positionCategory(p){
   if(/\bsickerwasserrohr\b|\bdraenrohr\b|\bdrainagerohr\b|\brohrleitung\b|\brohrbettung\b|\bschacht\b|\bschieber\b|\bmuffe\b|\bformteil\b|\bbogen\b/.test(t))return'LEITUNGSBAU';
   if(/\bschwarzweissanlage\b|\bdekontaminationsanlage\b|\bpersonen deko\b|\bstiefelwaschanlage\b|\breifenwaschanlage\b|\batemschutz\b|\bschutzanzug\b|\bgefahrstoff\b|\bbetriebsanweisung\b|\balarmplan\b|\bnotfallplan\b|\bgefaehrdungsbeurteilung\b/.test(t))return'ARBEITSSCHUTZ_SW';
   if(/\bbaustelleneinrichtung\b|\bbauzaun\b|\bbaustelleneinrichtung raeumen\b|\bbauschild\b|\bbaucontainer\b|\bdrehfluegeltor\b|\bschiebetor\b|\bschutzgelaender\b|\btreppenturm\b|\bbaustromversorgung\b|\bbauwasserversorgung\b|\bbaustellenbeleuchtung\b|\bbaustra(s|ß)e\b|\bueberfahrschutz\b|\bbehelfsueberfahrt\b/.test(t))return'BE';
-  if(/\bbodenaushub\b|\baushub\b|\berdaushub\b|\bboden loesen\b|\bboden laden\b|\bboden fuer baugrube loesen\b|\bboden fuer baugrube laden\b|\bbaugrube herstellen\b|\bbaugrube loesen\b|\boberboden abtragen\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bplanum\b|\bprofilieren\b|\bverdichten\b|\barbeitsraum verfuellen\b|\bleerschlitz verfuellen\b|\barbeitsebene\b|\bbauwerkshinterfuellung\b|\bhinterfuellung\b|\bhinterfullung\b|\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b|\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b/.test(t))return'ERDBAU';
+  if(/\bbodenaushub\b|\baushub\b|\berdaushub\b|\bboden loesen\b|\bboden laden\b|\bboden fuer baugrube loesen\b|\bboden fuer baugrube laden\b|\bbaugrube herstellen\b|\bbaugrube loesen\b|\boberboden abtragen\b|\boberboden andecken\b|\boberboden liefern und andecken\b|\boberboden lagern\b|\boberboden weiterverwenden\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bplanum\b|\bprofilieren\b|\bverdichten\b|\barbeitsraum verfuellen\b|\bleerschlitz verfuellen\b|\barbeitsebene\b|\barbeitsplattform\b|\bbauwerkshinterfuellung\b|\bhinterfuellung\b|\bhinterfullung\b|\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b|\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b|\bboeschungsansaat\b|\bboeschungsbegruenung\b|\bhydrosaat\b/.test(t))return'ERDBAU';
   const categoryMap={
     'ENTSORGUNG':[/\bentsorgung\b/,/\bverwertung\b/,/\babfahren\b/,/\bdeponieren\b/,/\bdeponie\b/,/\bbeprobung\b/,/\bchemischer nachweis\b/,/\babfallinventar\b/,/\bgefaehrlicher abfall\b/,/\bnicht gefaehrlicher abfall\b/,/\bn gefaehrl abfall\b/,/\babfallschluessel\b/,/\b170504\b/,/\bbm0\b/,/\bersatzbaustoffverordnung\b/,/\bzwischenlager\b/],
     'DEPONIEBAU_ABDICHTUNG':[/\btechnische barriere\b/,/\bmineralische dichtung\b/,/\bbasisabdichtung\b/,/\bkunststoffdichtungsbahn\b/,/\bkdb\b/,/\bpehd\b/,/\bschutzvlies\b/,/\bfiltervlies\b/,/\bvliesstoff\b/,/\bsandmatte\b/,/\bentwaesserungsschicht\b/,/\brandwall\b/,/\bboeschungsbereich\b/,/\banschluss an bestand\b/],
@@ -1161,9 +1364,9 @@ function positionCategory(p){
     'VERMESSUNG':[/\bhauptachsen\b/,/\babstecken\b/,/\bvermessung\b/,/\bvermessungsarbeiten\b/,/\btrassenabsteckung\b/,/\bachspunkt\b/],
     'WASSERHALTUNG':[/\bpumpe\b/,/\bpumpen\b/,/\bwasserhaltung\b/,/\babpumpen\b/,/\bniederschlagswasser\b/,/\bstromaggregat\b/,/\bpumpensteuerung\b/],
     'RODUNG_FREIMACHUNG':[/\brodung\b/,/\bfreimach\b/,/\bbewuchs\b/,/\bbaum\b/,/\bhecke\b/,/\bstraeucher\b/],
-    'STRASSENBAU':[/\basphalt\b/,/\bbitumen\b/,/\bdeckschicht\b/,/\btragschicht\b/,/\bbelag\b/,/\bfrostschutzschicht\b/],
+    'STRASSENBAU':[/\basphalt\b/,/\bbitumen\b/,/\bdeckschicht\b/,/\btragschicht\b/,/\bbelag\b/,/\bfrostschutzschicht\b/,/\bschichten ohne bindemittel\b/,/\bsob\b/,/\bfss\b/,/\bkts\b/,/\bsts\b/,/\bdob\b/,/\bbaustoffgemisch\b/,/\bmineralgemisch\b/,/\bunterlage profilieren\b/,/\bprofilausgleich\b/,/\bbankett\b/],
     'ABBRUCH_RUECKBAU':[/\babbrechen\b/,/\brueckbau\b/,/\baufbrechen\b/,/\babbau\b/,/\babbruch\b/],
-    'GERÃ„TE':[/\bbagger\b/,/\bkettenbagger\b/,/\bhydraulikbagger\b/,/\bmobilbagger\b/,/\braupe\b/,/\bplanierraupe\b/,/\bdozer\b/,/\bwalze\b/,/\bglattmantelwalze\b/,/\bvibrationswalze\b/,/\bradlader\b/,/\bdumper\b/,/\blkw\b/,/\bkehrmaschine\b/],
+    'GERÄTE':[/\bbagger\b/,/\bkettenbagger\b/,/\bhydraulikbagger\b/,/\bmobilbagger\b/,/\braupe\b/,/\bplanierraupe\b/,/\bdozer\b/,/\bwalze\b/,/\bglattmantelwalze\b/,/\bvibrationswalze\b/,/\bradlader\b/,/\bdumper\b/,/\blkw\b/,/\bkehrmaschine\b/],
     'PERSONAL':[/\bbaufacharbeiter\b/,/\bfacharbeiter\b/,/\bpolier\b/,/\bvorarbeiter\b/,/\bbauleiter\b/,/\bhelfer\b/,/\bgeraetefuehrer\b/,/\bstundenlohn\b/],
     'MATERIAL':[/\brohr\b/,/\bbeton\b/,/\bstahl\b/,/\bholz\b/,/\bsand\b/,/\bkies\b/,/\bschotter\b/,/\bzement\b/,/\bbitumen\b/,/\basphalt\b/,/\bvlies\b/,/\bmaterial\b/,/\brc material\b/]
   };
@@ -1176,7 +1379,7 @@ function categoryCompatibility(a,b,np=null,rp=null){
   if(a==='SONSTIGES'||b==='SONSTIGES')return 0.0;
   const related={
     'ERDBAU|ENTSORGUNG':0.60,'ERDBAU|DEPONIEBAU_ABDICHTUNG':0.45,'LEITUNGSBAU|WASSERHALTUNG':0.50,'BE|BAULEITUNG_PLANUNG':0.35,
-    'ERDBAU|STRASSENBAU':0.45,'MATERIAL|DEPONIEBAU_ABDICHTUNG':0.50,'GERÃ„TE|ERDBAU':0.35,'PERSONAL|ERDBAU':0.35,
+    'ERDBAU|STRASSENBAU':0.45,'MATERIAL|DEPONIEBAU_ABDICHTUNG':0.50,'GERÄTE|ERDBAU':0.35,'GERÄTE|STRASSENBAU':0.30,'PERSONAL|ERDBAU':0.35,
     'PERSONAL|LEITUNGSBAU':0.35,'MATERIAL|LEITUNGSBAU':0.45,'MATERIAL|STRASSENBAU':0.45,'QUALITAET_PROBEFELD|ERDBAU':0.45,
     'QUALITAET_PROBEFELD|DEPONIEBAU_ABDICHTUNG':0.45,'DOKUMENTATION|BAULEITUNG_PLANUNG':0.55,'DOKUMENTATION|QUALITAET_PROBEFELD':0.45,
     'ABBRUCH_RUECKBAU|ENTSORGUNG':0.45
@@ -1184,7 +1387,7 @@ function categoryCompatibility(a,b,np=null,rp=null){
   const pair=a+'|'+b, rev=b+'|'+a;
   if(related[pair]!=null)return related[pair];
   if(related[rev]!=null)return related[rev];
-  if((a==='GERÃ„TE'&&b==='ERDBAU')||(a==='ERDBAU'&&b==='GERÃ„TE')){
+  if((a==='GERÄTE'&&b==='ERDBAU')||(a==='ERDBAU'&&b==='GERÄTE')||(a==='GERÄTE'&&b==='STRASSENBAU')||(a==='STRASSENBAU'&&b==='GERÄTE')){
     const text=normalizeConstructionTerms((np?.kurztext||'')+' '+(rp?.kurztext||''));
     return /\bbagger\b|\braupe\b|\bwalze\b|\bradlader\b/.test(text)?0.35:0;
   }
@@ -1248,17 +1451,39 @@ function strSim(a,b){
   if(mx>260)return tokSim(a,b);
   return Math.max(0,1-lev(a,b)/mx);
 }
+function buildTokenIndex(tokens){
+  const exact=new Set(tokens);
+  const prefixMap=new Map();
+  const suffixMap=new Map();
+  tokens.forEach(t=>{
+    if(t.length>=5){
+      const prefix=t.slice(0,5);
+      if(!prefixMap.has(prefix))prefixMap.set(prefix,[]);
+      prefixMap.get(prefix).push(t);
+      const suffix=t.slice(-5);
+      if(!suffixMap.has(suffix))suffixMap.set(suffix,[]);
+      suffixMap.get(suffix).push(t);
+    }
+  });
+  return{exact,prefixMap,suffixMap,tokens};
+}
 function tokSim(a,b){
   const ta=[...new Set(tokenizeForMatch(a))];
   const tb=[...new Set(tokenizeForMatch(b))];
+  const tbIndex=buildTokenIndex(tb);
   if(!ta.length&&!tb.length)return 1;
   if(!ta.length||!tb.length)return 0;
   let score=0;
   ta.forEach(t=>{
-    if(tb.includes(t)){score+=1;return;}
+    if(tbIndex.exact.has(t)){score+=1;return;}
     if(t.length<4)return;
     let partial=0;
-    tb.forEach(s=>{
+    const candidates=new Set([
+      ...(t.length>=5?(tbIndex.prefixMap.get(t.slice(0,5))||[]):[]),
+      ...(t.length>=5?(tbIndex.suffixMap.get(t.slice(-5))||[]):[]),
+    ]);
+    if(!candidates.size)candidates.add(t);
+    candidates.forEach(s=>{
       if(s.length<4)return;
       if((s.startsWith(t)||t.startsWith(s))&&Math.min(t.length,s.length)/Math.max(t.length,s.length)>=0.7)partial=Math.max(partial,0.55);
       const stemT=t.substring(0,Math.min(5,t.length));
@@ -1271,6 +1496,15 @@ function tokSim(a,b){
   });
   return score/ta.length;
 }
+const SCORE_WEIGHTS=Object.freeze({
+  SHORT:0.28,
+  LONG:0.17,
+  SYNONYM:0.15,
+  CATEGORY:0.15,
+  UNIT:0.10,
+  QUANTITY:0.07,
+  OZ_MAX:0.03,
+});
 function buildReasonText(debug){
   const parts=[];
   parts.push('Kategorie '+debug.categoryNew+' → '+debug.categoryRef+' ('+debug.categoryScore+'%)');
@@ -1288,6 +1522,15 @@ function buildReasonText(debug){
   if((debug.earthPenalty||0)>0)parts.push('Erdbau-Familie weicht ab');
   if((debug.disposalPenalty||0)>0)parts.push('Entsorgungsklasse weicht ab');
   if((debug.demolitionPenalty||0)>0)parts.push('Abbruch-Familie weicht ab');
+  if((debug.sitePenalty||0)>0)parts.push('Einbauort/Feldkontext weicht ab');
+  if((debug.materialBandPenalty||0)>0)parts.push('Kornband/Materialklasse weicht ab');
+  if((debug.compactionPenalty||0)>0)parts.push('Verdichtungs-/Pruefwert weicht ab');
+  if((debug.agPenalty||0)>0)parts.push('AG-Stellung weicht ab');
+  if((debug.controlPenalty||0)>0)parts.push('Pruef-/Ausfuehrungslogik weicht ab');
+  if((debug.planumModePenalty||0)>0)parts.push('Planumlogik weicht ab');
+  if((debug.profileAdjustmentPenalty||0)>0)parts.push('Profilausgleich weicht ab');
+  if((debug.uf3Penalty||0)>0)parts.push('Feinanteil UF3 weicht ab');
+  if((debug.drainageModePenalty||0)>0)parts.push('Hinterfuellbereich weicht ab');
   if(debug.learningBoost>0)parts.push('Lernbonus '+debug.learningBoost+'%');
   if(debug.topMatchBoost>0)parts.push('Top-Signal '+debug.topMatchBoost+'%');
   if(debug.hardCapsApplied.length)parts.push('Deckel: '+debug.hardCapsApplied.join(', '));
@@ -1341,6 +1584,21 @@ function calcScore(np,rp,meta={}){
   const earthFamilyMismatch=categoryNew==='ERDBAU'&&categoryRef==='ERDBAU'&&earthFamilyNew&&earthFamilyRef&&earthFamilyNew!==earthFamilyRef;
   const disposalStrongMatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalSigNew&&disposalSigRef&&disposalSigNew===disposalSigRef;
   const disposalMismatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalSigNew&&disposalSigRef&&disposalSigNew!==disposalSigRef;
+  const siteContextNew=npProf.siteContext;
+  const siteContextRef=rpProf.siteContext;
+  const siteContextMismatch=(categoryNew===categoryRef)&&siteContextNew&&siteContextRef&&siteContextNew!==siteContextRef;
+  const materialBandNew=npProf.materialBand;
+  const materialBandRef=rpProf.materialBand;
+  const materialBandMismatch=(categoryNew==='ERDBAU'||categoryNew==='STRASSENBAU')&&categoryNew===categoryRef&&materialBandNew&&materialBandRef&&materialBandNew!==materialBandRef;
+  const compactionSpecNew=npProf.compactionSpec;
+  const compactionSpecRef=rpProf.compactionSpec;
+  const compactionMismatch=(categoryNew==='ERDBAU'||categoryNew==='STRASSENBAU')&&categoryNew===categoryRef&&compactionSpecNew&&compactionSpecRef&&compactionSpecNew!==compactionSpecRef;
+  const flagsNew=npProf.actionFlags||{};
+  const flagsRef=rpProf.actionFlags||{};
+  const agMismatch=flagsNew.agProvided!==flagsRef.agProvided;
+  const controlMismatch=flagsNew.controlTest!==flagsRef.controlTest;
+  const loadPairSignal=(flagsNew.loading&&flagsRef.loading)||(flagsNew.loading&&flagsRef.loosening)||(flagsNew.loosening&&flagsRef.loading);
+  const storageSignal=(flagsNew.storage&&flagsRef.storage)||(flagsNew.recovery&&flagsRef.recovery);
   const ebvNew=npProf.ebv;
   const ebvRef=rpProf.ebv;
   const depvNew=npProf.depv;
@@ -1349,10 +1607,20 @@ function calcScore(np,rp,meta={}){
   const oberbodenSignal=/\boberboden\b|\bmutterboden\b|\bhumosen\b/.test(npProf.fullNorm)&&/\boberboden\b|\bmutterboden\b|\bhumosen\b/.test(rpProf.fullNorm);
   const hinterfuellungSignal=earthFamilyNew==='HINTERFUELLUNG'&&earthFamilyRef==='HINTERFUELLUNG';
   const ansaatSignal=earthFamilyNew==='ANSAAT_BEGRUENUNG'&&earthFamilyRef==='ANSAAT_BEGRUENUNG';
+  const strassenbauSchichtSignal=earthFamilyNew==='STRASSENBAU_SCHICHT'&&earthFamilyRef==='STRASSENBAU_SCHICHT';
   const exactBoost=categoryScore===1&&unitScore===1&&synScore>=1?0.12:
     (categoryScore===1&&unitScore===1&&(shortScore>=0.95||longScore>=0.95)?0.06:
     (categoryScore===1&&unitScore===1&&(synScore>=0.80||shortScore>=0.80||longScore>=0.80)?0.03:0));
-  let penalties=0,genericPenalty=0,textOnlyPenalty=0,unitPenalty=0,quantityPenalty=0,swPenalty=0,holdingPenalty=0,docPenalty=0,assetPenalty=0,surchargePenalty=0,earthPenalty=0,disposalPenalty=0,docSubPenalty=0,demolitionPenalty=0;
+  const lineZoneMismatch=((flagsNew.lineZoneAbove&&flagsRef.lineZoneIncl)||(flagsNew.lineZoneIncl&&flagsRef.lineZoneAbove)||(flagsNew.lineZoneOnly&&!flagsRef.lineZoneOnly)||(flagsRef.lineZoneOnly&&!flagsNew.lineZoneOnly));
+  const separateBackfillMismatch=flagsNew.separateBackfill!==flagsRef.separateBackfill;
+  const shoringModeMismatch=flagsNew.separateShoring!==flagsRef.separateShoring;
+  const waterModeMismatch=flagsNew.separateWater!==flagsRef.separateWater;
+  const reuseSideMismatch=flagsNew.reuseOnSite!==flagsRef.reuseOnSite&&flagsNew.reuseOffSite!==flagsRef.reuseOffSite&&(flagsNew.reuseOnSite||flagsNew.reuseOffSite)&&(flagsRef.reuseOnSite||flagsRef.reuseOffSite);
+  const planumModeMismatch=flagsNew.planumSeparate!==flagsRef.planumSeparate&&flagsNew.planumIncluded!==flagsRef.planumIncluded&&(flagsNew.planumSeparate||flagsNew.planumIncluded)&&(flagsRef.planumSeparate||flagsRef.planumIncluded);
+  const profileAdjustmentMismatch=flagsNew.profileAdjustment!==flagsRef.profileAdjustment&&(flagsNew.profileAdjustment||flagsRef.profileAdjustment);
+  const uf3Mismatch=flagsNew.uf3!==flagsRef.uf3&&(flagsNew.uf3||flagsRef.uf3);
+  const drainageModeMismatch=(flagsNew.totalBackfillArea&&flagsRef.drainageArea)||(flagsRef.totalBackfillArea&&flagsNew.drainageArea)||(flagsNew.drainageAreaExcluded&&flagsRef.drainageArea)||(flagsRef.drainageAreaExcluded&&flagsNew.drainageArea);
+  let penalties=0,genericPenalty=0,textOnlyPenalty=0,unitPenalty=0,quantityPenalty=0,swPenalty=0,holdingPenalty=0,docPenalty=0,assetPenalty=0,surchargePenalty=0,earthPenalty=0,disposalPenalty=0,docSubPenalty=0,demolitionPenalty=0,sitePenalty=0,materialBandPenalty=0,compactionPenalty=0,agPenalty=0,controlPenalty=0,lineZonePenalty=0,backfillModePenalty=0,shoringModePenalty=0,waterModePenalty=0,reuseSidePenalty=0,planumModePenalty=0,profileAdjustmentPenalty=0,uf3Penalty=0,drainageModePenalty=0;
   const hardCapsApplied=[];
   if(genericWrongCategory){genericPenalty=0.20;penalties+=genericPenalty;}
   if(meta.isTextOnly){textOnlyPenalty=0.05;penalties+=textOnlyPenalty;}
@@ -1367,7 +1635,29 @@ function calcScore(np,rp,meta={}){
   if(earthFamilyMismatch&&Math.max(shortScore,synScore)<0.95){earthPenalty=0.14;penalties+=earthPenalty;}
   if(disposalMismatch&&Math.max(shortScore,synScore)<0.98){disposalPenalty=0.18;penalties+=disposalPenalty;}
   if(demolitionMismatch&&Math.max(shortScore,synScore)<0.95){demolitionPenalty=0.16;penalties+=demolitionPenalty;}
-  let final=0.28*shortScore+0.17*longScore+0.15*synScore+0.15*categoryScore+0.10*unitScore+0.07*quantityScore+Math.min(0.03,ozBoost)+learnBoost+topBoost+exactBoost-penalties;
+  if(siteContextMismatch&&Math.max(shortScore,synScore)<0.95){sitePenalty=0.10;penalties+=sitePenalty;}
+  if(materialBandMismatch&&Math.max(shortScore,synScore)<0.98){materialBandPenalty=0.12;penalties+=materialBandPenalty;}
+  if(compactionMismatch&&Math.max(shortScore,synScore)<0.98){compactionPenalty=0.10;penalties+=compactionPenalty;}
+  if(agMismatch&&Math.max(shortScore,synScore)<0.98){agPenalty=0.12;penalties+=agPenalty;}
+  if(controlMismatch&&Math.max(shortScore,synScore)<0.98){controlPenalty=0.12;penalties+=controlPenalty;}
+  if(lineZoneMismatch&&Math.max(shortScore,synScore)<0.98){lineZonePenalty=0.10;penalties+=lineZonePenalty;}
+  if(separateBackfillMismatch&&Math.max(shortScore,synScore)<0.98){backfillModePenalty=0.12;penalties+=backfillModePenalty;}
+  if(shoringModeMismatch&&Math.max(shortScore,synScore)<0.98){shoringModePenalty=0.08;penalties+=shoringModePenalty;}
+  if(waterModeMismatch&&Math.max(shortScore,synScore)<0.98){waterModePenalty=0.08;penalties+=waterModePenalty;}
+  if(reuseSideMismatch&&Math.max(shortScore,synScore)<0.98){reuseSidePenalty=0.08;penalties+=reuseSidePenalty;}
+  if(planumModeMismatch&&Math.max(shortScore,synScore)<0.98){planumModePenalty=0.12;penalties+=planumModePenalty;}
+  if(profileAdjustmentMismatch&&Math.max(shortScore,synScore)<0.98){profileAdjustmentPenalty=0.08;penalties+=profileAdjustmentPenalty;}
+  if(uf3Mismatch&&Math.max(shortScore,synScore)<0.98){uf3Penalty=0.08;penalties+=uf3Penalty;}
+  if(drainageModeMismatch&&Math.max(shortScore,synScore)<0.98){drainageModePenalty=0.10;penalties+=drainageModePenalty;}
+  let final=
+    SCORE_WEIGHTS.SHORT*shortScore+
+    SCORE_WEIGHTS.LONG*longScore+
+    SCORE_WEIGHTS.SYNONYM*synScore+
+    SCORE_WEIGHTS.CATEGORY*categoryScore+
+    SCORE_WEIGHTS.UNIT*unitScore+
+    SCORE_WEIGHTS.QUANTITY*quantityScore+
+    Math.min(SCORE_WEIGHTS.OZ_MAX,ozBoost)+
+    learnBoost+topBoost+exactBoost-penalties;
   if(baugrubeSignal)final+=0.08;
   if(earthFamilyNew&&earthFamilyNew===earthFamilyRef)final+=0.06;
   if(disposalStrongMatch)final+=0.10;
@@ -1376,6 +1666,25 @@ function calcScore(np,rp,meta={}){
   if(oberbodenSignal)final+=0.06;
   if(hinterfuellungSignal)final+=0.08;
   if(ansaatSignal)final+=0.08;
+  if(strassenbauSchichtSignal)final+=0.07;
+  if(siteContextNew&&siteContextNew===siteContextRef)final+=0.04;
+  if(materialBandNew&&materialBandNew===materialBandRef)final+=0.06;
+  if(compactionSpecNew&&compactionSpecNew===compactionSpecRef)final+=0.05;
+  if(loadPairSignal)final+=0.05;
+  if(storageSignal)final+=0.04;
+  if(flagsNew.lineZoneAbove&&flagsRef.lineZoneAbove)final+=0.05;
+  if(flagsNew.lineZoneIncl&&flagsRef.lineZoneIncl)final+=0.05;
+  if(flagsNew.lineZoneOnly&&flagsRef.lineZoneOnly)final+=0.05;
+  if(flagsNew.separateBackfill&&flagsRef.separateBackfill)final+=0.05;
+  if(flagsNew.separateShoring===flagsRef.separateShoring&&(flagsNew.separateShoring||flagsRef.separateShoring))final+=0.03;
+  if(flagsNew.separateWater===flagsRef.separateWater&&(flagsNew.separateWater||flagsRef.separateWater))final+=0.03;
+  if(flagsNew.planumSeparate&&flagsRef.planumSeparate)final+=0.05;
+  if(flagsNew.planumIncluded&&flagsRef.planumIncluded)final+=0.05;
+  if(flagsNew.profileAdjustment&&flagsRef.profileAdjustment)final+=0.04;
+  if(flagsNew.uf3&&flagsRef.uf3)final+=0.04;
+  if(flagsNew.drainageArea&&flagsRef.drainageArea)final+=0.05;
+  if(flagsNew.drainageAreaExcluded&&flagsRef.drainageAreaExcluded)final+=0.05;
+  if(flagsNew.totalBackfillArea&&flagsRef.totalBackfillArea)final+=0.05;
   final=Math.max(0,Math.min(1,final));
   if(categoryScore===0&&shortScore<0.80&&synScore<0.80){final=Math.min(final,0.39);hardCapsApplied.push('Kategorie unvereinbar');}
   if(genericWrongCategory){final=Math.min(final,0.35);hardCapsApplied.push('Generische Referenz');}
@@ -1390,6 +1699,20 @@ function calcScore(np,rp,meta={}){
   if(earthFamilyMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Erdbau-Familie unpassend');}
   if(disposalMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Entsorgungsklasse unpassend');}
   if(demolitionMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.35);hardCapsApplied.push('Abbruch-Familie unpassend');}
+  if(siteContextMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Einbauort unpassend');}
+  if(materialBandMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Kornband/Materialklasse unpassend');}
+  if(compactionMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.52);hardCapsApplied.push('Verdichtungs-/Pruefwert unpassend');}
+  if(agMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.39);hardCapsApplied.push('AG-Stellung unpassend');}
+  if(controlMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Pruef-/Ausfuehrungslogik unpassend');}
+  if(lineZoneMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.49);hardCapsApplied.push('Leitungszone unpassend');}
+  if(separateBackfillMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Verfuellmodus unpassend');}
+  if(shoringModeMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Verbaumodus unpassend');}
+  if(waterModeMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Wasserhaltungsmodus unpassend');}
+  if(reuseSideMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Einbau/Lagerort unpassend');}
+  if(planumModeMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Planumlogik unpassend');}
+  if(profileAdjustmentMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Profilausgleich unpassend');}
+  if(uf3Mismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Feinanteil UF3 unpassend');}
+  if(drainageModeMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Hinterfuellbereich unpassend');}
   if(ebvNew&&ebvRef&&ebvNew!==ebvRef){
     const ebvCap=ebvCompat(ebvNew,ebvRef);
     final=Math.min(final,ebvCap);
@@ -1407,7 +1730,7 @@ function calcScore(np,rp,meta={}){
   const textGate=Math.max(shortScore,longScore,synScore);
   if(textGate<0.25){final=Math.min(final,0.19);hardCapsApplied.push('Textbasis schwach');}
   const score=Math.max(0,Math.min(100,Math.round(final*100)));
-  const debug={shortScore:Math.round(shortScore*100),longScore:Math.round(longScore*100),synonymScore:Math.round(synScore*100),categoryNew,categoryRef,categoryScore:Math.round(categoryScore*100),unitScore:Math.round(unitScore*100),quantityScore:Math.round(quantityScore*100),learningBoost:Math.round(learnBoost*100),topMatchBoost:Math.round(topBoost*100),linkedReferenceBoost:0,genericPenalty:Math.round(genericPenalty*100),textOnlyPenalty:Math.round(textOnlyPenalty*100),unitPenalty:Math.round(unitPenalty*100),quantityPenalty:Math.round(quantityPenalty*100),holdingPenalty:Math.round(holdingPenalty*100),docPenalty:Math.round(docPenalty*100),docSubPenalty:Math.round(docSubPenalty*100),assetPenalty:Math.round(assetPenalty*100),surchargePenalty:Math.round(surchargePenalty*100),earthPenalty:Math.round(earthPenalty*100),disposalPenalty:Math.round(disposalPenalty*100),demolitionPenalty:Math.round(demolitionPenalty*100),hardCapsApplied,finalScore:score,newUnit:normUnit(np.me),refUnit:normUnit(refMatchUnit),reasonText:''};
+  const debug={shortScore:Math.round(shortScore*100),longScore:Math.round(longScore*100),synonymScore:Math.round(synScore*100),categoryNew,categoryRef,categoryScore:Math.round(categoryScore*100),unitScore:Math.round(unitScore*100),quantityScore:Math.round(quantityScore*100),learningBoost:Math.round(learnBoost*100),topMatchBoost:Math.round(topBoost*100),linkedReferenceBoost:0,genericPenalty:Math.round(genericPenalty*100),textOnlyPenalty:Math.round(textOnlyPenalty*100),unitPenalty:Math.round(unitPenalty*100),quantityPenalty:Math.round(quantityPenalty*100),holdingPenalty:Math.round(holdingPenalty*100),docPenalty:Math.round(docPenalty*100),docSubPenalty:Math.round(docSubPenalty*100),assetPenalty:Math.round(assetPenalty*100),surchargePenalty:Math.round(surchargePenalty*100),earthPenalty:Math.round(earthPenalty*100),disposalPenalty:Math.round(disposalPenalty*100),demolitionPenalty:Math.round(demolitionPenalty*100),sitePenalty:Math.round(sitePenalty*100),materialBandPenalty:Math.round(materialBandPenalty*100),compactionPenalty:Math.round(compactionPenalty*100),agPenalty:Math.round(agPenalty*100),controlPenalty:Math.round(controlPenalty*100),lineZonePenalty:Math.round(lineZonePenalty*100),backfillModePenalty:Math.round(backfillModePenalty*100),shoringModePenalty:Math.round(shoringModePenalty*100),waterModePenalty:Math.round(waterModePenalty*100),reuseSidePenalty:Math.round(reuseSidePenalty*100),planumModePenalty:Math.round(planumModePenalty*100),profileAdjustmentPenalty:Math.round(profileAdjustmentPenalty*100),uf3Penalty:Math.round(uf3Penalty*100),drainageModePenalty:Math.round(drainageModePenalty*100),hardCapsApplied,finalScore:score,newUnit:normUnit(np.me),refUnit:normUnit(refMatchUnit),reasonText:''};
   debug.reasonText=buildReasonText(debug);
   return{score,debug};
 }
@@ -1475,8 +1798,14 @@ async function readUploadedText(file,ext){
   }
   return decodeText(buf,'windows-1252');
 }
-function makeXref(){const c='0123456789ABCDEF';return Array.from({length:16},()=>c[Math.floor(Math.random()*16)]).join('');}
-function scoreBadge(sc){if(sc>=91)return'bh';if(sc>=60)return'bm';if(sc>=40)return'bo';if(sc>0)return'bl';return'';}
+function makeXref(){
+  if(globalThis.crypto&&typeof crypto.randomUUID==='function'){
+    return crypto.randomUUID().replace(/-/g,'').toUpperCase().slice(0,16);
+  }
+  const c='0123456789ABCDEF';
+  return Array.from({length:16},()=>c[Math.floor(Math.random()*16)]).join('');
+}
+function scoreBadge(sc){if(sc>=80)return'bh';if(sc>=60)return'bm';if(sc>=40)return'bo';if(sc>0)return'bl';return'';}
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // GAEB D83 PARSER
@@ -1677,9 +2006,34 @@ function parseExportReferenceXML(txt,fileName=''){
     throw new Error('Kein gültiger MajorWBS-Kopf gefunden. NameWBS oder WBSType fehlt.');
   }
   const cgrCatalog=[0,1,2,3].map(i=>prjInfo?.querySelector(`:scope > CGRCatalog > CGRCatalog${i}`)?.textContent?.trim()||'').filter(Boolean);
-  const sampleItemOz=majorWbs.querySelector(':scope > ITEMS > WBSItem > NameWBSItem')?.textContent?.trim()||'';
-  const sampleParts=sampleItemOz.split('.').map(s=>s.trim()).filter(Boolean);
-  const ozSegmentLengths=sampleParts.length?sampleParts.map(part=>part.length):[];
+  const allOzNodes=[...(majorWbs.querySelectorAll(':scope > ITEMS > WBSItem > NameWBSItem')||[])];
+  const dotFormatted=allOzNodes
+    .map(n=>(n.textContent||'').trim())
+    .filter(oz=>oz.includes('.')&&/^\d+\.\d/.test(oz))
+    .slice(0,10);
+  let ozSegmentLengths=[];
+  let sampleItemOz=dotFormatted[0]||allOzNodes[0]?.textContent?.trim()||'';
+  if(dotFormatted.length){
+    const partCounts=dotFormatted.map(oz=>oz.split('.').map(s=>s.trim()).filter(Boolean).length);
+    const freq={};
+    partCounts.forEach(count=>{freq[count]=(freq[count]||0)+1;});
+    const mode=Object.entries(freq).sort((a,b)=>b[1]-a[1]||Number(b[0])-Number(a[0]))[0]?.[0];
+    const representative=dotFormatted.find(oz=>oz.split('.').map(s=>s.trim()).filter(Boolean).length===Number(mode))||dotFormatted[0];
+    const repParts=representative.split('.').map(s=>s.trim()).filter(Boolean);
+    ozSegmentLengths=repParts.map(part=>part.length);
+    sampleItemOz=representative;
+  }else{
+    const numericSamples=allOzNodes
+      .map(n=>(n.textContent||'').trim())
+      .map(oz=>oz.split(/\D+/).filter(Boolean))
+      .filter(parts=>parts.length===2&&parts[1].length>=3)
+      .slice(0,10);
+    if(numericSamples.length){
+      const first=numericSamples[0];
+      ozSegmentLengths=[first[0].length,1,first[1].length-1];
+      sampleItemOz=first.join(' ');
+    }
+  }
   const targetOzSet=new Set([...(majorWbs.querySelectorAll(':scope > ITEMS > WBSItem > NameWBSItem')||[])].map(n=>(n.textContent||'').trim()).filter(Boolean));
   return {fileName,namePrj,descrPrj,paCode,paName,nameWBS,descrWBS,wbsType,cgrCatalog,sampleItemOz,ozSegmentLengths,targetOzSet};
 }
@@ -1688,11 +2042,14 @@ function formatExportOZ(raw, exportRef){
   if(!source)return '';
   const digits=source.replace(/\D+/g,'');
   const segs=Array.isArray(exportRef?.ozSegmentLengths)?exportRef.ozSegmentLengths.filter(n=>n>0):[];
-  if(segs.length>=2 && digits.length===segs.reduce((s,n)=>s+n,0)){
+  const sumSegs=segs.reduce((s,n)=>s+n,0);
+  const lenMatch=segs.length>=2&&(digits.length===sumSegs||(digits.length===sumSegs+1&&segs.length>=3));
+  if(lenMatch){
     let offset=0;
-    const parts=segs.map(len=>{
-      const chunk=digits.slice(offset,offset+len);
-      offset+=len;
+    const parts=segs.map((len,i)=>{
+      const actualLen=(i===segs.length-1)?digits.length-offset:len;
+      const chunk=digits.slice(offset,offset+actualLen);
+      offset+=actualLen;
       return chunk;
     }).filter(Boolean);
     if(parts.length)return parts.join('.')+'. ';
@@ -1700,6 +2057,11 @@ function formatExportOZ(raw, exportRef){
   if(/\d+\.\s*$/.test(source)||/\d+\.$/.test(source)){
     const parts=source.split('.').map(s=>s.trim()).filter(Boolean);
     if(parts.length)return parts.join('.')+'. ';
+  }
+  const numericParts=source.split(/\D+/).filter(Boolean);
+  if(numericParts.length===3)return numericParts.join('.')+'. ';
+  if(numericParts.length===2&&numericParts[1].length>=3){
+    return [numericParts[0],numericParts[1].slice(0,1),numericParts[1].slice(1)].filter(Boolean).join('.')+'. ';
   }
   return source;
 }
@@ -2415,8 +2777,7 @@ function validateExportReadiness(){
       if(targetItems.size && !targetItems.has(oz))summary.missingOZ.push(oz);
     });
     if(summary.missingOZ.length){
-      summary.ok=false;
-      summary.errors.push(`${summary.missingOZ.length} OZ nicht im Zielprojekt gefunden`);
+      summary.warnings.push(`${summary.missingOZ.length} OZ nicht in Export-Referenz-XML – Export trotzdem möglich`);
     }
     if(summary.fallbackCount>0){
       summary.warnings.push(`${summary.fallbackCount} Position(en) laufen über Fallback statt Rohkopie`);
@@ -2433,11 +2794,15 @@ function updateExportValidationSummary(){
     return;
   }
   if(audit.ok){
+    const base=audit.missingOZ.length
+      ?`${audit.accepted} Position(en) exportierbar, Zielprojekt-XML geladen, Teilmenge der OZ in Export-Referenz enthalten.`
+      :`${audit.accepted} Position(en) exportierbar, Zielprojekt-XML geladen, alle OZ im MajorWBS gefunden.`;
     const extra=audit.warnings.length?` <span style="color:#fbbf24">Hinweis:</span> ${audit.warnings.join(' | ')}`:'';
-    el.innerHTML=`<span style="color:#4ade80">✓ Export bereit:</span> ${audit.accepted} Position(en) exportierbar, Zielprojekt-XML geladen, alle OZ im MajorWBS gefunden.${extra}`;
+    el.innerHTML=`<span style="color:#4ade80">✓ Export bereit:</span> ${base}${extra}`;
     return;
   }
   const details=[...audit.errors];
+  if(audit.warnings.length)details.push(...audit.warnings);
   if(audit.missingOZ.length)details.push('Beispiele: '+audit.missingOZ.slice(0,5).join(', '));
   el.innerHTML=`<span style="color:#fbbf24">⚠ Export noch nicht sauber:</span> ${details.join(' | ')}`;
 }
@@ -3134,7 +3499,7 @@ async function runMatch(){
       }
       const top3=ranked.slice(0,3);
       const best=top3[0];
-      const accepted=!!(best&&best.score>=91&&best.kind==='CALC'&&(best.pos?.kosten||[]).some(k=>k.typ!=='S')&&!(best.debug?.hardCapsApplied||[]).length);
+      const accepted=!!(best&&best.score>=80&&best.kind==='CALC'&&(best.pos?.kosten||[]).some(k=>k.typ!=='S')&&!(best.debug?.hardCapsApplied||[]).length);
       nextResults.push({newPos:np,matches:top3,sel:0,accepted});
     }
     const now=performance.now();
@@ -3418,15 +3783,187 @@ function showDetail(idx){
   document.getElementById('detailModal').classList.add('open');
 }
 function closeDetail(){document.getElementById('detailModal').classList.remove('open');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();closeDonationModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();closeDonationModal();closeManualLangModal();}});
 
+function resetManualCache(){
+  S.manualCacheKey='';
+  S.manualCacheRows=[];
+}
+function getManualRefPool(calcOnly){
+  const activeProjects=S.refProjects.filter(p=>p.active);
+  const key=`${calcOnly?1:0}|`+activeProjects.map(p=>`${p.name}:${(p.positions||[]).length}`).join('|');
+  if(S.manualRefPoolKey===key&&S.manualRefPool&&S.manualRefIndexMap)return{refs:S.manualRefPool,indexMap:S.manualRefIndexMap};
+  const refs=activeProjects.flatMap(p=>p.positions||[]).filter(rp=>!calcOnly||((rp.kosten||[]).some(k=>k.typ!=='S')));
+  const indexMap=new Map();
+  refs.forEach((rp,idx)=>indexMap.set(rp,idx));
+  S.manualRefPoolKey=key;
+  S.manualRefPool=refs;
+  S.manualRefIndexMap=indexMap;
+  return{refs,indexMap};
+}
+function getManualBuckets(refs){
+  const key=`${refs.length}|${S.refProjects.filter(p=>p.active).map(p=>`${p.name}:${(p.positions||[]).length}`).join('|')}`;
+  if(S.manualBucketKey===key&&S.manualBuckets)return S.manualBuckets;
+  S.manualBucketKey=key;
+  S.manualBuckets=buildReferenceBuckets(refs);
+  return S.manualBuckets;
+}
+function canUseManualWorker(){
+  return typeof Worker==='function'&&typeof Blob==='function'&&typeof URL!=='undefined'&&typeof URL.createObjectURL==='function';
+}
+function buildManualWorkerPayload(target,candidateRefs,pool){
+  return{
+    workerReady:canUseManualWorker(),
+    target:{
+      oz:target?.newPos?.oz||'',
+      kurztext:target?.newPos?.kurztext||'',
+      me:target?.newPos?.me||'',
+      menge:Number(target?.newPos?.menge)||0
+    },
+    refCount:candidateRefs.length,
+    calcOnlyPoolSize:pool?.refs?.length||0
+  };
+}
+function getManualProjectPreference(target){
+  const targetProf=getMatchProfile(target?.newPos);
+  const counts={};
+  (S.results||[]).forEach(r=>{
+    const best=r?.matches?.[r.sel||0];
+    if(!best?.pos?.source)return;
+    if(!r.accepted&&!(best.debug?.reasonText||'').startsWith('Manuell gesetzt'))return;
+    const rpProf=getMatchProfile(best.pos);
+    let weight=0;
+    if(rpProf.category===targetProf.category)weight+=2;
+    if(targetProf.earthFamily&&rpProf.earthFamily===targetProf.earthFamily)weight+=2;
+    if(targetProf.disposalSig&&rpProf.disposalSig===targetProf.disposalSig)weight+=3;
+    if(targetProf.docSub&&rpProf.docSub===targetProf.docSub)weight+=2;
+    if(targetProf.siteContext&&rpProf.siteContext===targetProf.siteContext)weight+=2;
+    if(targetProf.beAsset&&rpProf.beAsset===targetProf.beAsset)weight+=2;
+    if(weight<=0)return;
+    counts[best.pos.source]=(counts[best.pos.source]||0)+weight;
+  });
+  const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  if(!ranked.length)return null;
+  return{project:ranked[0][0],weight:ranked[0][1]};
+}
+function computeManualCandidateRowsSync(target,candidateRefs,pool){
+  const projectPref=getManualProjectPreference(target);
+  return candidateRefs.map((rp,refIdxInPool)=>{
+    const evaluated=calcScore(target.newPos,rp,{isTextOnly:!(rp.matchedXML&&rp.kosten?.length)});
+    const projectBoost=(projectPref&&rp.source===projectPref.project)?Math.min(8,2+projectPref.weight):0;
+    return{
+      rp,
+      refIdx:pool.indexMap.get(rp),
+      score:Math.min(100,evaluated.score+projectBoost),
+      debug:{...evaluated.debug,projectBoost},
+      exportable:!!(rp.matchedXML&&(rp.kosten||[]).some(k=>k.typ!=='S')),
+      refIdxInPool,
+      searchOz:norm(rp.oz||''),
+      searchShort:norm(rp.kurztext||''),
+      searchLong:norm(rp.langtext||''),
+      searchSource:norm(rp.source||''),
+      searchHay:norm([rp.oz,rp.kurztext,rp.langtext,rp.source].join(' '))
+    };
+  }).sort((a,b)=>b.score-a.score);
+}
+function scoreManualSearch(queryNorm,queryTokens,row){
+  if(!queryNorm)return 1;
+  const q=queryNorm;
+  const qOZ=canonOZLoose(q);
+  const rowOZ=row.searchOz||'';
+  const rowShort=row.searchShort||'';
+  const rowLong=row.searchLong||'';
+  const rowSource=row.searchSource||'';
+  let score=0;
+  if(qOZ){
+    const rowOZCanon=canonOZLoose(rowOZ);
+    if(rowOZCanon&&rowOZCanon===qOZ)score=Math.max(score,1.0);
+    else if(rowOZCanon&&rowOZCanon.startsWith(qOZ))score=Math.max(score,0.92);
+    else if(rowOZ.includes(q)||rowOZCanon.includes(qOZ))score=Math.max(score,0.80);
+  }else if(rowOZ.includes(q)){
+    score=Math.max(score,0.72);
+  }
+  if(rowShort===q)score=Math.max(score,0.96);
+  else if(rowShort.startsWith(q))score=Math.max(score,0.86);
+  else if(rowShort.includes(q))score=Math.max(score,0.76);
+  if(queryTokens.length){
+    const shortTokenHit=queryTokens.filter(tok=>rowShort.includes(tok)).length/queryTokens.length;
+    const longTokenHit=queryTokens.filter(tok=>rowLong.includes(tok)).length/queryTokens.length;
+    const sourceTokenHit=queryTokens.filter(tok=>rowSource.includes(tok)).length/queryTokens.length;
+    score=Math.max(score,shortTokenHit*0.78,longTokenHit*0.48,sourceTokenHit*0.28);
+  }
+  if(q.length>=5){
+    score=Math.max(score,tokSim(q,rowShort)*0.72,tokSim(q,rowLong)*0.42);
+  }
+  if(row.exportable)score=Math.min(1,score+0.02);
+  return score;
+}
+function getManualCandidatesForTarget(target,calcOnly){
+  const pool=getManualRefPool(calcOnly);
+  const refs=pool.refs;
+  const targetProf=getMatchProfile(target.newPos);
+  const cacheKey=[
+    target.newPos?.oz||'',
+    target.newPos?.kurztext||'',
+    calcOnly?1:0,
+    refs.length,
+    target.accepted?1:0,
+    target.sel||0,
+    target.matches?.[target.sel||0]?.pos?.oz||''
+  ].join('|');
+  if(S.manualCacheKey===cacheKey&&S.manualCacheRows?.length)return S.manualCacheRows;
+  const buckets=getManualBuckets(refs);
+  let candidateRefs=refs.length>220?getBucketCandidates(targetProf,buckets,refs):refs;
+  if(candidateRefs.length>220){
+    candidateRefs=candidateRefs
+      .map(rp=>({rp,qs:candidateQuickScore(targetProf,getMatchProfile(rp))}))
+      .sort((a,b)=>b.qs-a.qs)
+      .slice(0,140)
+      .map(x=>x.rp);
+  }
+  buildManualWorkerPayload(target,candidateRefs,pool);
+  const rows=computeManualCandidateRowsSync(target,candidateRefs,pool);
+  S.manualCacheKey=cacheKey;
+  S.manualCacheRows=rows;
+  return rows;
+}
+function scheduleManualSearch(){
+  if(S.manualSearchTimer)clearTimeout(S.manualSearchTimer);
+  S.manualSearchTimer=setTimeout(()=>{
+    S.manualSearchTimer=null;
+    renderManualMatch();
+  },120);
+}
+function openManualTargetLang(idx,ev){
+  if(ev){
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+  const row=S.results[idx];
+  const fullLang=(row?.newPos?.langtext||'').trim();
+  if(!fullLang)return;
+  document.getElementById('manualLangHdr').textContent=`Langtext - ${row.newPos.oz}`;
+  document.getElementById('manualLangBody').textContent=fullLang;
+  document.getElementById('manualLangModal').classList.add('open');
+}
+function closeManualLangModal(){
+  document.getElementById('manualLangModal').classList.remove('open');
+}
 function openManualMatch(idx){
+  const changed=S.manualTargetIdx!==idx;
   S.manualTargetIdx=idx;
+  if(S.manualSearchTimer){clearTimeout(S.manualSearchTimer);S.manualSearchTimer=null;}
+  if(changed){
+    const searchEl=document.getElementById('manualSearch');
+    if(searchEl)searchEl.value='';
+  }
+  resetManualCache();
   switchTab('t4');
   renderManualMatch();
 }
 function onManualCalcToggle(){
   document.getElementById('manualCalcOnlyLbl')?.classList.toggle('on',document.getElementById('manualCalcOnly')?.checked);
+  resetManualCache();
   renderManualMatch();
 }
 function onManualPendingToggle(){
@@ -3450,6 +3987,10 @@ function applyManualMatch(resultIdx,refIdx){
   }else{
     S.manualTargetIdx=resultIdx;
   }
+  resetManualCache();
+  if(S.manualSearchTimer){clearTimeout(S.manualSearchTimer);S.manualSearchTimer=null;}
+  const searchEl=document.getElementById('manualSearch');
+  if(searchEl)searchEl.value='';
   renderMatch();
   updateExport();
   renderManualMatch();
@@ -3494,10 +4035,15 @@ function renderManualMatch(){
       ?`<span class="src" style="color:#4ade80">Auto-Match mit XML</span>`
       :`<span class="src" style="color:#fbbf24">Manuell prüfen</span>`;
     const qtyLabel=r.newPos.menge>0?`${r.newPos.menge.toLocaleString('de-DE',{maximumFractionDigits:3})} ${h(r.newPos.me||'')}`:`ME ${h(r.newPos.me||'-')}`;
+    const fullLang=(r.newPos.langtext||'').trim();
+    const longPreview=fullLang?`${h(fullLang.substring(0,80))}${fullLang.length>80?'...':''}`:'';
+    const langToggle=fullLang?`<button class="manual-more" onclick="openManualTargetLang(${idx},event)">📄 Langtext anzeigen</button>`:'';
+    const langBlock=fullLang?`<div class="lt">${longPreview}</div>`:'';
     return `<div class="manual-item ${statusCls} ${idx===S.manualTargetIdx?'active':''}" onclick="openManualMatch(${idx})">
       <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div class="oz">${h(r.newPos.oz)}</div>${badge}</div>
       <div class="kt">${h(r.newPos.kurztext)}</div>
-      <div class="lt">${h((r.newPos.langtext||'').substring(0,80))}${(r.newPos.langtext||'').length>80?'...':''}</div>
+      ${langBlock}
+      ${langToggle}
       <div class="manual-badges"><span class="me-tag me-none">${qtyLabel}</span>${statusChip}${autoChip}</div>
     </div>`;
     }).join('');
@@ -3509,20 +4055,16 @@ function renderManualMatch(){
   const visibleIndex=Math.max(0,targetRows.findIndex(entry=>entry.idx===S.manualTargetIdx));
   infoEl.textContent=`${visibleIndex+1} / ${targetRows.length}${pendingOnly?' offen':''}`;
   const search=norm(document.getElementById('manualSearch')?.value||'');
+  const searchTokens=search?[...new Set(tokenizeForMatch(search))]:[];
   const calcOnly=!!document.getElementById('manualCalcOnly')?.checked;
-  let refs=getActiveRef().filter(rp=>!calcOnly||((rp.kosten||[]).some(k=>k.typ!=='S')));
-  refs=refs.map((rp,refIdx)=>{
-    const evaluated=calcScore(target.newPos,rp,{isTextOnly:!(rp.matchedXML&&rp.kosten?.length)});
-    return{rp,refIdx,score:evaluated.score,debug:evaluated.debug,exportable:!!(rp.matchedXML&&(rp.kosten||[]).some(k=>k.typ!=='S'))};
-  });
+  let refs=getManualCandidatesForTarget(target,calcOnly);
   if(search){
-    refs=refs.filter(x=>{
-      const hay=norm([x.rp.oz,x.rp.kurztext,x.rp.langtext,x.rp.source].join(' '));
-      return hay.includes(search);
-    });
+    refs=refs
+      .map(x=>({...x,searchScore:scoreManualSearch(search,searchTokens,x)}))
+      .filter(x=>x.searchScore>=0.18)
+      .sort((a,b)=>(b.searchScore-a.searchScore)||(b.score-a.score));
   }
-  refs.sort((a,b)=>b.score-a.score);
-  refs=refs.slice(0,80);
+  refs=refs.slice(0,60);
   if(!refs.length){
     resultEl.innerHTML='<div class="empty"><div class="empty-i">🔎</div>Keine passende Referenz zur Suche gefunden.</div>';
     return;
@@ -3531,7 +4073,7 @@ function renderManualMatch(){
     const meCls=norm(target.newPos.me)===norm(x.rp.me)?'me-ok':'me-diff';
     return `<div class="manual-result">
       <div class="manual-result-copy">
-        <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
           <div>
             <div class="oz">${h(x.rp.oz)} · <span class="src">${h(x.rp.source)}</span></div>
             <div class="kt">${h(x.rp.kurztext)}</div>
@@ -3542,6 +4084,7 @@ function renderManualMatch(){
         <div class="manual-badges">
           <span class="me-tag ${meCls}">ME ${h(x.rp.me||'-')}</span>
           <span class="src">${x.exportable?'Kalkulation vorhanden':'nur D83/Text'}</span>
+          ${x.debug?.projectBoost?`<span class="src" style="color:#93c5fd">Projektkonsistenz +${x.debug.projectBoost}%</span>`:''}
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
@@ -3721,8 +4264,9 @@ function doExportXML(){
   if(!window._lastXML){buildXML();}
   if(!window._lastXML){alert('Keine markierten Positionen oder Zielprojekt-Referenz fehlt.');return;}
   const exportAudit=validateExportReadiness();
-  if(!exportAudit.ok){
-    alert('Export noch nicht sauber:\n- '+exportAudit.errors.join('\n- ')+(exportAudit.missingOZ.length?'\n- Beispiele: '+exportAudit.missingOZ.slice(0,5).join(', '):''));
+  if(exportAudit.errors.length){
+    const warnText=exportAudit.warnings.length?'\n\nHinweise:\n- '+exportAudit.warnings.join('\n- '):'';
+    alert('Export noch nicht sauber:\n- '+exportAudit.errors.join('\n- ')+(exportAudit.missingOZ.length?'\n- Beispiele: '+exportAudit.missingOZ.slice(0,5).join(', '):'')+warnText);
     updateExportValidationSummary();
     return;
   }
@@ -3948,6 +4492,38 @@ function runMatchingSelfTest(showUI=false){
     ,{kind:'good',a:{kurztext:'Nicht gefährlicher Abfall 170504 BM0 entsorgen',me:'t'},b:{kurztext:'N.gefährl. Abfall aus Baustelle entsorgen, 170504 BM0',me:'t'},min:75}
     ,{kind:'bad',a:{kurztext:'Qualitätssicherungsplan Schlitzwandarbeiten',me:'psch'},b:{kurztext:'Bauzeitenplan als Balkendiagramm',me:'psch'},max:35}
     ,{kind:'bad',a:{kurztext:'Einzelfundament Stahlbeton abbrechen',me:'st'},b:{kurztext:'N.gefährl. Abfall aus Baustelle entsorgen 170504 BM0',me:'t'},max:35}
+    // Frostschutz
+    ,{kind:'good',a:{kurztext:'Frostschutzschicht einbauen, Schüttung URA, RC-Material',me:'m3'},b:{kurztext:'Frostschutzschicht URA liefern und einbauen',me:'m3'},min:65,label:'Frostschutz URA match'}
+    ,{kind:'bad',a:{kurztext:'Frostschutzschicht einbauen URA',me:'m3'},b:{kurztext:'Baugrube herstellen, Boden lösen und laden',me:'m3'},max:45,label:'Frostschutz != Baugrube'}
+    ,{kind:'good',a:{kurztext:'Schichten ohne Bindemittel herstellen, Baustoffgemisch 0/45',me:'m3'},b:{kurztext:'Frostschutzschicht aus Mineralgemisch 0/45 einbauen',me:'m3'},min:60,label:'SoB/Frostschutz match'}
+    // Hinterfüllung
+    ,{kind:'good',a:{kurztext:'Bauwerkshinterfüllung einbauen, Verdichtung',me:'m3'},b:{kurztext:'Bauwerkshinterfüllung herstellen, lagewise verdichten',me:'m3'},min:72,label:'Hinterfüllung match'}
+    ,{kind:'bad',a:{kurztext:'Bauwerkshinterfüllung einbauen',me:'m3'},b:{kurztext:'Oberboden abtragen und lagern',me:'m3'},max:45,label:'Hinterfüllung != Oberboden'}
+    // Ansaat
+    ,{kind:'good',a:{kurztext:'Nassansaat Böschung, Rasenmischung RSM',me:'m2'},b:{kurztext:'Böschungsansaat Nassansaat herstellen',me:'m2'},min:60,label:'Nassansaat match'}
+    ,{kind:'bad',a:{kurztext:'Nassansaat Böschung',me:'m2'},b:{kurztext:'Oberboden abtragen',me:'m3'},max:39,label:'Ansaat != Oberboden'}
+    // Baugrube lösen
+    ,{kind:'good',a:{kurztext:'Boden für Baugrube lösen und laden, Verwertung',me:'m3'},b:{kurztext:'Bodenaushub Baugrube lösen laden verwerten',me:'m3'},min:70,label:'Baugrube lösen/laden match'}
+    ,{kind:'bad',a:{kurztext:'Boden für Baugrube lösen',me:'m3'},b:{kurztext:'Arbeitsraum verfüllen, verdichten',me:'m3'},max:45,label:'Baugrube lösen != Verfüllung'}
+    ,{kind:'good',a:{kurztext:'Leitungsgraben herstellen, Boden ausheben und laden',me:'m3'},b:{kurztext:'Rohrgraben ausheben, Grabensohle herstellen',me:'m3'},min:62,label:'Leitungsgraben match'}
+    ,{kind:'bad',a:{kurztext:'Leitungsgraben herstellen',me:'m3'},b:{kurztext:'Bauwerkshinterfüllung liefern und einbauen',me:'m3'},max:45,label:'Leitungsgraben != Hinterfüllung'}
+    ,{kind:'good',a:{kurztext:'Leitungsgraben herstellen, oberhalb der Leitungszone einbauen und verdichten',me:'m3'},b:{kurztext:'Leitungsgraben herstellen, Material nach Verlegen der Leitung in Graben oberhalb der Leitungszone einbauen und verdichten',me:'m3'},min:68,label:'Leitungszone oberhalb match'}
+    ,{kind:'bad',a:{kurztext:'Leitungsgraben herstellen, Verfüllboden gesondert',me:'m3'},b:{kurztext:'Leitungsgraben herstellen, einschließlich Leitungszone einbauen und verdichten',me:'m3'},max:52,label:'Verfüllmodus != integriert'}
+    ,{kind:'good',a:{kurztext:'Baugrube für Schacht herstellen',me:'m3'},b:{kurztext:'Schachtbaugrube herstellen, Aushub verwerten',me:'m3'},min:62,label:'Schachtbaugrube match'}
+    ,{kind:'good',a:{kurztext:'Oberboden des AG andecken auf Böschungen',me:'m2'},b:{kurztext:'Oberboden andecken Böschungen',me:'m2'},min:68,label:'Oberboden andecken match'}
+    ,{kind:'bad',a:{kurztext:'Oberboden andecken',me:'m2'},b:{kurztext:'Oberboden abtragen und lagern',me:'m3'},max:45,label:'Oberboden andecken != abtragen'}
+    ,{kind:'good',a:{kurztext:'Bauwerkshinterfüllung für Widerlager, gesamter Hinterfüllbereich',me:'m3'},b:{kurztext:'Material liefern und als Bauwerkshinterfüllung profilgerecht einbauen, gesamter Hinterfüllbereich',me:'m3'},min:72,label:'Hinterfüllbereich gesamt match'}
+    ,{kind:'bad',a:{kurztext:'Bauwerkshinterfüllung, ohne Entwässerungsbereich',me:'m3'},b:{kurztext:'Bauwerkshinterfüllung, Entwässerungsbereich',me:'m3'},max:45,label:'Entwässerungsbereich != ohne Entwässerungsbereich'}
+    ,{kind:'good',a:{kurztext:'Planum herstellen EV2 100',me:'m2'},b:{kurztext:'Unterlage profilieren, EV2 mindestens 100',me:'m2'},min:65,label:'Planum EV2 100 match'}
+    ,{kind:'bad',a:{kurztext:'Boden bzw. Fels lösen und einbauen, Planum gesondert',me:'m3'},b:{kurztext:'Boden bzw. Fels lösen und einbauen, Planum nicht gesondert',me:'m3'},max:45,label:'Planum gesondert != n. ges.'}
+    ,{kind:'good',a:{kurztext:'Frostschutzschicht 0/45 Feinanteil UF3 EV2 100',me:'m3'},b:{kurztext:'FSS 0/45 UF3 herstellen, EV2 mindestens 100',me:'m3'},min:72,label:'FSS 0/45 UF3 match'}
+    ,{kind:'bad',a:{kurztext:'Kiestragschicht 0/32 herstellen',me:'m2'},b:{kurztext:'Schottertragschicht 0/56 herstellen',me:'m2'},max:55,label:'KTS != STS'}
+    ,{kind:'bad',a:{kurztext:'Bankett profilgerecht herstellen',me:'m'},b:{kurztext:'Bankett abtragen einschließlich Vegetationsdecke',me:'m3'},max:45,label:'Bankett herstellen != abtragen'}
+    // EBV/BM Entsorgung
+    ,{kind:'good',a:{kurztext:'Entsorgung BM-0, AVV 17 05 04, nicht gefährlicher Abfall',me:'t'},b:{kurztext:'Verwertung BM0 Boden AVV 170504',me:'t'},min:75,label:'BM-0 Entsorgung match'}
+    ,{kind:'bad',a:{kurztext:'Entsorgung BM-F3 gefährlicher Abfall AVV 170506',me:'t'},b:{kurztext:'Entsorgung BM-0 AVV 170504',me:'t'},max:35,label:'BM-F3 != BM-0'}
+    // Doku Grenzfall
+    ,{kind:'bad',a:{kurztext:'Qualitätssicherungsplan erstellen',me:'psch'},b:{kurztext:'Bauzeitenplan erstellen',me:'psch'},max:39,label:'QS-Plan != Bauzeitenplan'}
   ];
   const results=cases.map(c=>{
     const ev=calcScore(c.a,c.b,{isTextOnly:false});
@@ -4049,6 +4625,46 @@ function switchTab(id){
   if(id==='t3')buildXML();
   if(id==='t4')renderManualMatch();
 }
+function setManualSplitWidth(px,persist=true){
+  const layout=document.querySelector('#t4 .manual-layout');
+  if(!layout||window.innerWidth<=900)return;
+  const bounds=layout.getBoundingClientRect();
+  const min=260;
+  const max=Math.max(min,Math.min(bounds.width-340,520));
+  const clamped=Math.max(min,Math.min(max,px));
+  document.documentElement.style.setProperty('--manual-left-width',`${clamped}px`);
+  if(persist){
+    try{localStorage.setItem(MANUAL_SPLIT_KEY,String(Math.round(clamped)));}catch(_){}
+  }
+}
+function loadManualSplitWidth(){
+  if(window.innerWidth<=900)return;
+  let saved=null;
+  try{saved=Number(localStorage.getItem(MANUAL_SPLIT_KEY)||'');}catch(_){}
+  if(Number.isFinite(saved)&&saved>0)setManualSplitWidth(saved,false);
+}
+function startManualSplit(ev){
+  if(window.innerWidth<=900)return;
+  ev.preventDefault();
+  S.manualSplitDragging=true;
+  document.getElementById('manualSplitter')?.classList.add('dragging');
+}
+function moveManualSplit(ev){
+  if(!S.manualSplitDragging||window.innerWidth<=900)return;
+  const layout=document.querySelector('#t4 .manual-layout');
+  if(!layout)return;
+  const rect=layout.getBoundingClientRect();
+  setManualSplitWidth(ev.clientX-rect.left,false);
+}
+function stopManualSplit(){
+  if(!S.manualSplitDragging)return;
+  S.manualSplitDragging=false;
+  document.getElementById('manualSplitter')?.classList.remove('dragging');
+  const current=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--manual-left-width'));
+  if(Number.isFinite(current)&&current>0){
+    try{localStorage.setItem(MANUAL_SPLIT_KEY,String(Math.round(current)));}catch(_){}
+  }
+}
 
 function setupDrop2(zoneId,type){
   const zone=document.getElementById(zoneId);if(!zone)return;
@@ -4063,9 +4679,9 @@ function setupDrop2(zoneId,type){
   });
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════════════════════════════════════════════════════
 // LAYOUT POLISH (DOM-Nachbearbeitung)
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════════════════════════════════════════════════════
 function applyLayoutPolish(){
   const previewHead=document.querySelector('#t1 .preview-compact .section-head');
   if(previewHead){
@@ -4102,9 +4718,9 @@ function applyLayoutPolish(){
   updateDiagnosticSummary();
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════════════════════════════════════════════════════
 // INIT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════════════════════════════════════════════════════
 (function(){
   // document.lastModified spiegelt immer den letzten Speicherzeitpunkt wider
   const lm=new Date(document.lastModified);
@@ -4112,31 +4728,27 @@ function applyLayoutPolish(){
   document.getElementById('buildStamp').textContent='Stand: '+formatBuildStamp(stamp);
 })();
 document.getElementById('siScore').textContent='↓';
-updateMatchMemoryUI();
-updateExportReferenceUI();
 
 // File-Input Event-Handler
 document.getElementById('fileD83').onchange=e=>{if(e.target.files[0])loadPendingFile(e.target.files[0],'d83');};
 document.getElementById('fileXML').onchange=e=>{if(e.target.files[0])loadPendingFile(e.target.files[0],'xml');};
 document.getElementById('fNew').onchange=e=>{if(e.target.files[0])loadNewLV(e.target.files[0]);};
 document.getElementById('fileRefJSON').onchange=e=>{if(e.target.files[0])importRefFromJSON(e.target.files[0]);};
-document.getElementById('fileMatchMemoryJSON').onchange=e=>{if(e.target.files[0])importMatchMemoryJSON(e.target.files[0]);};
-document.getElementById('fileExportRefXML').onchange=e=>{if(e.target.files[0])loadExportReferenceFile(e.target.files[0]);};
 
 // Drag-Drop Zonen
 setupDrop2('dropD83','d83');
 setupDrop2('dropXML','xml');
 setupDrop2('dNew','new');
+document.addEventListener('mousemove',moveManualSplit);
+document.addEventListener('mouseup',stopManualSplit);
+window.addEventListener('resize',()=>loadManualSplitWidth());
 
 // App starten
 applyLayoutPolish();
 document.getElementById('d83RefLbl')?.classList.toggle('on',document.getElementById('d83RefFilter')?.checked);
 document.getElementById('manualCalcOnlyLbl')?.classList.toggle('on',document.getElementById('manualCalcOnly')?.checked);
-document.getElementById('manualPendingOnlyLbl')?.classList.toggle('on',document.getElementById('manualPendingOnly')?.checked);
+loadManualSplitWidth();
 loadRefFromStorage();
-updateExportValidationSummary();
-
-
 </script>
 </body>
 </html>
