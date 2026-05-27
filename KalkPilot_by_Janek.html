@@ -646,10 +646,26 @@ function log(msg,t='i'){
   s.className='l'+t;s.textContent='['+new Date().toLocaleTimeString()+'] '+msg+'\n';
   el.appendChild(s);el.scrollTop=el.scrollHeight;
 }
+const TEXT_CACHE_LIMIT=12000;
+const NORM_CACHE=new Map();
+const STOPWORD_CACHE=new Map();
+const TERM_CACHE=new Map();
+const TOKEN_CACHE=new Map();
+function cacheGetOrSet(map,key,build){
+  if(map.has(key))return map.get(key);
+  const value=build();
+  if(map.size>=TEXT_CACHE_LIMIT){
+    const firstKey=map.keys().next().value;
+    if(firstKey!==undefined)map.delete(firstKey);
+  }
+  map.set(key,value);
+  return value;
+}
 function norm(t){
-  return(t||'').toLowerCase()
+  const src=String(t||'');
+  return cacheGetOrSet(NORM_CACHE,src,()=>src.toLowerCase()
     .replace(/ä|Ã¤/g,'ae').replace(/ö|Ã¶/g,'oe').replace(/ü|Ã¼/g,'ue').replace(/ß|ÃŸ/g,'ss')
-    .replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+    .replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim());
 }
 function normalizeOZPart(part){
   const cleaned=String(part||'').replace(/\D/g,'');
@@ -825,7 +841,8 @@ const LV_STOPWORDS=new Set([
   'freitext','abrechnung','abrechng','auftrag','gesondert','anordnung','einrechn','einrechnen'
 ]);
 function removeLVStopwords(text){
-  return norm(text).split(/\s+/).filter(w=>w.length>2&&!LV_STOPWORDS.has(w)).join(' ');
+  const src=String(text||'');
+  return cacheGetOrSet(STOPWORD_CACHE,src,()=>norm(src).split(/\s+/).filter(w=>w.length>2&&!LV_STOPWORDS.has(w)).join(' '));
 }
 
 // â”€â”€â”€ Bauterm-Normierung â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -915,13 +932,17 @@ const TERM_NORMS=[
   [/\babrechn(?:ung|g)\b/g,' '],
 ];
 function normalizeConstructionTerms(text){
-  let t=removeLVStopwords(text);
-  for(const [pat,rep] of TERM_NORMS)t=t.replace(pat,rep);
-  return t.replace(/\s+/g,' ').trim();
+  const src=String(text||'');
+  return cacheGetOrSet(TERM_CACHE,src,()=>{
+    let t=removeLVStopwords(src);
+    for(const [pat,rep] of TERM_NORMS)t=t.replace(pat,rep);
+    return t.replace(/\s+/g,' ').trim();
+  });
 }
 
 function tokenizeForMatch(text){
-  return normalizeConstructionTerms(text).split(/\s+/).filter(w=>w.length>2);
+  const src=String(text||'');
+  return cacheGetOrSet(TOKEN_CACHE,src,()=>Object.freeze(normalizeConstructionTerms(src).split(/\s+/).filter(w=>w.length>2)));
 }
 function normUnit(u){
   const s=repairLegacyGermanText(u||'').toLowerCase().trim();
