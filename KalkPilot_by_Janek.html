@@ -181,6 +181,25 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .export-actions{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;padding:10px 12px;background:rgba(79,142,247,.05);border:1px solid rgba(79,142,247,.14);border-radius:8px}
 .export-primary{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .export-meta{font-size:11px;color:var(--muted)}
+.export-oz-box{margin-top:10px;border:1px solid var(--border);border-radius:8px;background:rgba(79,142,247,.05);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.export-oz-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.export-oz-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.export-oz-status{font-size:11px;font-weight:700}
+.export-oz-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.export-oz-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+.export-oz-card .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+.export-oz-card .val{font-family:Consolas,monospace;font-size:12px;color:var(--text);word-break:break-all}
+.export-oz-examples{display:flex;flex-direction:column;gap:4px;font-size:11px}
+.export-oz-example{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;border-bottom:1px dashed rgba(255,255,255,.06);padding-bottom:4px}
+.export-oz-example:last-child{border-bottom:0;padding-bottom:0}
+.export-oz-map{font-family:Consolas,monospace;color:var(--text)}
+.export-oz-expert{border-top:1px solid rgba(255,255,255,.08);padding-top:8px;display:flex;flex-direction:column;gap:8px}
+.export-oz-expert-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.export-oz-expert-box{display:flex;flex-direction:column;gap:6px}
+.export-oz-input{min-width:260px;font-family:Consolas,monospace}
+.export-oz-hint{font-size:11px;color:var(--muted);line-height:1.45}
+.export-oz-live{font-size:11px;color:#dbeafe;font-family:Consolas,monospace}
+@media(max-width:900px){.export-oz-grid{grid-template-columns:1fr}}
 .ref-notice{display:none;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(245,158,11,.28);background:rgba(245,158,11,.08);color:#fcd34d;font-size:11px;line-height:1.5}
 .ref-notice.show{display:flex}
 .ref-notice b{color:#fde68a}
@@ -439,8 +458,8 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         </label>
         <select id="filterSel" onchange="renderMatch()">
           <option value="all">- Alle -</option>
-          <option value="green">🟢 Grün ≥ 91%</option>
-          <option value="yellow">🟡 Gelb 60-90%</option>
+          <option value="green">🟢 Grün ≥ 80%</option>
+          <option value="yellow">🟡 Gelb 60-79%</option>
           <option value="orange">🟠 Orange 40-59%</option>
           <option value="red">🔴 Rot ≤ 39%</option>
           <option value="nomatch">⬜ Kein Treffer</option>
@@ -501,8 +520,8 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 <div id="t3" class="tab">
   <div class="sum-grid">
     <div class="sum-card"><div class="sum-n" id="sAcc">0</div><div class="sum-l">Übernommene Positionen</div></div>
-    <div class="sum-card"><div class="sum-n" id="sHigh">0</div><div class="sum-l">≥ 91% Match</div></div>
-    <div class="sum-card"><div class="sum-n" id="sMid">0</div><div class="sum-l">60-90% Match</div></div>
+    <div class="sum-card"><div class="sum-n" id="sHigh">0</div><div class="sum-l">≥ 80% Match</div></div>
+    <div class="sum-card"><div class="sum-n" id="sMid">0</div><div class="sum-l">60-79% Match</div></div>
     <div class="sum-card"><div class="sum-n" id="sLow">0</div><div class="sum-l">&lt; 60% - manuell prüfen</div></div>
   </div>
   <div class="card">
@@ -531,6 +550,15 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       <button class="btn btn-s btn-sm" onclick="copyXML(event)">📋 XML kopieren</button>
     </div>
     <div id="exportValidationSummary" class="section-note" style="margin-top:10px">Export-Prüfung erscheint hier, sobald Positionen übernommen sind.</div>
+    <div id="exportOzInspector" class="export-oz-box">
+      <div class="export-oz-head">
+        <div>
+          <div class="export-oz-title">OZ-Abgleich</div>
+          <div class="section-note">Automatische Prüfung der Ziel-OZ und bei Bedarf manuelle Format-Überschreibung für den Export.</div>
+        </div>
+      </div>
+      <div class="section-note">Zielprojekt-XML laden, damit die OZ-Struktur geprüft und bei Bedarf auf Seite 4 angepasst werden kann.</div>
+    </div>
   </div>
   <div class="card" style="flex:1;display:flex;flex-direction:column;gap:8px;min-height:0">
     <div class="ctitle">XML-Vorschau (iTWO: Rechtsklick → Kalkulation importieren → Kalkulation XML)</div>
@@ -667,6 +695,8 @@ const S={
   refStorageWarning:'',
   matching:false,
   exportRef:null,
+  exportOzOverrideEnabled:false,
+  exportOzManualSample:'',
 };
 // Pending new project (before merging)
 const P={
@@ -680,8 +710,22 @@ const REVIEW_NOTES_KEY='KalkPilot_ReviewNotes_v1';
 const MANUAL_SPLIT_KEY='KalkPilot_ManualSplit_v1';
 const MATCH_SPLIT_KEY='KalkPilot_MatchSplit_v1';
 const REF_POSITION_RECOMMENDED_MAX=15000;
+const MATCH_GREEN_MIN=80;
+const MATCH_YELLOW_MIN=60;
+const MATCH_ORANGE_MIN=40;
+function isProjectActive(project){
+  return project?.active!==false&&project?.active!=='false'&&project?.active!==0&&project?.active!=='0';
+}
 function getActiveRef(){
-  return S.refProjects.filter(p=>p.active).flatMap(p=>p.positions);
+  return S.refProjects.filter(isProjectActive).flatMap(p=>p.positions);
+}
+function classifyMatchScore(sc){
+  const score=Number(sc)||0;
+  if(score>=MATCH_GREEN_MIN)return'green';
+  if(score>=MATCH_YELLOW_MIN)return'yellow';
+  if(score>=MATCH_ORANGE_MIN)return'orange';
+  if(score>0)return'red';
+  return'nomatch';
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -1384,9 +1428,9 @@ function collectDiagnosticSignals(){
   return {
     total,accepted,noMatch,docRisk,disposalRisk,demolitionRisk,hardCaps,
     linkedRef,readiness,
-    green:results.filter(r=>(r.matches?.[0]?.score||0)>=91).length,
-    warm:results.filter(r=>{const s=r.matches?.[0]?.score||0;return s>=60&&s<91;}).length,
-    weak:results.filter(r=>{const s=r.matches?.[0]?.score||0;return s>0&&s<60;}).length
+    green:results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='green').length,
+    warm:results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='yellow').length,
+    weak:results.filter(r=>['orange','red'].includes(classifyMatchScore(r.matches?.[0]?.score))).length
   };
 }
 function updateDiagnosticSummary(diag=null){
@@ -1906,7 +1950,14 @@ function makeXref(){
   const c='0123456789ABCDEF';
   return Array.from({length:16},()=>c[Math.floor(Math.random()*16)]).join('');
 }
-function scoreBadge(sc){if(sc>=80)return'bh';if(sc>=60)return'bm';if(sc>=40)return'bo';if(sc>0)return'bl';return'';}
+function scoreBadge(sc){
+  const bucket=classifyMatchScore(sc);
+  if(bucket==='green')return'bh';
+  if(bucket==='yellow')return'bm';
+  if(bucket==='orange')return'bo';
+  if(bucket==='red')return'bl';
+  return'';
+}
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // GAEB D83 PARSER
@@ -2136,7 +2187,16 @@ function parseExportReferenceXML(txt,fileName=''){
     }
   }
   const targetOzValues=[...(majorWbs.querySelectorAll(':scope > ITEMS > WBSItem > NameWBSItem')||[])].map(n=>(n.textContent||'').trim()).filter(Boolean);
+  const templateData=buildOzTemplateData(sampleItemOz);
+  const targetOzSet=new Set(targetOzValues);
+  const targetOzKeySet=buildOZKeySet(targetOzValues);
+  const targetOzExactMap=buildOZExactMap(targetOzValues);
+  return {fileName,namePrj,descrPrj,paCode,paName,nameWBS,descrWBS,wbsType,cgrCatalog,sampleItemOz,ozSegmentLengths,templateSegments:templateData.templateSegments,templateSuffix:templateData.templateSuffix,targetOzSet,targetOzKeySet,targetOzExactMap};
+}
+function buildOzTemplateData(sample){
+  const sampleItemOz=String(sample||'').replace(/\r?\n/g,'').trimEnd();
   const templateSegments=[];
+  const ozSegmentLengths=[];
   const templateSuffix=sampleItemOz.includes('.')?sampleItemOz.slice(sampleItemOz.lastIndexOf('.')+1):'';
   if(sampleItemOz.includes('.')){
     const matches=[...sampleItemOz.matchAll(/([^.]*)\./g)];
@@ -2150,21 +2210,39 @@ function parseExportReferenceXML(txt,fileName=''){
         trailSpaces:(rawSeg.match(/\s*$/)?.[0]||'').length,
         zeroPad:!!trimmed && !/\s/.test(rawSeg) && /^0\d+$/.test(trimmed)
       });
+      if(trimmed)ozSegmentLengths.push(trimmed.length);
     });
+  }else{
+    const parts=sampleItemOz.split(/\D+/).filter(Boolean);
+    parts.forEach(part=>ozSegmentLengths.push(part.length));
   }
-  const targetOzSet=new Set(targetOzValues);
-  const targetOzKeySet=buildOZKeySet(targetOzValues);
-  const targetOzExactMap=buildOZExactMap(targetOzValues);
-  return {fileName,namePrj,descrPrj,paCode,paName,nameWBS,descrWBS,wbsType,cgrCatalog,sampleItemOz,ozSegmentLengths,templateSegments,templateSuffix,targetOzSet,targetOzKeySet,targetOzExactMap};
+  return {
+    sampleItemOz,
+    ozSegmentLengths,
+    templateSegments,
+    templateSuffix,
+    isValid:(templateSegments.length>=2)||(ozSegmentLengths.length>=2)
+  };
+}
+function getEffectiveExportRef(){
+  if(!S.exportRef)return null;
+  if(!S.exportOzOverrideEnabled)return S.exportRef;
+  const override=buildOzTemplateData(S.exportOzManualSample);
+  if(!override.isValid)return S.exportRef;
+  return {
+    ...S.exportRef,
+    sampleItemOz:override.sampleItemOz,
+    ozSegmentLengths:override.ozSegmentLengths,
+    templateSegments:override.templateSegments,
+    templateSuffix:override.templateSuffix,
+    manualOzOverride:true
+  };
 }
 function formatExportOZ(raw, exportRef){
   const source=String(raw||'').trim();
   if(!source)return '';
   const exactMap=exportRef?.targetOzExactMap instanceof Map?exportRef.targetOzExactMap:null;
-  if(exactMap){
-    const exact=ozLookupKeys(source).map(key=>exactMap.get(key)).find(Boolean);
-    if(exact)return exact;
-  }
+  const manualOverride=!!exportRef?.manualOzOverride;
   const numericParts=source.split(/\D+/).filter(Boolean);
   const templateSegments=Array.isArray(exportRef?.templateSegments)?exportRef.templateSegments.filter(seg=>seg&&seg.width>0):[];
   if(templateSegments.length>=2&&numericParts.length===templateSegments.length){
@@ -2177,6 +2255,14 @@ function formatExportOZ(raw, exportRef){
       return width>String(num).length?String(num).padStart(width,' '):String(num);
     });
     return parts.join('.')+'.'+String(exportRef?.templateSuffix??' ');
+  }
+  if(exactMap&&manualOverride){
+    const exact=ozLookupKeys(source).map(key=>exactMap.get(key)).find(Boolean);
+    if(exact)return exact;
+  }
+  if(exactMap&&!manualOverride){
+    const exact=ozLookupKeys(source).map(key=>exactMap.get(key)).find(Boolean);
+    if(exact)return exact;
   }
   const digits=source.replace(/\D+/g,'');
   const segs=Array.isArray(exportRef?.ozSegmentLengths)?exportRef.ozSegmentLengths.filter(n=>n>0):[];
@@ -2230,16 +2316,139 @@ function updateExportReferenceUI(){
   if(!summary)return;
   if(!S.exportRef){
     summary.innerHTML='<b>Zielprojekt-Referenz:</b> Noch nicht geladen. Für den XML-Export ist eine iTWO-Projekt-XML mit <code>MajorWBS</code> Pflicht.';
+    renderExportOzInspector();
     return;
   }
   summary.innerHTML=`<b>Zielprojekt erkannt:</b><br>Projekt: ${h(S.exportRef.namePrj)}${S.exportRef.descrPrj?` - ${h(S.exportRef.descrPrj)}`:''}<br>WBS-ID: ${h(S.exportRef.nameWBS)}${S.exportRef.descrWBS?` - ${h(S.exportRef.descrWBS)}`:''}<br>WBS-Typ: ${h(S.exportRef.wbsType)} | Phase: ${h(S.exportRef.paCode)}${S.exportRef.paName?` (${h(S.exportRef.paName)})`:''}${S.exportRef.fileName?`<br>Datei: ${h(S.exportRef.fileName)}`:''}`;
+  renderExportOzInspector();
+}
+function getExportOzSourceRows(limit=5){
+  const accepted=S.results.filter(r=>r.accepted).map(r=>r.newPos);
+  const base=accepted.length?accepted:S.newLV;
+  return (base||[]).filter(Boolean).slice(0,limit);
+}
+function getExportOzInspectorState(){
+  const baseRef=S.exportRef;
+  const effectiveRef=getEffectiveExportRef();
+  const sourceRows=getExportOzSourceRows(5);
+  const sourceSample=sourceRows[0]?.oz||S.newLV[0]?.oz||'';
+  const manualTemplate=buildOzTemplateData(S.exportOzManualSample);
+  const examples=effectiveRef?sourceRows.map(pos=>{
+    const formatted=formatExportOZ(pos.oz,effectiveRef);
+    const targetSet=effectiveRef.targetOzSet instanceof Set?effectiveRef.targetOzSet:new Set();
+    return {
+      sourceOz:String(pos.oz||'').trim(),
+      formattedOz:String(formatted||'').trim(),
+      exactHit:targetSet.has(String(formatted||'').trim())
+    };
+  }):[];
+  const hits=examples.filter(x=>x.exactHit).length;
+  let tone='good';
+  let status='✅ Exportformat eindeutig';
+  let hint='Die Ziel-OZ werden automatisch aus der geladenen Projekt-XML abgeleitet.';
+  if(!baseRef){
+    tone='neutral';
+    status='ℹ Zielprojekt-XML laden';
+    hint='Erst nach dem Laden der Zielprojekt-XML kann der OZ-Abgleich bewertet werden.';
+  }else if(S.exportOzOverrideEnabled&&!manualTemplate.isValid){
+    tone='bad';
+    status='⚠ Expertenformat noch nicht gültig';
+    hint='Bitte ein Beispielformat wie z. B. 01.   1. eingeben.';
+  }else if(examples.length&&hits===0){
+    tone='bad';
+    status='⚠ Probeabbildung kritisch';
+    hint='Keine Beispiel-OZ wurde exakt im Zielprojekt gefunden. Der Expertenmodus kann hier helfen.';
+  }else if(examples.length&&hits<examples.length){
+    tone='warn';
+    status='⚠ Probeabbildung auffällig';
+    hint=`${hits}/${examples.length} Beispiel-OZ passen exakt. Prüfe das Format vor dem Export nach iTWO.`;
+  }else if(!examples.length){
+    tone='neutral';
+    status='ℹ Noch keine Exportbeispiele';
+    hint='Sobald ein neues LV oder übernommene Positionen vorliegen, erscheinen hier Beispielabbildungen.';
+  }
+  return {
+    baseRef,effectiveRef,sourceSample,examples,hits,tone,status,hint,
+    targetSample:baseRef?.sampleItemOz||'',
+    effectiveSample:effectiveRef?.sampleItemOz||baseRef?.sampleItemOz||'',
+    manualTemplateValid:manualTemplate.isValid
+  };
+}
+function renderExportOzInspector(){
+  const box=document.getElementById('exportOzInspector');
+  if(!box)return;
+  const state=getExportOzInspectorState();
+  if(!state.baseRef){
+    box.innerHTML=`<div class="export-oz-head"><div><div class="export-oz-title">OZ-Abgleich</div><div class="section-note">Automatische Prüfung der Ziel-OZ und bei Bedarf manuelle Format-Überschreibung für den Export.</div></div><div class="export-oz-status" style="color:#93c5fd">ℹ Zielprojekt-XML laden</div></div><div class="section-note">Erst nach dem Laden der Zielprojekt-XML kann KalkPilot die erwartete OZ-Struktur erkennen.</div>`;
+    return;
+  }
+  const examplesHtml=state.examples.length
+    ?state.examples.map(ex=>`<div class="export-oz-example"><div class="export-oz-map">${h(ex.sourceOz)} → ${h(ex.formattedOz||'–')}</div><div style="color:${ex.exactHit?'#4ade80':'#fbbf24'};font-size:10px">${ex.exactHit?'im Ziel gefunden':'nicht eindeutig'}</div></div>`).join('')
+    :'<div class="section-note">Noch keine Beispiel-OZ aus dem neuen LV vorhanden.</div>';
+  const toneColor=state.tone==='good'?'#4ade80':state.tone==='warn'?'#fbbf24':state.tone==='bad'?'#f87171':'#93c5fd';
+  const expertEnabled=S.exportOzOverrideEnabled;
+  box.innerHTML=`
+    <div class="export-oz-head">
+      <div>
+        <div class="export-oz-title">OZ-Abgleich</div>
+        <div class="section-note">${h(state.hint)}</div>
+      </div>
+      <div class="export-oz-status" style="color:${toneColor}">${state.status}</div>
+    </div>
+    <div class="export-oz-grid">
+      <div class="export-oz-card"><div class="lbl">Zielprojekt erkannt</div><div class="val">${h(state.targetSample||'–')}</div></div>
+      <div class="export-oz-card"><div class="lbl">Neues LV erkannt</div><div class="val">${h(state.sourceSample||'–')}</div></div>
+      <div class="export-oz-card"><div class="lbl">Aktiv für Export</div><div class="val">${h(state.effectiveSample||'–')}${expertEnabled?'  (Expertenmodus)':''}</div></div>
+    </div>
+    <div class="export-oz-card">
+      <div class="lbl">Probeabbildung</div>
+      <div class="export-oz-examples">${examplesHtml}</div>
+    </div>
+    <div class="export-oz-expert">
+      <label class="export-oz-expert-row">
+        <input type="checkbox" ${expertEnabled?'checked':''} onchange="toggleExportOzOverride(this.checked)" style="width:14px;height:14px">
+        <span><b>Expertenmodus:</b> OZ-Struktur manuell überschreiben</span>
+      </label>
+      <div class="export-oz-expert-box" style="${expertEnabled?'display:flex':'display:none'}">
+        <div class="export-oz-expert-row">
+          <input type="text" id="exportOzManualInput" class="export-oz-input" value="${h(S.exportOzManualSample||state.targetSample||'')}" oninput="setExportOzManualSample(this.value)" placeholder="z. B. 01.   1. ">
+          <button class="btn btn-s btn-sm" onclick="resetExportOzOverride()">Automatik wiederherstellen</button>
+        </div>
+        <div class="export-oz-hint">Hier nur ein Beispielformat angeben, nicht einzelne OZ bearbeiten. Die Exportvorschau wird sofort neu aufgebaut, ohne neues Matching.</div>
+        <div class="export-oz-live">Live-Vorschau: ${h(state.sourceSample||'01 1')} → ${h(state.examples[0]?.formattedOz||formatExportOZ(state.sourceSample||'01 1',state.effectiveRef)||'–')}</div>
+        ${state.manualTemplateValid?'<div class="section-note" style="color:#4ade80">Format aktiv. Die XML-Vorschau unten nutzt jetzt dieses Muster.</div>':'<div class="section-note" style="color:#fbbf24">Noch kein gültiges Beispielformat erkannt.</div>'}
+      </div>
+    </div>`;
+}
+function toggleExportOzOverride(enabled){
+  S.exportOzOverrideEnabled=!!enabled;
+  if(enabled&&!S.exportOzManualSample)S.exportOzManualSample=S.exportRef?.sampleItemOz||'';
+  refreshExportOzOverride();
+}
+function setExportOzManualSample(value){
+  S.exportOzManualSample=String(value||'');
+  refreshExportOzOverride();
+}
+function resetExportOzOverride(){
+  S.exportOzOverrideEnabled=false;
+  S.exportOzManualSample=S.exportRef?.sampleItemOz||'';
+  refreshExportOzOverride();
+}
+function refreshExportOzOverride(){
+  renderExportOzInspector();
+  if(S.results.length)updateExport();
+  else{
+    buildXML();
+    updateExportValidationSummary();
+  }
 }
 function probeExportReferenceMapping(){
-  if(!S.exportRef||!S.newLV?.length)return null;
+  const currentRef=getEffectiveExportRef();
+  if(!currentRef||!S.newLV?.length)return null;
   const sample=S.newLV.slice(0,Math.min(12,S.newLV.length));
-  const targetSet=S.exportRef.targetOzSet instanceof Set?S.exportRef.targetOzSet:new Set();
+  const targetSet=currentRef.targetOzSet instanceof Set?currentRef.targetOzSet:new Set();
   const mapped=sample.map(pos=>{
-    const formatted=formatExportOZ(pos.oz,S.exportRef);
+    const formatted=formatExportOZ(pos.oz,currentRef);
     return {
       sourceOz:String(pos.oz||'').trim(),
       formattedOz:String(formatted||'').trim(),
@@ -2253,6 +2462,8 @@ async function loadExportReferenceFile(file){
   try{
     const txt=await readUploadedText(file,'XML');
     S.exportRef=parseExportReferenceXML(txt,file.name);
+    S.exportOzOverrideEnabled=false;
+    S.exportOzManualSample=S.exportRef?.sampleItemOz||'';
     updateExportReferenceUI();
     buildXML();
     updateExportValidationSummary();
@@ -2272,6 +2483,8 @@ async function loadExportReferenceFile(file){
   }catch(err){
     pendingXmlExportAfterReference=false;
     S.exportRef=null;
+    S.exportOzOverrideEnabled=false;
+    S.exportOzManualSample='';
     updateExportReferenceUI();
     updateExportValidationSummary();
     alert(err.message||'Die Referenzdatei konnte nicht gelesen werden.');
@@ -2281,6 +2494,8 @@ async function loadExportReferenceFile(file){
 function clearExportReference(){
   S.exportRef=null;
   pendingXmlExportAfterReference=false;
+  S.exportOzOverrideEnabled=false;
+  S.exportOzManualSample='';
   const input=document.getElementById('fileExportRefXML');
   if(input)input.value='';
   updateExportReferenceUI();
@@ -2532,14 +2747,15 @@ function updateRefUI(){
     list.innerHTML='<div class="empty"><div class="empty-i">🗄</div>Noch keine Referenzprojekte</div>';
   }else{
     list.innerHTML=S.refProjects.map((p,i)=>{
+      const projectActive=isProjectActive(p);
       const s=p.stats||{};
       const typeIcon=s.hasD83&&s.hasXML?'📊':s.hasXML?'🗂':'📋';
       const qualBadge=s.withCosts>0
         ?`<span class="stat-chip sc-match">✓ ${s.withCosts} Kalk.Pos.</span>`:
          `<span class="stat-chip" style="background:rgba(245,158,11,.15);color:#fbbf24">⚠ Keine Kosten</span>`;
-      return`<div class="proj-card ${p.active?'active-proj':''}">
+      return`<div class="proj-card ${projectActive?'active-proj':''}">
         <div class="proj-header">
-          <input type="checkbox" ${p.active?'checked':''} onchange="toggleRefProject(${i},this.checked)" style="width:14px;height:14px;flex-shrink:0;accent-color:var(--accent)">
+          <input type="checkbox" ${projectActive?'checked':''} onchange="toggleRefProject(${i},this.checked)" style="width:14px;height:14px;flex-shrink:0;accent-color:var(--accent)">
           <span style="font-size:16px">${typeIcon}</span>
           <span class="proj-name">${h(p.name)}</span>
           <button class="btn btn-s btn-sm" onclick="removeRefProject(${i})" style="margin-left:auto;color:var(--red)">✕</button>
@@ -2841,9 +3057,28 @@ function textContainsDrainageHints(text=''){
   const t=normalizeConstructionTerms(text);
   return /\bsickerwasserrohr\b|\bdraenrohr\b|\bdrainagerohr\b|\bdrainage\b|\bleitungsbau\b|\brohrleitung\b/.test(t);
 }
+function runExportFormatSelfTest(){
+  const fakeRef={
+    ...buildOzTemplateData('01.   1.'),
+    manualOzOverride:true,
+    targetOzExactMap:new Map(),
+    targetOzSet:new Set(['01.   1.','03.   7.','12.   5.']),
+    targetOzKeySet:buildOZKeySet(['01.   1.','03.   7.','12.   5.'])
+  };
+  const cases=[
+    {source:'01 1',expected:'01.   1.'},
+    {source:'03 7',expected:'03.   7.'},
+    {source:'12 5',expected:'12.   5.'}
+  ];
+  return cases.map(c=>{
+    const actual=formatExportOZ(c.source,fakeRef).trimEnd();
+    return {...c,actual,ok:actual===c.expected};
+  });
+}
 
 function runExportSelfTest(showUI=false,verbose=false){
   const accepted=S.results.filter(r=>r.accepted&&hasExportableMatch(r));
+  const currentRef=getEffectiveExportRef();
   const audits=[];
   accepted.forEach(r=>{
     const best=r.matches?.[r.sel||0];
@@ -2851,7 +3086,7 @@ function runExportSelfTest(showUI=false,verbose=false){
     if(!rp?.rawWBSItemXml)return;
     try{
       const srcDoc=new DOMParser().parseFromString(rp.rawWBSItemXml,'text/xml');
-      const exportXml=cloneRawWBSItemXml(rp,formatExportOZ(r.newPos.oz,S.exportRef),r.newPos.kurztext);
+      const exportXml=cloneRawWBSItemXml(rp,formatExportOZ(r.newPos.oz,currentRef),r.newPos.kurztext);
       const outDoc=exportXml?new DOMParser().parseFromString(exportXml,'text/xml'):null;
       if(!outDoc || outDoc.querySelector('parsererror')){
         audits.push({newOz:r.newPos.oz,refOz:rp.oz,project:rp.source,ok:false,issue:'Export-Rohkopie nicht parsebar'});
@@ -2862,7 +3097,7 @@ function runExportSelfTest(showUI=false,verbose=false){
       const srcCounts=countXmlEstimateNodes(srcItem);
       const outCounts=countXmlEstimateNodes(outItem);
       const issues=[];
-      if(textOf(outItem,':scope > NameWBSItem','')!==formatExportOZ(r.newPos.oz,S.exportRef))issues.push('Ziel-OZ nicht korrekt eingesetzt');
+      if(textOf(outItem,':scope > NameWBSItem','')!==formatExportOZ(r.newPos.oz,currentRef))issues.push('Ziel-OZ nicht korrekt eingesetzt');
       if(textOf(outItem,':scope > EstDetails > SubItem > Text','')!==r.newPos.kurztext)issues.push('Ziel-Kurztext nicht korrekt eingesetzt');
       if(textOf(outItem,':scope > OutlineSpecs','')!==textOf(srcItem,':scope > OutlineSpecs',''))issues.push('OutlineSpecs abweichend');
       if(srcCounts.topSubItems!==outCounts.topSubItems)issues.push(`Top-SubItems ${srcCounts.topSubItems}→${outCounts.topSubItems}`);
@@ -2919,7 +3154,8 @@ function runExportSelfTest(showUI=false,verbose=false){
 function validateExportReadiness(){
   const accepted=S.results.filter(r=>r.accepted&&hasExportableMatch(r));
   const summary={ok:true,errors:[],warnings:[],accepted:accepted.length,missingOZ:[],missingRef:false,fallbackCount:0,rawCopyCount:0};
-  if(!S.exportRef){
+  const currentRef=getEffectiveExportRef();
+  if(!currentRef){
     summary.ok=false;
     summary.missingRef=true;
     summary.errors.push('Zielprojekt-XML fehlt');
@@ -2928,11 +3164,11 @@ function validateExportReadiness(){
     summary.ok=false;
     summary.errors.push('Keine exportierbaren Positionen übernommen');
   }
-  if(S.exportRef && accepted.length){
-    const targetItems=(S.exportRef.targetOzSet instanceof Set)?S.exportRef.targetOzSet:new Set();
-    const targetItemKeys=(S.exportRef.targetOzKeySet instanceof Set)?S.exportRef.targetOzKeySet:buildOZKeySet(targetItems);
+  if(currentRef && accepted.length){
+    const targetItems=(currentRef.targetOzSet instanceof Set)?currentRef.targetOzSet:new Set();
+    const targetItemKeys=(currentRef.targetOzKeySet instanceof Set)?currentRef.targetOzKeySet:buildOZKeySet(targetItems);
     accepted.forEach(r=>{
-      const oz=formatExportOZ(r.newPos?.oz,S.exportRef).trim();
+      const oz=formatExportOZ(r.newPos?.oz,currentRef).trim();
       const best=r.matches?.[r.sel||0];
       if(best?.pos?.rawWBSItemXml)summary.rawCopyCount++;
       else summary.fallbackCount++;
@@ -2952,6 +3188,7 @@ function updateExportValidationSummary(){
   const el=document.getElementById('exportValidationSummary');
   if(!el)return;
   const audit=validateExportReadiness();
+  renderExportOzInspector();
   if(!S.results.length){
     el.textContent='Export-Prüfung erscheint hier, sobald Positionen übernommen sind.';
     return;
@@ -3028,6 +3265,7 @@ function parseRawWBSItemXml(rawWBSItemXml){
 function normalizeRefProjects(projects){
   return(projects||[]).map(project=>({
     ...project,
+    active:isProjectActive(project),
     positions:(project.positions||[]).map(pos=>{
       const rawRefresh=pos.matchedXML&&pos.rawWBSItemXml?parseRawWBSItemXml(pos.rawWBSItemXml):null;
       const cleaned=cleanParsedPosition({
@@ -3090,7 +3328,7 @@ function updateRefLoadStatus(activeCount){
   const curEl=document.getElementById('refLoadCurrent');
   const detailEl=document.getElementById('refLoadLimitDetail');
   if(!box||!maxEl||!curEl||!detailEl)return;
-  const current=Number(activeCount)||0;
+  const current=Number.isFinite(Number(activeCount))?Number(activeCount):getActiveRef().length;
   const ratio=REF_POSITION_RECOMMENDED_MAX>0?current/REF_POSITION_RECOMMENDED_MAX:0;
   box.classList.remove('tone-ok','tone-warn','tone-bad');
   let tone='tone-ok';
@@ -3754,10 +3992,10 @@ async function runMatch(){
 }
 
 function summarizeBadges(){
-  const g=S.results.filter(r=>r.matches[0]?.score>=91).length;
-  const y=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>=60&&s<91;}).length;
-  const o=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>=40&&s<60;}).length;
-  const r=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>0&&s<40;}).length;
+  const g=S.results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='green').length;
+  const y=S.results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='yellow').length;
+  const o=S.results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='orange').length;
+  const r=S.results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='red').length;
   const n=S.results.filter(r=>!r.matches.length).length;
   return`<span class="badge bh">🟢 ${g}</span><span class="badge bm">🟡 ${y}</span><span class="badge bo">🟠 ${o}</span><span class="badge bl">🔴 ${r}</span>${n?`<span class="badge" style="background:rgba(107,114,128,.2);color:#9ca3af">⬜ ${n}</span>`:''}`;
 }
@@ -3812,10 +4050,10 @@ function renderMatch(){
   if(!S.results.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div class="empty-i">🔍</div>Noch kein Matching</div></td></tr>';return;}
   let rows=[...S.results];
   const fs=r=>r.matches[0]?.score||0;
-  if(filter==='green')        rows=rows.filter(r=>fs(r)>=91);
-  else if(filter==='yellow')  rows=rows.filter(r=>fs(r)>=60&&fs(r)<91);
-  else if(filter==='orange')  rows=rows.filter(r=>fs(r)>=40&&fs(r)<60);
-  else if(filter==='red')     rows=rows.filter(r=>fs(r)>0&&fs(r)<40);
+  if(filter==='green')        rows=rows.filter(r=>classifyMatchScore(fs(r))==='green');
+  else if(filter==='yellow')  rows=rows.filter(r=>classifyMatchScore(fs(r))==='yellow');
+  else if(filter==='orange')  rows=rows.filter(r=>classifyMatchScore(fs(r))==='orange');
+  else if(filter==='red')     rows=rows.filter(r=>classifyMatchScore(fs(r))==='red');
   else if(filter==='nomatch') rows=rows.filter(r=>!r.matches.length);
   else if(filter==='acc')     rows=rows.filter(r=>r.accepted);
   else if(filter==='notacc')  rows=rows.filter(r=>!r.accepted);
@@ -4323,9 +4561,9 @@ function updateExport(){
   const exportableResults=acceptedResults.filter(r=>hasExportableMatch(r));
   const skippedResults=acceptedResults.length-exportableResults.length;
   const acc=acceptedResults.length;
-  const hi=S.results.filter(r=>r.matches[0]?.score>=91).length;
-  const mi=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>=60&&s<91;}).length;
-  const lo=S.results.filter(r=>{const s=r.matches[0]?.score||0;return s>0&&s<60;}).length;
+  const hi=S.results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='green').length;
+  const mi=S.results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='yellow').length;
+  const lo=S.results.filter(r=>['orange','red'].includes(classifyMatchScore(r.matches?.[0]?.score))).length;
   document.getElementById('sAcc').textContent=acc;
   document.getElementById('sHigh').textContent=hi;
   document.getElementById('sMid').textContent=mi;
@@ -4345,14 +4583,14 @@ function buildXML(){
   const exportFileName=document.getElementById('projName').value||'Export';
   const acc=S.results.filter(r=>r.accepted&&hasExportableMatch(r));
   if(!acc.length){window._lastXML='';return;}
-  if(!S.exportRef){
+  const projectRef=getEffectiveExportRef();
+  if(!projectRef){
     window._lastXML='';
     document.getElementById('xmlPrev').textContent='/* Zielprojekt-Referenz erforderlich: Bitte zuerst eine iTWO-Projekt-XML mit MajorWBS laden. */';
     return;
   }
   const sourceNames=[...new Set(acc.map(r=>(r.matches[r.sel]?.pos?.source||r.newPos?.source||'').trim()).filter(Boolean))];
   const projDescr=sourceNames.length?sourceNames.join(' | '):exportFileName;
-  const projectRef=S.exportRef;
   const wbsXref=makeXref();
 
   const itemEntries=acc.map(r=>{
@@ -4542,10 +4780,7 @@ function buildReviewBuckets(){
   S.results.forEach(r=>{
     const best=r.matches?.[r.sel||0];
     if(!best){buckets.nomatch.push(r);return;}
-    if(best.score>=91)buckets.green.push(r);
-    else if(best.score>=60)buckets.yellow.push(r);
-    else if(best.score>=40)buckets.orange.push(r);
-    else buckets.red.push(r);
+    buckets[classifyMatchScore(best.score)].push(r);
   });
   return buckets;
 }
@@ -4756,10 +4991,12 @@ function runMatchingSelfTest(showUI=false){
 function runDiagnosticsSelfTest(showUI=false,verbose=false){
   const ref=runReferenceLinkSelfTest(false,verbose);
   const match=runMatchingSelfTest(false);
+  const exportFormat=runExportFormatSelfTest();
   const exportAudit=runExportSelfTest(false,verbose);
   const readiness=validateExportReadiness();
   const matchOk=match.filter(x=>x.ok).length;
   const matchBad=match.length-matchOk;
+  const exportFormatOk=exportFormat.filter(x=>x.ok).length;
   const lines=[
     `Gesamtdiagnose (${new Date().toLocaleTimeString()})`,
     `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
@@ -4775,6 +5012,10 @@ function runDiagnosticsSelfTest(showUI=false,verbose=false){
     `- Bestanden: ${matchOk}/${match.length}`,
     `- Fehlgeschlagen: ${matchBad}`,
     ...match.filter(x=>!x.ok).slice(0,10).map(x=>`  • ${x.a.kurztext} ↔ ${x.b.kurztext} = ${x.score}%`),
+    ``,
+    `OZ-Format-Selbsttest`,
+    `- Bestanden: ${exportFormatOk}/${exportFormat.length}`,
+    ...exportFormat.filter(x=>!x.ok).map(x=>`  • ${x.source} → ${x.actual} (erwartet ${x.expected})`),
     ``,
     `Export-Selbsttest`,
     `- Geprüft: ${exportAudit.total}`,
@@ -4805,9 +5046,9 @@ function runDiagnosticsSelfTest(showUI=false,verbose=false){
     hardCaps:(S.results||[]).map(r=>r.matches?.[r.sel||0]).filter(Boolean).filter(m=>(m.debug?.hardCapsApplied||[]).length).length,
     linkedRef:ref,
     readiness,
-    green:(S.results||[]).filter(r=>(r.matches?.[0]?.score||0)>=91).length,
-    warm:(S.results||[]).filter(r=>{const s=r.matches?.[0]?.score||0;return s>=60&&s<91;}).length,
-    weak:(S.results||[]).filter(r=>{const s=r.matches?.[0]?.score||0;return s>0&&s<60;}).length
+    green:(S.results||[]).filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='green').length,
+    warm:(S.results||[]).filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='yellow').length,
+    weak:(S.results||[]).filter(r=>['orange','red'].includes(classifyMatchScore(r.matches?.[0]?.score))).length
   });
   if(showUI){
     const area=document.getElementById('reviewPromptArea');
@@ -4963,11 +5204,21 @@ function applyLayoutPolish(){
   }
   const filterSel=document.getElementById('filterSel');
   if(filterSel){
+    const green=filterSel.querySelector('option[value="green"]');
+    const yellow=filterSel.querySelector('option[value="yellow"]');
     const orange=filterSel.querySelector('option[value="orange"]');
     const red=filterSel.querySelector('option[value="red"]');
+    if(green)green.textContent='🟢 Grün ≥ 80%';
+    if(yellow)yellow.textContent='🟡 Gelb 60-79%';
     if(orange)orange.textContent='🟠 Orange 40-59%';
     if(red)red.textContent='🔴 Rot ≤ 39%';
   }
+  const sHighLabel=document.querySelector('#t3 #sHigh')?.nextElementSibling;
+  const sMidLabel=document.querySelector('#t3 #sMid')?.nextElementSibling;
+  const sLowLabel=document.querySelector('#t3 #sLow')?.nextElementSibling;
+  if(sHighLabel)sHighLabel.textContent='≥ 80% Match';
+  if(sMidLabel)sMidLabel.textContent='60-79% Match';
+  if(sLowLabel)sLowLabel.textContent='< 60% - manuell prüfen';
   updateDiagnosticSummary();
 }
 
