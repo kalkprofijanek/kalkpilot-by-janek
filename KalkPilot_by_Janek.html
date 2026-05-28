@@ -10,6 +10,7 @@
   --text:#e8ecf0;--muted:#8892a4;--accent:#4f8ef7;--accent2:#3d7ae6;
   --green:#22c55e;--yellow:#f59e0b;--orange:#ea580c;--red:#ef4444;
   --manual-left-width:320px;
+  --match-top-height:220px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
@@ -146,6 +147,11 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .match-progress-strong{color:var(--text);font-weight:600}
 .match-progress-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
 .match-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#4f8ef7,#22c55e);transition:width .15s ease}
+.match-layout{display:grid;grid-template-rows:minmax(170px,var(--match-top-height)) 10px minmax(260px,1fr);gap:0;flex:1;min-height:0}
+.match-top-area{min-height:0;overflow:auto;padding-right:2px}
+.match-splitter{position:relative;cursor:row-resize;display:flex;align-items:center;justify-content:stretch}
+.match-splitter::before{content:'';height:2px;border-radius:999px;background:rgba(79,142,247,.22);margin:0 10px;flex:1;transition:background .15s ease,height .15s ease}
+.match-splitter:hover::before,.match-splitter.dragging::before{background:rgba(79,142,247,.65);height:4px}
 .manual-layout{display:grid;grid-template-columns:minmax(260px,var(--manual-left-width)) 10px minmax(320px,1fr);gap:0;flex:1;min-height:0}
 .manual-list,.manual-results{background:var(--card);border:1px solid var(--border);border-radius:8px;min-height:0;display:flex;flex-direction:column}
 .manual-list{border-top-right-radius:0;border-bottom-right-radius:0}
@@ -210,7 +216,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .donation-paypal span{color:var(--muted)}
 .donation-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .donation-note{margin-top:12px;color:var(--muted);font-size:11px}
-@media(max-width:900px){.grid2{grid-template-columns:1fr}.sum-grid{grid-template-columns:repeat(2,1fr)}.drop-pair{grid-template-columns:1fr}.manual-layout{grid-template-columns:1fr}.manual-splitter{display:none}.manual-list,.manual-results{border-radius:8px}}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}.sum-grid{grid-template-columns:repeat(2,1fr)}.drop-pair{grid-template-columns:1fr}.match-layout{grid-template-rows:auto 0 minmax(260px,1fr)}.match-splitter{display:none}.manual-layout{grid-template-columns:1fr}.manual-splitter{display:none}.manual-list,.manual-results{border-radius:8px}}
 </style>
 </head>
 <body>
@@ -324,7 +330,9 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 
 <!-- â•â•â• TAB 2 â•â•â• -->
 <div id="t2" class="tab">
-  <div class="grid2">
+  <div class="match-layout">
+    <div class="match-top-area">
+      <div class="grid2">
     <div class="card">
       <div class="ctitle">Neues LV hochladen (unbepreist)</div>
       <div class="drop" id="dNew" onclick="document.getElementById('fNew').click()">
@@ -364,9 +372,10 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         <button class="btn btn-p" id="runBtn" disabled onclick="runMatch()">▶ KalkPilot starten - Matching durchführen</button>
       </div>
     </div>
-  </div>
+      </div>
+    </div>
 
-  <div class="card" style="flex:1;display:flex;flex-direction:column;gap:8px;min-height:0">
+    <div class="card" style="display:flex;flex-direction:column;gap:8px;min-height:0">
     <div class="toolbar toolbar-band">
       <div class="ctitle" style="margin:0">Matching-Ergebnisse</div>
       <div id="matchSum" style="display:flex;gap:5px;margin-left:6px"></div>
@@ -417,6 +426,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         <span id="matchProgressEta">0%</span>
       </div>
     </div>
+    <div class="match-splitter" id="matchSplitter" onmousedown="startMatchSplit(event)" title="Trefferanzeige nach oben ziehen"></div>
     <div class="tbl-wrap" style="flex:1">
       <table id="mTbl">
         <thead><tr>
@@ -433,6 +443,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
           <tr><td colspan="8"><div class="empty"><div class="empty-i">🔍</div>Lade Referenzprojekte + neues LV, dann „KalkPilot starten“</div></td></tr>
         </tbody>
       </table>
+    </div>
     </div>
   </div>
 </div>
@@ -593,6 +604,7 @@ const S={
   manualTargetIdx:-1,
   manualShowLangIdx:-1,
   manualSplitDragging:false,
+  matchSplitDragging:false,
   manualCandidates:[],
   manualCacheKey:'',
   manualCacheRows:[],
@@ -616,6 +628,7 @@ const TOP_MATCH_KEY='KalkPilot_TopMatches_v1';
 const LEARNING_KEY='KalkPilot_MatchLearning_v1';
 const REVIEW_NOTES_KEY='KalkPilot_ReviewNotes_v1';
 const MANUAL_SPLIT_KEY='KalkPilot_ManualSplit_v1';
+const MATCH_SPLIT_KEY='KalkPilot_MatchSplit_v1';
 function getActiveRef(){
   return S.refProjects.filter(p=>p.active).flatMap(p=>p.positions);
 }
@@ -4686,6 +4699,46 @@ function stopManualSplit(){
     try{localStorage.setItem(MANUAL_SPLIT_KEY,String(Math.round(current)));}catch(_){}
   }
 }
+function setMatchTopHeight(px,persist=true){
+  const layout=document.querySelector('#t2 .match-layout');
+  if(!layout||window.innerWidth<=900)return;
+  const bounds=layout.getBoundingClientRect();
+  const min=170;
+  const max=Math.max(min,Math.min(bounds.height-280,Math.max(220,window.innerHeight*0.55)));
+  const clamped=Math.max(min,Math.min(max,px));
+  document.documentElement.style.setProperty('--match-top-height',`${clamped}px`);
+  if(persist){
+    try{localStorage.setItem(MATCH_SPLIT_KEY,String(Math.round(clamped)));}catch(_){}
+  }
+}
+function loadMatchSplitHeight(){
+  if(window.innerWidth<=900)return;
+  let saved=null;
+  try{saved=Number(localStorage.getItem(MATCH_SPLIT_KEY)||'');}catch(_){}
+  if(Number.isFinite(saved)&&saved>0)setMatchTopHeight(saved,false);
+}
+function startMatchSplit(ev){
+  if(window.innerWidth<=900)return;
+  ev.preventDefault();
+  S.matchSplitDragging=true;
+  document.getElementById('matchSplitter')?.classList.add('dragging');
+}
+function moveMatchSplit(ev){
+  if(!S.matchSplitDragging||window.innerWidth<=900)return;
+  const layout=document.querySelector('#t2 .match-layout');
+  if(!layout)return;
+  const rect=layout.getBoundingClientRect();
+  setMatchTopHeight(ev.clientY-rect.top,false);
+}
+function stopMatchSplit(){
+  if(!S.matchSplitDragging)return;
+  S.matchSplitDragging=false;
+  document.getElementById('matchSplitter')?.classList.remove('dragging');
+  const current=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--match-top-height'));
+  if(Number.isFinite(current)&&current>0){
+    try{localStorage.setItem(MATCH_SPLIT_KEY,String(Math.round(current)));}catch(_){}
+  }
+}
 
 function setupDrop2(zoneId,type){
   const zone=document.getElementById(zoneId);if(!zone)return;
@@ -4754,21 +4807,25 @@ document.getElementById('siScore').textContent='↓';
 document.getElementById('fileD83').onchange=e=>{if(e.target.files[0])loadPendingFile(e.target.files[0],'d83');};
 document.getElementById('fileXML').onchange=e=>{if(e.target.files[0])loadPendingFile(e.target.files[0],'xml');};
 document.getElementById('fNew').onchange=e=>{if(e.target.files[0])loadNewLV(e.target.files[0]);};
+document.getElementById('fileExportRefXML').onchange=e=>{if(e.target.files[0])loadExportReferenceFile(e.target.files[0]);};
 document.getElementById('fileRefJSON').onchange=e=>{if(e.target.files[0])importRefFromJSON(e.target.files[0]);};
 
 // Drag-Drop Zonen
 setupDrop2('dropD83','d83');
 setupDrop2('dropXML','xml');
 setupDrop2('dNew','new');
+document.addEventListener('mousemove',moveMatchSplit);
+document.addEventListener('mouseup',stopMatchSplit);
 document.addEventListener('mousemove',moveManualSplit);
 document.addEventListener('mouseup',stopManualSplit);
-window.addEventListener('resize',()=>loadManualSplitWidth());
+window.addEventListener('resize',()=>{loadManualSplitWidth();loadMatchSplitHeight();});
 
 // App starten
 applyLayoutPolish();
 document.getElementById('d83RefLbl')?.classList.toggle('on',document.getElementById('d83RefFilter')?.checked);
 document.getElementById('manualCalcOnlyLbl')?.classList.toggle('on',document.getElementById('manualCalcOnly')?.checked);
 loadManualSplitWidth();
+loadMatchSplitHeight();
 loadRefFromStorage();
 </script>
 </body>
