@@ -147,11 +147,13 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .match-progress-strong{color:var(--text);font-weight:600}
 .match-progress-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
 .match-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#4f8ef7,#22c55e);transition:width .15s ease}
-.match-layout{display:grid;grid-template-rows:minmax(170px,var(--match-top-height)) 10px minmax(260px,1fr);gap:0;flex:1;min-height:0}
+.match-layout{display:grid;grid-template-rows:minmax(170px,var(--match-top-height)) minmax(260px,1fr);gap:0;flex:1;min-height:0}
 .match-top-area{min-height:0;overflow:auto;padding-right:2px}
 .match-splitter{position:relative;cursor:row-resize;display:flex;align-items:center;justify-content:stretch}
 .match-splitter::before{content:'';height:2px;border-radius:999px;background:rgba(79,142,247,.22);margin:0 10px;flex:1;transition:background .15s ease,height .15s ease}
 .match-splitter:hover::before,.match-splitter.dragging::before{background:rgba(79,142,247,.65);height:4px}
+.match-results-card{overflow:hidden}
+.match-table-wrap{flex:1;min-height:0}
 .manual-layout{display:grid;grid-template-columns:minmax(260px,var(--manual-left-width)) 10px minmax(320px,1fr);gap:0;flex:1;min-height:0}
 .manual-list,.manual-results{background:var(--card);border:1px solid var(--border);border-radius:8px;min-height:0;display:flex;flex-direction:column}
 .manual-list{border-top-right-radius:0;border-bottom-right-radius:0}
@@ -216,7 +218,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .donation-paypal span{color:var(--muted)}
 .donation-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .donation-note{margin-top:12px;color:var(--muted);font-size:11px}
-@media(max-width:900px){.grid2{grid-template-columns:1fr}.sum-grid{grid-template-columns:repeat(2,1fr)}.drop-pair{grid-template-columns:1fr}.match-layout{grid-template-rows:auto 0 minmax(260px,1fr)}.match-splitter{display:none}.manual-layout{grid-template-columns:1fr}.manual-splitter{display:none}.manual-list,.manual-results{border-radius:8px}}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}.sum-grid{grid-template-columns:repeat(2,1fr)}.drop-pair{grid-template-columns:1fr}.match-layout{grid-template-rows:auto minmax(260px,1fr)}.match-splitter{display:none}.manual-layout{grid-template-columns:1fr}.manual-splitter{display:none}.manual-list,.manual-results{border-radius:8px}}
 </style>
 </head>
 <body>
@@ -375,7 +377,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       </div>
     </div>
 
-    <div class="card" style="display:flex;flex-direction:column;gap:8px;min-height:0">
+    <div class="card match-results-card" style="display:flex;flex-direction:column;gap:8px;min-height:0">
     <div class="toolbar toolbar-band">
       <div class="ctitle" style="margin:0">Matching-Ergebnisse</div>
       <div id="matchSum" style="display:flex;gap:5px;margin-left:6px"></div>
@@ -427,7 +429,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       </div>
     </div>
     <div class="match-splitter" id="matchSplitter" onmousedown="startMatchSplit(event)" title="Trefferanzeige nach oben ziehen"></div>
-    <div class="tbl-wrap" style="flex:1">
+    <div class="tbl-wrap match-table-wrap">
       <table id="mTbl">
         <thead><tr>
           <th class="decision-col">Aktion</th>
@@ -701,6 +703,13 @@ function ozLookupKeys(raw){
   const strict=canonOZ(raw);
   const loose=canonOZLoose(raw);
   return [...new Set([strict&&('seg:'+strict),loose&&('dig:'+loose)].filter(Boolean))];
+}
+function buildOZKeySet(values){
+  const keySet=new Set();
+  (values||[]).forEach(value=>{
+    ozLookupKeys(value).forEach(key=>keySet.add(key));
+  });
+  return keySet;
 }
 function sameOZ(a,b){
   if(!a||!b)return false;
@@ -2068,8 +2077,10 @@ function parseExportReferenceXML(txt,fileName=''){
       sampleItemOz=first.join(' ');
     }
   }
-  const targetOzSet=new Set([...(majorWbs.querySelectorAll(':scope > ITEMS > WBSItem > NameWBSItem')||[])].map(n=>(n.textContent||'').trim()).filter(Boolean));
-  return {fileName,namePrj,descrPrj,paCode,paName,nameWBS,descrWBS,wbsType,cgrCatalog,sampleItemOz,ozSegmentLengths,targetOzSet};
+  const targetOzValues=[...(majorWbs.querySelectorAll(':scope > ITEMS > WBSItem > NameWBSItem')||[])].map(n=>(n.textContent||'').trim()).filter(Boolean);
+  const targetOzSet=new Set(targetOzValues);
+  const targetOzKeySet=buildOZKeySet(targetOzValues);
+  return {fileName,namePrj,descrPrj,paCode,paName,nameWBS,descrWBS,wbsType,cgrCatalog,sampleItemOz,ozSegmentLengths,targetOzSet,targetOzKeySet};
 }
 function formatExportOZ(raw, exportRef){
   const source=String(raw||'').trim();
@@ -2803,12 +2814,14 @@ function validateExportReadiness(){
   }
   if(S.exportRef && accepted.length){
     const targetItems=(S.exportRef.targetOzSet instanceof Set)?S.exportRef.targetOzSet:new Set();
+    const targetItemKeys=(S.exportRef.targetOzKeySet instanceof Set)?S.exportRef.targetOzKeySet:buildOZKeySet(targetItems);
     accepted.forEach(r=>{
       const oz=formatExportOZ(r.newPos?.oz,S.exportRef).trim();
       const best=r.matches?.[r.sel||0];
       if(best?.pos?.rawWBSItemXml)summary.rawCopyCount++;
       else summary.fallbackCount++;
-      if(targetItems.size && !targetItems.has(oz))summary.missingOZ.push(oz);
+      const ozMatchesTarget=!targetItems.size||ozLookupKeys(oz).some(key=>targetItemKeys.has(key));
+      if(!ozMatchesTarget)summary.missingOZ.push(oz);
     });
     if(summary.missingOZ.length){
       summary.warnings.push(`${summary.missingOZ.length} OZ nicht in Export-Referenz-XML – Export trotzdem möglich`);
