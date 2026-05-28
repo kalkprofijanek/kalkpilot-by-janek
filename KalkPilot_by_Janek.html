@@ -192,7 +192,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .export-oz-examples{display:flex;flex-direction:column;gap:4px;font-size:11px}
 .export-oz-example{display:flex;gap:8px;align-items:flex-start;justify-content:space-between;border-bottom:1px dashed rgba(255,255,255,.06);padding-bottom:4px}
 .export-oz-example:last-child{border-bottom:0;padding-bottom:0}
-.export-oz-map{font-family:Consolas,monospace;color:var(--text)}
+.export-oz-map{font-family:Consolas,monospace;color:var(--text);white-space:pre-wrap}
 .export-oz-expert{border-top:1px solid rgba(255,255,255,.08);padding-top:8px;display:flex;flex-direction:column;gap:8px}
 .export-oz-expert-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .export-oz-expert-box{display:flex;flex-direction:column;gap:6px}
@@ -716,8 +716,21 @@ const MATCH_ORANGE_MIN=40;
 function isProjectActive(project){
   return project?.active!==false&&project?.active!=='false'&&project?.active!==0&&project?.active!=='0';
 }
+function getActiveRefState(){
+  const activeProjects=S.refProjects.filter(isProjectActive);
+  const positions=[];
+  let withCosts=0;
+  activeProjects.forEach(project=>{
+    const items=Array.isArray(project?.positions)?project.positions.filter(Boolean):[];
+    items.forEach(pos=>{
+      positions.push(pos);
+      if(pos?.kosten&&pos.kosten.length>0&&!pos.kosten.every(k=>k.typ==='S'))withCosts++;
+    });
+  });
+  return {projects:activeProjects,positions,total:positions.length,withCosts};
+}
 function getActiveRef(){
-  return S.refProjects.filter(isProjectActive).flatMap(p=>p.positions);
+  return getActiveRefState().positions;
 }
 function classifyMatchScore(sc){
   const score=Number(sc)||0;
@@ -1596,6 +1609,15 @@ function strSim(a,b){
   if(mx>260)return tokSim(a,b);
   return Math.max(0,1-lev(a,b)/mx);
 }
+function literalShortSim(a,b){
+  a=norm(a);
+  b=norm(b);
+  if(a===b)return 1;
+  const mx=Math.max(a.length,b.length);
+  if(!mx)return 1;
+  if(mx>260)return tokSim(a,b);
+  return Math.max(0,1-lev(a,b)/mx);
+}
 function buildTokenIndex(tokens){
   const exact=new Set(tokens);
   const prefixMap=new Map();
@@ -1653,6 +1675,8 @@ const SCORE_WEIGHTS=Object.freeze({
 function buildReasonText(debug){
   const parts=[];
   parts.push('Kategorie '+debug.categoryNew+' → '+debug.categoryRef+' ('+debug.categoryScore+'%)');
+  if((debug.literalShortScore||0)>=99)parts.push('Kurztext praktisch identisch');
+  else if((debug.literalShortScore||0)>=95)parts.push('Kurztext fast wortgleich');
   if(debug.synonymScore>=80)parts.push('starke Fachbegriffe/Synonyme erkannt');
   else if(debug.shortScore>=80)parts.push('starker Kurztext-Treffer');
   else if(debug.longScore>=70)parts.push('Langtext stützt den Treffer');
@@ -1691,7 +1715,9 @@ function getReferenceMatchUnit(rp){
 function calcScore(np,rp,meta={}){
   const npProf=getMatchProfile(np);
   const rpProf=getMatchProfile(rp);
-  const shortScore=tokSim(npProf.shortNorm,rpProf.shortNorm);
+  const literalShortScore=literalShortSim(npProf.shortRaw,rpProf.shortRaw);
+  const tokenShortScore=tokSim(npProf.shortNorm,rpProf.shortNorm);
+  const shortScore=Math.max(tokenShortScore,literalShortScore>=0.90?literalShortScore:0);
   const longScore=Math.max(strSim(npProf.longNorm||npProf.shortNorm,rpProf.longNorm||rpProf.shortNorm),tokSim(npProf.longNorm||npProf.shortNorm,rpProf.longNorm||rpProf.shortNorm)); 
   const synScore=synonymScore(npProf.shortNorm,rpProf.fullNorm);
   const categoryNew=npProf.category;
@@ -1753,9 +1779,13 @@ function calcScore(np,rp,meta={}){
   const hinterfuellungSignal=earthFamilyNew==='HINTERFUELLUNG'&&earthFamilyRef==='HINTERFUELLUNG';
   const ansaatSignal=earthFamilyNew==='ANSAAT_BEGRUENUNG'&&earthFamilyRef==='ANSAAT_BEGRUENUNG';
   const strassenbauSchichtSignal=earthFamilyNew==='STRASSENBAU_SCHICHT'&&earthFamilyRef==='STRASSENBAU_SCHICHT';
+  const textConfidence=Math.max(shortScore,synScore,longScore,literalShortScore);
   const exactBoost=categoryScore===1&&unitScore===1&&synScore>=1?0.12:
-    (categoryScore===1&&unitScore===1&&(shortScore>=0.95||longScore>=0.95)?0.06:
-    (categoryScore===1&&unitScore===1&&(synScore>=0.80||shortScore>=0.80||longScore>=0.80)?0.03:0));
+    (categoryScore===1&&unitScore===1&&(shortScore>=0.95||longScore>=0.95||literalShortScore>=0.97)?0.08:
+    (categoryScore===1&&unitScore===1&&(synScore>=0.80||shortScore>=0.80||longScore>=0.80||literalShortScore>=0.92)?0.04:0));
+  const literalBoost=literalShortScore>=0.995&&unitScore>=0.80&&categoryScore>=0.45?0.16:
+    (literalShortScore>=0.97&&unitScore>=0.80&&categoryScore>=0.45?0.10:
+    (literalShortScore>=0.94&&unitScore>=0.80&&categoryScore>=0.45?0.06:0));
   const lineZoneMismatch=((flagsNew.lineZoneAbove&&flagsRef.lineZoneIncl)||(flagsNew.lineZoneIncl&&flagsRef.lineZoneAbove)||(flagsNew.lineZoneOnly&&!flagsRef.lineZoneOnly)||(flagsRef.lineZoneOnly&&!flagsNew.lineZoneOnly));
   const separateBackfillMismatch=flagsNew.separateBackfill!==flagsRef.separateBackfill;
   const shoringModeMismatch=flagsNew.separateShoring!==flagsRef.separateShoring;
@@ -1768,32 +1798,32 @@ function calcScore(np,rp,meta={}){
   let penalties=0,genericPenalty=0,textOnlyPenalty=0,unitPenalty=0,quantityPenalty=0,swPenalty=0,holdingPenalty=0,docPenalty=0,assetPenalty=0,surchargePenalty=0,earthPenalty=0,disposalPenalty=0,docSubPenalty=0,demolitionPenalty=0,sitePenalty=0,materialBandPenalty=0,compactionPenalty=0,agPenalty=0,controlPenalty=0,lineZonePenalty=0,backfillModePenalty=0,shoringModePenalty=0,waterModePenalty=0,reuseSidePenalty=0,planumModePenalty=0,profileAdjustmentPenalty=0,uf3Penalty=0,drainageModePenalty=0;
   const hardCapsApplied=[];
   if(genericWrongCategory){genericPenalty=0.20;penalties+=genericPenalty;}
-  if(meta.isTextOnly){textOnlyPenalty=0.05;penalties+=textOnlyPenalty;}
+  if(meta.isTextOnly&&literalShortScore<0.97){textOnlyPenalty=0.05;penalties+=textOnlyPenalty;}
   if(unitScore<=0.10&&categoryScore<1.0){unitPenalty=0.08;penalties+=unitPenalty;}
   if(quantityScore<=0.20&&unitScore>=0.45&&!['psch','st','h','wo','mt','stmt','stwo','mmt'].includes(normUnit(np.me))){quantityPenalty=0.04;penalties+=quantityPenalty;}
   if(categoryNew==='ARBEITSSCHUTZ_SW'&&categoryRef==='ARBEITSSCHUTZ_SW'&&swSubNew&&swSubRef&&swSubNew!==swSubRef&&swSubNew!=='GENERIC'&&swSubRef!=='GENERIC'){swPenalty=0.14;penalties+=swPenalty;}
   if(holdingMismatch){holdingPenalty=0.08;penalties+=holdingPenalty;}
-  if(docMismatch&&Math.max(shortScore,synScore)<0.90){docPenalty=0.12;penalties+=docPenalty;}
-  if(docSubMismatch&&Math.max(shortScore,synScore)<0.95){docSubPenalty=0.16;penalties+=docSubPenalty;}
-  if(beAssetMismatch&&Math.max(shortScore,synScore)<0.95){assetPenalty=0.16;penalties+=assetPenalty;}
-  if(surchargeMismatch&&Math.max(shortScore,synScore)<0.95){surchargePenalty=0.10;penalties+=surchargePenalty;}
-  if(earthFamilyMismatch&&Math.max(shortScore,synScore)<0.95){earthPenalty=0.14;penalties+=earthPenalty;}
-  if(disposalMismatch&&Math.max(shortScore,synScore)<0.98){disposalPenalty=0.18;penalties+=disposalPenalty;}
-  if(demolitionMismatch&&Math.max(shortScore,synScore)<0.95){demolitionPenalty=0.16;penalties+=demolitionPenalty;}
-  if(siteContextMismatch&&Math.max(shortScore,synScore)<0.95){sitePenalty=0.10;penalties+=sitePenalty;}
-  if(materialBandMismatch&&Math.max(shortScore,synScore)<0.98){materialBandPenalty=0.12;penalties+=materialBandPenalty;}
-  if(compactionMismatch&&Math.max(shortScore,synScore)<0.98){compactionPenalty=0.10;penalties+=compactionPenalty;}
-  if(agMismatch&&Math.max(shortScore,synScore)<0.98){agPenalty=0.12;penalties+=agPenalty;}
-  if(controlMismatch&&Math.max(shortScore,synScore)<0.98){controlPenalty=0.12;penalties+=controlPenalty;}
-  if(lineZoneMismatch&&Math.max(shortScore,synScore)<0.98){lineZonePenalty=0.10;penalties+=lineZonePenalty;}
-  if(separateBackfillMismatch&&Math.max(shortScore,synScore)<0.98){backfillModePenalty=0.12;penalties+=backfillModePenalty;}
-  if(shoringModeMismatch&&Math.max(shortScore,synScore)<0.98){shoringModePenalty=0.08;penalties+=shoringModePenalty;}
-  if(waterModeMismatch&&Math.max(shortScore,synScore)<0.98){waterModePenalty=0.08;penalties+=waterModePenalty;}
-  if(reuseSideMismatch&&Math.max(shortScore,synScore)<0.98){reuseSidePenalty=0.08;penalties+=reuseSidePenalty;}
-  if(planumModeMismatch&&Math.max(shortScore,synScore)<0.98){planumModePenalty=0.12;penalties+=planumModePenalty;}
-  if(profileAdjustmentMismatch&&Math.max(shortScore,synScore)<0.98){profileAdjustmentPenalty=0.08;penalties+=profileAdjustmentPenalty;}
-  if(uf3Mismatch&&Math.max(shortScore,synScore)<0.98){uf3Penalty=0.08;penalties+=uf3Penalty;}
-  if(drainageModeMismatch&&Math.max(shortScore,synScore)<0.98){drainageModePenalty=0.10;penalties+=drainageModePenalty;}
+  if(docMismatch&&textConfidence<0.90){docPenalty=0.12;penalties+=docPenalty;}
+  if(docSubMismatch&&textConfidence<0.95){docSubPenalty=0.16;penalties+=docSubPenalty;}
+  if(beAssetMismatch&&textConfidence<0.95){assetPenalty=0.16;penalties+=assetPenalty;}
+  if(surchargeMismatch&&textConfidence<0.95){surchargePenalty=0.10;penalties+=surchargePenalty;}
+  if(earthFamilyMismatch&&textConfidence<0.95){earthPenalty=0.14;penalties+=earthPenalty;}
+  if(disposalMismatch&&textConfidence<0.98){disposalPenalty=0.18;penalties+=disposalPenalty;}
+  if(demolitionMismatch&&textConfidence<0.95){demolitionPenalty=0.16;penalties+=demolitionPenalty;}
+  if(siteContextMismatch&&textConfidence<0.95){sitePenalty=0.10;penalties+=sitePenalty;}
+  if(materialBandMismatch&&textConfidence<0.98){materialBandPenalty=0.12;penalties+=materialBandPenalty;}
+  if(compactionMismatch&&textConfidence<0.98){compactionPenalty=0.10;penalties+=compactionPenalty;}
+  if(agMismatch&&textConfidence<0.98){agPenalty=0.12;penalties+=agPenalty;}
+  if(controlMismatch&&textConfidence<0.98){controlPenalty=0.12;penalties+=controlPenalty;}
+  if(lineZoneMismatch&&textConfidence<0.98){lineZonePenalty=0.10;penalties+=lineZonePenalty;}
+  if(separateBackfillMismatch&&textConfidence<0.98){backfillModePenalty=0.12;penalties+=backfillModePenalty;}
+  if(shoringModeMismatch&&textConfidence<0.98){shoringModePenalty=0.08;penalties+=shoringModePenalty;}
+  if(waterModeMismatch&&textConfidence<0.98){waterModePenalty=0.08;penalties+=waterModePenalty;}
+  if(reuseSideMismatch&&textConfidence<0.98){reuseSidePenalty=0.08;penalties+=reuseSidePenalty;}
+  if(planumModeMismatch&&textConfidence<0.98){planumModePenalty=0.12;penalties+=planumModePenalty;}
+  if(profileAdjustmentMismatch&&textConfidence<0.98){profileAdjustmentPenalty=0.08;penalties+=profileAdjustmentPenalty;}
+  if(uf3Mismatch&&textConfidence<0.98){uf3Penalty=0.08;penalties+=uf3Penalty;}
+  if(drainageModeMismatch&&textConfidence<0.98){drainageModePenalty=0.10;penalties+=drainageModePenalty;}
   let final=
     SCORE_WEIGHTS.SHORT*shortScore+
     SCORE_WEIGHTS.LONG*longScore+
@@ -1802,7 +1832,7 @@ function calcScore(np,rp,meta={}){
     SCORE_WEIGHTS.UNIT*unitScore+
     SCORE_WEIGHTS.QUANTITY*quantityScore+
     Math.min(SCORE_WEIGHTS.OZ_MAX,ozBoost)+
-    learnBoost+topBoost+exactBoost-penalties;
+    learnBoost+topBoost+exactBoost+literalBoost-penalties;
   if(baugrubeSignal)final+=0.08;
   if(earthFamilyNew&&earthFamilyNew===earthFamilyRef)final+=0.06;
   if(disposalStrongMatch)final+=0.10;
@@ -1833,31 +1863,34 @@ function calcScore(np,rp,meta={}){
   final=Math.max(0,Math.min(1,final));
   if(categoryScore===0&&shortScore<0.80&&synScore<0.80){final=Math.min(final,0.39);hardCapsApplied.push('Kategorie unvereinbar');}
   if(genericWrongCategory){final=Math.min(final,0.35);hardCapsApplied.push('Generische Referenz');}
-  if(meta.isTextOnly){final=Math.min(final,0.74);hardCapsApplied.push('D83-only');}
+  if(meta.isTextOnly&&literalShortScore<0.97){final=Math.min(final,0.74);hardCapsApplied.push('D83-only');}
   if(unitScore<=0.10&&categoryScore<1.0){final=Math.min(final,0.59);hardCapsApplied.push('Einheit schwach');}
-  if(swPenalty>0&&Math.max(shortScore,synScore)<0.85){final=Math.min(final,0.39);hardCapsApplied.push('SW-Untergruppe unpassend');}
-  if(holdingMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Vorhaltung unpassend');}
-  if(docMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.39);hardCapsApplied.push('Dokumenttyp unpassend');}
-  if(docSubMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.35);hardCapsApplied.push('Doku-/QS-Typ unpassend');}
-  if(beAssetMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.45);hardCapsApplied.push('BE-Anlage unpassend');}
-  if(surchargeMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Kosten/Zuschlag unpassend');}
-  if(earthFamilyMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Erdbau-Familie unpassend');}
-  if(disposalMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Entsorgungsklasse unpassend');}
-  if(demolitionMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.35);hardCapsApplied.push('Abbruch-Familie unpassend');}
-  if(siteContextMismatch&&Math.max(shortScore,synScore)<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Einbauort unpassend');}
-  if(materialBandMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Kornband/Materialklasse unpassend');}
-  if(compactionMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.52);hardCapsApplied.push('Verdichtungs-/Pruefwert unpassend');}
-  if(agMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.39);hardCapsApplied.push('AG-Stellung unpassend');}
-  if(controlMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Pruef-/Ausfuehrungslogik unpassend');}
-  if(lineZoneMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.49);hardCapsApplied.push('Leitungszone unpassend');}
-  if(separateBackfillMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Verfuellmodus unpassend');}
-  if(shoringModeMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Verbaumodus unpassend');}
-  if(waterModeMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Wasserhaltungsmodus unpassend');}
-  if(reuseSideMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Einbau/Lagerort unpassend');}
-  if(planumModeMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Planumlogik unpassend');}
-  if(profileAdjustmentMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Profilausgleich unpassend');}
-  if(uf3Mismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Feinanteil UF3 unpassend');}
-  if(drainageModeMismatch&&Math.max(shortScore,synScore)<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Hinterfuellbereich unpassend');}
+  if(swPenalty>0&&textConfidence<0.85){final=Math.min(final,0.39);hardCapsApplied.push('SW-Untergruppe unpassend');}
+  if(holdingMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Vorhaltung unpassend');}
+  if(docMismatch&&textConfidence<0.95){final=Math.min(final,0.39);hardCapsApplied.push('Dokumenttyp unpassend');}
+  if(docSubMismatch&&textConfidence<0.95){final=Math.min(final,0.35);hardCapsApplied.push('Doku-/QS-Typ unpassend');}
+  if(beAssetMismatch&&textConfidence<0.95){final=Math.min(final,0.45);hardCapsApplied.push('BE-Anlage unpassend');}
+  if(surchargeMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Kosten/Zuschlag unpassend');}
+  if(earthFamilyMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Erdbau-Familie unpassend');}
+  if(disposalMismatch&&textConfidence<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Entsorgungsklasse unpassend');}
+  if(demolitionMismatch&&textConfidence<0.95){final=Math.min(final,0.35);hardCapsApplied.push('Abbruch-Familie unpassend');}
+  if(siteContextMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Einbauort unpassend');}
+  if(materialBandMismatch&&textConfidence<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Kornband/Materialklasse unpassend');}
+  if(compactionMismatch&&textConfidence<0.98){final=Math.min(final,0.52);hardCapsApplied.push('Verdichtungs-/Pruefwert unpassend');}
+  if(agMismatch&&textConfidence<0.98){final=Math.min(final,0.39);hardCapsApplied.push('AG-Stellung unpassend');}
+  if(controlMismatch&&textConfidence<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Pruef-/Ausfuehrungslogik unpassend');}
+  if(lineZoneMismatch&&textConfidence<0.98){final=Math.min(final,0.49);hardCapsApplied.push('Leitungszone unpassend');}
+  if(separateBackfillMismatch&&textConfidence<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Verfuellmodus unpassend');}
+  if(shoringModeMismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Verbaumodus unpassend');}
+  if(waterModeMismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Wasserhaltungsmodus unpassend');}
+  if(reuseSideMismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Einbau/Lagerort unpassend');}
+  if(planumModeMismatch&&textConfidence<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Planumlogik unpassend');}
+  if(profileAdjustmentMismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Profilausgleich unpassend');}
+  if(uf3Mismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Feinanteil UF3 unpassend');}
+  if(drainageModeMismatch&&textConfidence<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Hinterfuellbereich unpassend');}
+  if(literalShortScore>=0.995&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.99);
+  else if(literalShortScore>=0.97&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.96);
+  else if(literalShortScore>=0.94&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.92);
   if(ebvNew&&ebvRef&&ebvNew!==ebvRef){
     const ebvCap=ebvCompat(ebvNew,ebvRef);
     final=Math.min(final,ebvCap);
@@ -1875,7 +1908,7 @@ function calcScore(np,rp,meta={}){
   const textGate=Math.max(shortScore,longScore,synScore);
   if(textGate<0.25){final=Math.min(final,0.19);hardCapsApplied.push('Textbasis schwach');}
   const score=Math.max(0,Math.min(100,Math.round(final*100)));
-  const debug={shortScore:Math.round(shortScore*100),longScore:Math.round(longScore*100),synonymScore:Math.round(synScore*100),categoryNew,categoryRef,categoryScore:Math.round(categoryScore*100),unitScore:Math.round(unitScore*100),quantityScore:Math.round(quantityScore*100),learningBoost:Math.round(learnBoost*100),topMatchBoost:Math.round(topBoost*100),linkedReferenceBoost:0,genericPenalty:Math.round(genericPenalty*100),textOnlyPenalty:Math.round(textOnlyPenalty*100),unitPenalty:Math.round(unitPenalty*100),quantityPenalty:Math.round(quantityPenalty*100),holdingPenalty:Math.round(holdingPenalty*100),docPenalty:Math.round(docPenalty*100),docSubPenalty:Math.round(docSubPenalty*100),assetPenalty:Math.round(assetPenalty*100),surchargePenalty:Math.round(surchargePenalty*100),earthPenalty:Math.round(earthPenalty*100),disposalPenalty:Math.round(disposalPenalty*100),demolitionPenalty:Math.round(demolitionPenalty*100),sitePenalty:Math.round(sitePenalty*100),materialBandPenalty:Math.round(materialBandPenalty*100),compactionPenalty:Math.round(compactionPenalty*100),agPenalty:Math.round(agPenalty*100),controlPenalty:Math.round(controlPenalty*100),lineZonePenalty:Math.round(lineZonePenalty*100),backfillModePenalty:Math.round(backfillModePenalty*100),shoringModePenalty:Math.round(shoringModePenalty*100),waterModePenalty:Math.round(waterModePenalty*100),reuseSidePenalty:Math.round(reuseSidePenalty*100),planumModePenalty:Math.round(planumModePenalty*100),profileAdjustmentPenalty:Math.round(profileAdjustmentPenalty*100),uf3Penalty:Math.round(uf3Penalty*100),drainageModePenalty:Math.round(drainageModePenalty*100),hardCapsApplied,finalScore:score,newUnit:normUnit(np.me),refUnit:normUnit(refMatchUnit),reasonText:''};
+  const debug={shortScore:Math.round(shortScore*100),literalShortScore:Math.round(literalShortScore*100),longScore:Math.round(longScore*100),synonymScore:Math.round(synScore*100),categoryNew,categoryRef,categoryScore:Math.round(categoryScore*100),unitScore:Math.round(unitScore*100),quantityScore:Math.round(quantityScore*100),learningBoost:Math.round(learnBoost*100),topMatchBoost:Math.round(topBoost*100),linkedReferenceBoost:0,genericPenalty:Math.round(genericPenalty*100),textOnlyPenalty:Math.round(textOnlyPenalty*100),unitPenalty:Math.round(unitPenalty*100),quantityPenalty:Math.round(quantityPenalty*100),holdingPenalty:Math.round(holdingPenalty*100),docPenalty:Math.round(docPenalty*100),docSubPenalty:Math.round(docSubPenalty*100),assetPenalty:Math.round(assetPenalty*100),surchargePenalty:Math.round(surchargePenalty*100),earthPenalty:Math.round(earthPenalty*100),disposalPenalty:Math.round(disposalPenalty*100),demolitionPenalty:Math.round(demolitionPenalty*100),sitePenalty:Math.round(sitePenalty*100),materialBandPenalty:Math.round(materialBandPenalty*100),compactionPenalty:Math.round(compactionPenalty*100),agPenalty:Math.round(agPenalty*100),controlPenalty:Math.round(controlPenalty*100),lineZonePenalty:Math.round(lineZonePenalty*100),backfillModePenalty:Math.round(backfillModePenalty*100),shoringModePenalty:Math.round(shoringModePenalty*100),waterModePenalty:Math.round(waterModePenalty*100),reuseSidePenalty:Math.round(reuseSidePenalty*100),planumModePenalty:Math.round(planumModePenalty*100),profileAdjustmentPenalty:Math.round(profileAdjustmentPenalty*100),uf3Penalty:Math.round(uf3Penalty*100),drainageModePenalty:Math.round(drainageModePenalty*100),hardCapsApplied,finalScore:score,newUnit:normUnit(np.me),refUnit:normUnit(refMatchUnit),reasonText:''};
   debug.reasonText=buildReasonText(debug);
   return{score,debug};
 }
@@ -2159,24 +2192,28 @@ function parseExportReferenceXML(txt,fileName=''){
   }
   const cgrCatalog=[0,1,2,3].map(i=>prjInfo?.querySelector(`:scope > CGRCatalog > CGRCatalog${i}`)?.textContent?.trim()||'').filter(Boolean);
   const allOzNodes=[...(majorWbs.querySelectorAll(':scope > ITEMS > WBSItem > NameWBSItem')||[])];
-  const dotFormatted=allOzNodes
-    .map(n=>(n.textContent||'').trim())
-    .filter(oz=>oz.includes('.')&&/^\d+\.\d/.test(oz))
+  const allOzValuesRaw=allOzNodes
+    .map(n=>(n.textContent||'').replace(/\r?\n/g,''))
+    .filter(oz=>String(oz||'').trim());
+  const dotFormatted=allOzValuesRaw
+    .filter(oz=>{
+      const compact=String(oz||'').trim();
+      return compact.includes('.')&&/^\d+\.\s*\d/.test(compact);
+    })
     .slice(0,10);
   let ozSegmentLengths=[];
-  let sampleItemOz=dotFormatted[0]||allOzNodes[0]?.textContent?.trim()||'';
+  let sampleItemOz=dotFormatted[0]||allOzValuesRaw[0]||'';
   if(dotFormatted.length){
-    const partCounts=dotFormatted.map(oz=>oz.split('.').map(s=>s.trim()).filter(Boolean).length);
+    const partCounts=dotFormatted.map(oz=>String(oz||'').split('.').map(s=>s.trim()).filter(Boolean).length);
     const freq={};
     partCounts.forEach(count=>{freq[count]=(freq[count]||0)+1;});
     const mode=Object.entries(freq).sort((a,b)=>b[1]-a[1]||Number(b[0])-Number(a[0]))[0]?.[0];
-    const representative=dotFormatted.find(oz=>oz.split('.').map(s=>s.trim()).filter(Boolean).length===Number(mode))||dotFormatted[0];
+    const representative=dotFormatted.find(oz=>String(oz||'').split('.').map(s=>s.trim()).filter(Boolean).length===Number(mode))||dotFormatted[0];
     const repParts=representative.split('.').map(s=>s.trim()).filter(Boolean);
     ozSegmentLengths=repParts.map(part=>part.length);
     sampleItemOz=representative;
   }else{
-    const numericSamples=allOzNodes
-      .map(n=>(n.textContent||'').trim())
+    const numericSamples=allOzValuesRaw
       .map(oz=>oz.split(/\D+/).filter(Boolean))
       .filter(parts=>parts.length===2&&parts[1].length>=3)
       .slice(0,10);
@@ -2186,15 +2223,16 @@ function parseExportReferenceXML(txt,fileName=''){
       sampleItemOz=first.join(' ');
     }
   }
-  const targetOzValues=[...(majorWbs.querySelectorAll(':scope > ITEMS > WBSItem > NameWBSItem')||[])].map(n=>(n.textContent||'').trim()).filter(Boolean);
+  const targetOzValuesRaw=allOzValuesRaw;
+  const targetOzValues=targetOzValuesRaw.map(v=>String(v||'').trim()).filter(Boolean);
   const templateData=buildOzTemplateData(sampleItemOz);
   const targetOzSet=new Set(targetOzValues);
-  const targetOzKeySet=buildOZKeySet(targetOzValues);
-  const targetOzExactMap=buildOZExactMap(targetOzValues);
+  const targetOzKeySet=buildOZKeySet(targetOzValuesRaw);
+  const targetOzExactMap=buildOZExactMap(targetOzValuesRaw);
   return {fileName,namePrj,descrPrj,paCode,paName,nameWBS,descrWBS,wbsType,cgrCatalog,sampleItemOz,ozSegmentLengths,templateSegments:templateData.templateSegments,templateSuffix:templateData.templateSuffix,targetOzSet,targetOzKeySet,targetOzExactMap};
 }
 function buildOzTemplateData(sample){
-  const sampleItemOz=String(sample||'').replace(/\r?\n/g,'').trimEnd();
+  const sampleItemOz=String(sample||'').replace(/\r?\n/g,'');
   const templateSegments=[];
   const ozSegmentLengths=[];
   const templateSuffix=sampleItemOz.includes('.')?sampleItemOz.slice(sampleItemOz.lastIndexOf('.')+1):'';
@@ -2243,6 +2281,10 @@ function formatExportOZ(raw, exportRef){
   if(!source)return '';
   const exactMap=exportRef?.targetOzExactMap instanceof Map?exportRef.targetOzExactMap:null;
   const manualOverride=!!exportRef?.manualOzOverride;
+  if(exactMap&&!manualOverride){
+    const exact=ozLookupKeys(source).map(key=>exactMap.get(key)).find(Boolean);
+    if(exact)return exact;
+  }
   const numericParts=source.split(/\D+/).filter(Boolean);
   const templateSegments=Array.isArray(exportRef?.templateSegments)?exportRef.templateSegments.filter(seg=>seg&&seg.width>0):[];
   if(templateSegments.length>=2&&numericParts.length===templateSegments.length){
@@ -2257,10 +2299,6 @@ function formatExportOZ(raw, exportRef){
     return parts.join('.')+'.'+String(exportRef?.templateSuffix??' ');
   }
   if(exactMap&&manualOverride){
-    const exact=ozLookupKeys(source).map(key=>exactMap.get(key)).find(Boolean);
-    if(exact)return exact;
-  }
-  if(exactMap&&!manualOverride){
     const exact=ozLookupKeys(source).map(key=>exactMap.get(key)).find(Boolean);
     if(exact)return exact;
   }
@@ -2327,6 +2365,9 @@ function getExportOzSourceRows(limit=5){
   const base=accepted.length?accepted:S.newLV;
   return (base||[]).filter(Boolean).slice(0,limit);
 }
+function visualizeOzWhitespace(value){
+  return String(value||'').replace(/ /g,'·');
+}
 function getExportOzInspectorState(){
   const baseRef=S.exportRef;
   const effectiveRef=getEffectiveExportRef();
@@ -2338,7 +2379,7 @@ function getExportOzInspectorState(){
     const targetSet=effectiveRef.targetOzSet instanceof Set?effectiveRef.targetOzSet:new Set();
     return {
       sourceOz:String(pos.oz||'').trim(),
-      formattedOz:String(formatted||'').trim(),
+      formattedOz:String(formatted||''),
       exactHit:targetSet.has(String(formatted||'').trim())
     };
   }):[];
@@ -2383,7 +2424,7 @@ function renderExportOzInspector(){
     return;
   }
   const examplesHtml=state.examples.length
-    ?state.examples.map(ex=>`<div class="export-oz-example"><div class="export-oz-map">${h(ex.sourceOz)} → ${h(ex.formattedOz||'–')}</div><div style="color:${ex.exactHit?'#4ade80':'#fbbf24'};font-size:10px">${ex.exactHit?'im Ziel gefunden':'nicht eindeutig'}</div></div>`).join('')
+    ?state.examples.map(ex=>`<div class="export-oz-example"><div class="export-oz-map">${h(visualizeOzWhitespace(ex.sourceOz))} → ${h(visualizeOzWhitespace(ex.formattedOz||'–'))}</div><div style="color:${ex.exactHit?'#4ade80':'#fbbf24'};font-size:10px">${ex.exactHit?'im Ziel gefunden':'nicht eindeutig'}</div></div>`).join('')
     :'<div class="section-note">Noch keine Beispiel-OZ aus dem neuen LV vorhanden.</div>';
   const toneColor=state.tone==='good'?'#4ade80':state.tone==='warn'?'#fbbf24':state.tone==='bad'?'#f87171':'#93c5fd';
   const expertEnabled=S.exportOzOverrideEnabled;
@@ -2396,9 +2437,9 @@ function renderExportOzInspector(){
       <div class="export-oz-status" style="color:${toneColor}">${state.status}</div>
     </div>
     <div class="export-oz-grid">
-      <div class="export-oz-card"><div class="lbl">Zielprojekt erkannt</div><div class="val">${h(state.targetSample||'–')}</div></div>
-      <div class="export-oz-card"><div class="lbl">Neues LV erkannt</div><div class="val">${h(state.sourceSample||'–')}</div></div>
-      <div class="export-oz-card"><div class="lbl">Aktiv für Export</div><div class="val">${h(state.effectiveSample||'–')}${expertEnabled?'  (Expertenmodus)':''}</div></div>
+      <div class="export-oz-card"><div class="lbl">Zielprojekt erkannt</div><div class="val export-oz-map">${h(visualizeOzWhitespace(state.targetSample||'–'))}</div></div>
+      <div class="export-oz-card"><div class="lbl">Neues LV erkannt</div><div class="val export-oz-map">${h(visualizeOzWhitespace(state.sourceSample||'–'))}</div></div>
+      <div class="export-oz-card"><div class="lbl">Aktiv für Export</div><div class="val export-oz-map">${h(visualizeOzWhitespace(state.effectiveSample||'–'))}${expertEnabled?'  (Expertenmodus)':''}</div></div>
     </div>
     <div class="export-oz-card">
       <div class="lbl">Probeabbildung</div>
@@ -2415,7 +2456,7 @@ function renderExportOzInspector(){
           <button class="btn btn-s btn-sm" onclick="resetExportOzOverride()">Automatik wiederherstellen</button>
         </div>
         <div class="export-oz-hint">Hier nur ein Beispielformat angeben, nicht einzelne OZ bearbeiten. Die Exportvorschau wird sofort neu aufgebaut, ohne neues Matching.</div>
-        <div class="export-oz-live">Live-Vorschau: ${h(state.sourceSample||'01 1')} → ${h(state.examples[0]?.formattedOz||formatExportOZ(state.sourceSample||'01 1',state.effectiveRef)||'–')}</div>
+        <div class="export-oz-live">Live-Vorschau: ${h(visualizeOzWhitespace(state.sourceSample||'01 1'))} → ${h(visualizeOzWhitespace(state.examples[0]?.formattedOz||formatExportOZ(state.sourceSample||'01 1',state.effectiveRef)||'–'))}</div>
         ${state.manualTemplateValid?'<div class="section-note" style="color:#4ade80">Format aktiv. Die XML-Vorschau unten nutzt jetzt dieses Muster.</div>':'<div class="section-note" style="color:#fbbf24">Noch kein gültiges Beispielformat erkannt.</div>'}
       </div>
     </div>`;
@@ -2736,10 +2777,11 @@ function clearAllProjects(){
 // REFERENZ-UI RENDER
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function updateRefUI(){
-  const activePos=getActiveRef();
-  document.getElementById('hRef').textContent=activePos.length;
+  const activeState=getActiveRefState();
+  const activePos=activeState.positions;
+  document.getElementById('hRef').textContent=activeState.total.toLocaleString('de-DE');
   document.getElementById('projCount').textContent=S.refProjects.length;
-  updateRefLoadStatus(activePos.length);
+  updateRefLoadStatus(activeState);
   checkRunBtn();
 
   const list=document.getElementById('projList');
@@ -2777,7 +2819,7 @@ function updateRefUI(){
 
   // Positionsvorschau
   const tb=document.getElementById('refTb');
-  document.getElementById('refPreviewCount').textContent=activePos.length?`${activePos.length} aktive Positionen (max. 200 angezeigt)`:'';
+  document.getElementById('refPreviewCount').textContent=activeState.total?`${activeState.total.toLocaleString('de-DE')} aktive Positionen (max. 200 angezeigt)`:''; 
   if(!activePos.length){
     tb.innerHTML='<tr><td colspan="8"><div class="empty" style="padding:10px"><div style="font-size:20px">🗄</div>Keine aktiven Daten</div></td></tr>';
     return;
@@ -3059,19 +3101,19 @@ function textContainsDrainageHints(text=''){
 }
 function runExportFormatSelfTest(){
   const fakeRef={
-    ...buildOzTemplateData('01.   1.'),
+    ...buildOzTemplateData('01.   1. '),
     manualOzOverride:true,
     targetOzExactMap:new Map(),
     targetOzSet:new Set(['01.   1.','03.   7.','12.   5.']),
-    targetOzKeySet:buildOZKeySet(['01.   1.','03.   7.','12.   5.'])
+    targetOzKeySet:buildOZKeySet(['01.   1. ','03.   7. ','12.   5. '])
   };
   const cases=[
-    {source:'01 1',expected:'01.   1.'},
-    {source:'03 7',expected:'03.   7.'},
-    {source:'12 5',expected:'12.   5.'}
+    {source:'01 1',expected:'01.   1. '},
+    {source:'03 7',expected:'03.   7. '},
+    {source:'12 5',expected:'12.   5. '}
   ];
   return cases.map(c=>{
-    const actual=formatExportOZ(c.source,fakeRef).trimEnd();
+    const actual=formatExportOZ(c.source,fakeRef);
     return {...c,actual,ok:actual===c.expected};
   });
 }
@@ -3322,23 +3364,27 @@ function setRefDataNotice(message=''){
   notice.innerHTML=`<span style="font-size:14px;line-height:1">⚠</span><div>${message}</div>`;
   notice.classList.add('show');
 }
-function updateRefLoadStatus(activeCount){
+function updateRefLoadStatus(activeSource){
   const box=document.getElementById('refLoadLimitHint');
   const maxEl=document.getElementById('refLoadLimitMax');
   const curEl=document.getElementById('refLoadCurrent');
   const detailEl=document.getElementById('refLoadLimitDetail');
   if(!box||!maxEl||!curEl||!detailEl)return;
-  const current=Number.isFinite(Number(activeCount))?Number(activeCount):getActiveRef().length;
+  const activeState=activeSource&&typeof activeSource==='object'
+    ?activeSource
+    :getActiveRefState();
+  const current=Number.isFinite(Number(activeState?.total))?Number(activeState.total):0;
+  const withCosts=Number.isFinite(Number(activeState?.withCosts))?Number(activeState.withCosts):0;
   const ratio=REF_POSITION_RECOMMENDED_MAX>0?current/REF_POSITION_RECOMMENDED_MAX:0;
   box.classList.remove('tone-ok','tone-warn','tone-bad');
   let tone='tone-ok';
-  let text='Empfohlene Lastgrenze: bis ca. '+REF_POSITION_RECOMMENDED_MAX.toLocaleString('de-DE')+' aktive Referenzpositionen · im sicheren Bereich';
+  let text=`Davon ${withCosts.toLocaleString('de-DE')} mit Kalkulationsdaten · empfohlene Lastgrenze: bis ca. ${REF_POSITION_RECOMMENDED_MAX.toLocaleString('de-DE')} aktive Referenzpositionen · im sicheren Bereich`;
   if(ratio>=1){
     tone='tone-bad';
-    text='Empfohlene Lastgrenze überschritten · bitte Referenzen reduzieren oder in Teilmengen arbeiten';
+    text=`Davon ${withCosts.toLocaleString('de-DE')} mit Kalkulationsdaten · empfohlene Lastgrenze überschritten · bitte Referenzen reduzieren oder in Teilmengen arbeiten`;
   }else if(ratio>=0.66){
     tone='tone-warn';
-    text='Empfohlene Lastgrenze bald erreicht · größere Matching-Läufe können spürbar langsamer werden';
+    text=`Davon ${withCosts.toLocaleString('de-DE')} mit Kalkulationsdaten · empfohlene Lastgrenze bald erreicht · größere Matching-Läufe können spürbar langsamer werden`;
   }
   if(S.refStorageWarning){
     tone='tone-bad';
@@ -4195,7 +4241,7 @@ function showDetail(idx){
       <span class="detail-lbl">Match-Score:</span><span class="detail-val"><span class="badge ${scoreBadge(best.score)}">${best.score}%</span> → OZ ${h(np.oz)} "${h(np.kurztext)}"</span>
       <span class="detail-lbl">Kategorie:</span><span class="detail-val">${h(dbg.categoryNew||'-')} → ${h(dbg.categoryRef||'-')} (${dbg.categoryScore??0}%)</span>
       <span class="detail-lbl">Lernbonus / Top:</span><span class="detail-val">${dbg.learningBoost??0}% / ${dbg.topMatchBoost??0}%</span>
-      <span class="detail-lbl">Kurz / Lang / Syn:</span><span class="detail-val">${dbg.shortScore??0}% / ${dbg.longScore??0}% / ${dbg.synonymScore??0}%</span>
+      <span class="detail-lbl">Kurz / Literal / Lang / Syn:</span><span class="detail-val">${dbg.shortScore??0}% / ${dbg.literalShortScore??0}% / ${dbg.longScore??0}% / ${dbg.synonymScore??0}%</span>
       <span class="detail-lbl">Einheit / Menge:</span><span class="detail-val">${dbg.unitScore??0}% / ${dbg.quantityScore??0}%</span>
       <span class="detail-lbl">Deckel:</span><span class="detail-val">${dbg.hardCapsApplied?.length?h(dbg.hardCapsApplied.join(', ')):'-'}</span>
       <span class="detail-lbl">Grund:</span><span class="detail-val detail-lt">${h(dbg.reasonText||'')}</span>
@@ -4829,7 +4875,7 @@ function generateChatGPTReviewPrompt(){
     const best=r.matches[r.sel||0],d=best.debug||{};
     lines.push(`${i+1}. NEW ${r.newPos.oz} | ${r.newPos.kurztext}`);
     lines.push(`   REF ${best.pos.oz} | ${best.pos.kurztext} | ${best.score}% | ${best.kind}`);
-    lines.push(`   debug: short=${d.shortScore}, long=${d.longScore}, syn=${d.synonymScore}, cat=${d.categoryNew}->${d.categoryRef} (${d.categoryScore}), unit=${d.unitScore}, qty=${d.quantityScore}, learn=${d.learningBoost}, top=${d.topMatchBoost}, proj=${d.projectBoost||0}, penalties=[g:${d.genericPenalty}, t:${d.textOnlyPenalty}, u:${d.unitPenalty}, q:${d.quantityPenalty}, h:${d.holdingPenalty||0}, d:${d.docPenalty||0}, ds:${d.docSubPenalty||0}, a:${d.assetPenalty||0}, e:${d.earthPenalty||0}, ents:${d.disposalPenalty||0}, abr:${d.demolitionPenalty||0}, z:${d.surchargePenalty||0}], caps=${(d.hardCapsApplied||[]).join('/')||'-'}`);
+    lines.push(`   debug: short=${d.shortScore}, literal=${d.literalShortScore||0}, long=${d.longScore}, syn=${d.synonymScore}, cat=${d.categoryNew}->${d.categoryRef} (${d.categoryScore}), unit=${d.unitScore}, qty=${d.quantityScore}, learn=${d.learningBoost}, top=${d.topMatchBoost}, proj=${d.projectBoost||0}, penalties=[g:${d.genericPenalty}, t:${d.textOnlyPenalty}, u:${d.unitPenalty}, q:${d.quantityPenalty}, h:${d.holdingPenalty||0}, d:${d.docPenalty||0}, ds:${d.docSubPenalty||0}, a:${d.assetPenalty||0}, e:${d.earthPenalty||0}, ents:${d.disposalPenalty||0}, abr:${d.demolitionPenalty||0}, z:${d.surchargePenalty||0}], caps=${(d.hardCapsApplied||[]).join('/')||'-'}`);
     lines.push(`   reason: ${d.reasonText||'-'}`);
   });
   lines.push('');
@@ -4838,7 +4884,7 @@ function generateChatGPTReviewPrompt(){
     const best=r.matches[r.sel||0],d=best.debug||{};
     lines.push(`${i+1}. NEW ${r.newPos.oz} | ${r.newPos.kurztext}`);
     lines.push(`   REF ${best.pos.oz} | ${best.pos.kurztext} | ${best.score}% | ${best.kind}`);
-    lines.push(`   debug: short=${d.shortScore}, long=${d.longScore}, syn=${d.synonymScore}, cat=${d.categoryNew}->${d.categoryRef} (${d.categoryScore}), unit=${d.unitScore}, qty=${d.quantityScore}, learn=${d.learningBoost}, top=${d.topMatchBoost}, proj=${d.projectBoost||0}, penalties=[g:${d.genericPenalty}, t:${d.textOnlyPenalty}, u:${d.unitPenalty}, q:${d.quantityPenalty}, h:${d.holdingPenalty||0}, d:${d.docPenalty||0}, ds:${d.docSubPenalty||0}, a:${d.assetPenalty||0}, e:${d.earthPenalty||0}, ents:${d.disposalPenalty||0}, abr:${d.demolitionPenalty||0}, z:${d.surchargePenalty||0}], caps=${(d.hardCapsApplied||[]).join('/')||'-'}`);
+    lines.push(`   debug: short=${d.shortScore}, literal=${d.literalShortScore||0}, long=${d.longScore}, syn=${d.synonymScore}, cat=${d.categoryNew}->${d.categoryRef} (${d.categoryScore}), unit=${d.unitScore}, qty=${d.quantityScore}, learn=${d.learningBoost}, top=${d.topMatchBoost}, proj=${d.projectBoost||0}, penalties=[g:${d.genericPenalty}, t:${d.textOnlyPenalty}, u:${d.unitPenalty}, q:${d.quantityPenalty}, h:${d.holdingPenalty||0}, d:${d.docPenalty||0}, ds:${d.docSubPenalty||0}, a:${d.assetPenalty||0}, e:${d.earthPenalty||0}, ents:${d.disposalPenalty||0}, abr:${d.demolitionPenalty||0}, z:${d.surchargePenalty||0}], caps=${(d.hardCapsApplied||[]).join('/')||'-'}`);
     lines.push(`   reason: ${d.reasonText||'-'}`);
   });
   lines.push('');
@@ -4907,6 +4953,9 @@ function runReferenceLinkSelfTest(showUI=false,verbose=false){
 }
 function runMatchingSelfTest(showUI=false){
   const cases=[
+    {kind:'good',a:{kurztext:'Baustelleneinrichtung einrichten betreiben räumen',me:'psch'},b:{kurztext:'Baustelleneinrichtung einrichten betreiben räumen',me:'psch'},min:99,label:'Identischer Kurztext fast 100%'},
+    {kind:'good',a:{kurztext:'Schottertragschicht herstellen',me:'m2'},b:{kurztext:'Schottertragschicht herstelen',me:'m2'},min:95,label:'Kleiner Tippfehler bleibt hoch'},
+    {kind:'good',a:{kurztext:'Baugrube herstellen Boden loesen und laden',me:'m3'},b:{kurztext:'Baugrube herstellen Boden lösen und laden',me:'m3'},min:97,label:'Nahezu identischer Kurztext bleibt hoch'},
     {kind:'good',a:{kurztext:'Baustelleneinrichtung',me:'psch'},b:{kurztext:'Baustelle einrichten',me:'psch'},min:70},
     {kind:'good',a:{kurztext:'Baustelle räumen',me:'psch'},b:{kurztext:'Baustelleneinrichtung räumen',me:'psch'},min:70},
     {kind:'good',a:{kurztext:'Bauzaun',me:'m'},b:{kurztext:'Bauzaun liefern und aufstellen',me:'m'},min:70},
