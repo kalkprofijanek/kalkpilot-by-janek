@@ -3323,19 +3323,28 @@ function coerceReferenceProjectsPayload(payload){
   if(payload&&Array.isArray(payload.data))return payload.data;
   return null;
 }
+function coerceMatchMemoryPayload(payload){
+  if(!payload||typeof payload!=='object')return null;
+  const topMatches=payload.topMatches??payload.top??payload.topStore??payload.matchTopStore??payload.data?.topMatches;
+  const learning=payload.learning??payload.learningStore??payload.matchLearningStore??payload.data?.learning??{};
+  if(topMatches==null&&learning==null)return null;
+  return {
+    topMatches:normalizeMemoryStore(topMatches),
+    learning:normalizeMemoryStore(learning)
+  };
+}
 function importMatchMemoryJSON(file){
   const reader=new FileReader();
   reader.onload=e=>{
     try{
       const payload=JSON.parse(normalizeImportedJSONText(e.target.result));
-      const topMatches=normalizeMemoryStore(payload?.topMatches);
-      const learning=normalizeMemoryStore(payload?.learning);
-      if(!topMatches||typeof topMatches!=='object'||!learning||typeof learning!=='object')throw new Error('JSON enthält kein gültiges Matching-Wissen');
-      saveTopMatchStore(topMatches);
-      saveLearningStore(learning);
+      const stores=coerceMatchMemoryPayload(payload);
+      if(!stores||typeof stores.topMatches!=='object'||typeof stores.learning!=='object')throw new Error('JSON enthält kein gültiges Matching-Wissen');
+      saveTopMatchStore(stores.topMatches);
+      saveLearningStore(stores.learning);
       renderMatch();
       updateExport();
-      log(`✓ Matching-Wissen geladen: ${Object.keys(topMatches).length} Top-Treffer, ${Object.keys(learning).length} Lernsignaturen`,'s');
+      log(`✓ Matching-Wissen geladen: ${Object.keys(stores.topMatches).length} Top-Treffer, ${Object.keys(stores.learning).length} Lernsignaturen`,'s');
     }catch(err){
       alert('Matching-Wissen konnte nicht geladen werden: '+err.message);
       log('⚠ Laden des Matching-Wissens fehlgeschlagen: '+err.message,'w');
@@ -4822,6 +4831,7 @@ document.getElementById('fileXML').onchange=e=>{if(e.target.files[0])loadPending
 document.getElementById('fNew').onchange=e=>{if(e.target.files[0])loadNewLV(e.target.files[0]);};
 document.getElementById('fileExportRefXML').onchange=e=>{if(e.target.files[0])loadExportReferenceFile(e.target.files[0]);};
 document.getElementById('fileRefJSON').onchange=e=>{if(e.target.files[0])importRefFromJSON(e.target.files[0]);};
+document.getElementById('fileMatchMemoryJSON').onchange=e=>{if(e.target.files[0])importMatchMemoryJSON(e.target.files[0]);};
 
 // Drag-Drop Zonen
 setupDrop2('dropD83','d83');
