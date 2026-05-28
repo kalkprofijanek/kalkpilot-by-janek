@@ -184,6 +184,45 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .ref-notice{display:none;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(245,158,11,.28);background:rgba(245,158,11,.08);color:#fcd34d;font-size:11px;line-height:1.5}
 .ref-notice.show{display:flex}
 .ref-notice b{color:#fde68a}
+#refLoadLimitHint{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:8px;
+  border:1px solid rgba(245,158,11,.42);
+  background:linear-gradient(180deg,rgba(245,158,11,.16),rgba(245,158,11,.10));
+  color:#fde68a;
+  font-size:13px;
+  line-height:1.45;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+#refLoadLimitHint.tone-ok{
+  border-color:rgba(34,197,94,.36);
+  background:linear-gradient(180deg,rgba(22,163,74,.14),rgba(22,163,74,.08));
+  color:#dcfce7;
+}
+#refLoadLimitHint.tone-warn{
+  border-color:rgba(245,158,11,.42);
+  background:linear-gradient(180deg,rgba(245,158,11,.16),rgba(245,158,11,.10));
+  color:#fde68a;
+}
+#refLoadLimitHint.tone-bad{
+  border-color:rgba(239,68,68,.42);
+  background:linear-gradient(180deg,rgba(239,68,68,.18),rgba(239,68,68,.10));
+  color:#fecaca;
+}
+#refLoadLimitHint b{color:#fff3bf}
+#refLoadLimitHint .limit-icon{font-size:18px;line-height:1;flex-shrink:0}
+#refLoadLimitHint .limit-copy{display:flex;flex-direction:column;gap:2px}
+#refLoadLimitHint .limit-main{font-weight:600;font-size:12px;letter-spacing:.2px;text-transform:uppercase}
+#refLoadLimitHint .limit-current{font-size:15px;color:#fff7d6}
+#refLoadLimitHint .limit-current strong{
+  color:#ffffff;
+  font-size:19px;
+  font-weight:800;
+}
+#refLoadLimitHint .limit-detail{font-size:12px;opacity:.95}
 .mini-modal{display:none;position:fixed;inset:0;z-index:1001;background:rgba(0,0,0,.62);align-items:center;justify-content:center}
 .mini-modal.open{display:flex}
 .mini-box{background:var(--card);border:1px solid var(--border);border-radius:10px;width:min(760px,94vw);max-height:72vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.6)}
@@ -305,6 +344,14 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         <button class="btn btn-s btn-sm" onclick="document.getElementById('fileRefJSON').click()" title="Gesicherte JSON-Datenbank laden">📂 Laden</button>
         <input type="file" id="fileRefJSON" accept=".json">
         <button class="btn btn-s btn-sm" onclick="clearAllProjects()" style="color:var(--red)" title="Alle Projekte löschen">🗑 Alle löschen</button>
+      </div>
+    </div>
+    <div class="ref-notice show tone-ok" id="refLoadLimitHint" style="display:flex">
+      <span class="limit-icon">⚖</span>
+      <div class="limit-copy">
+        <div class="limit-main">Referenzlast</div>
+        <div class="limit-current">Aktuell aktiv: <strong id="refLoadCurrent">0</strong></div>
+        <div class="limit-detail" id="refLoadLimitDetail">Empfohlene Lastgrenze: bis ca. <span id="refLoadLimitMax">15.000</span> aktive Referenzpositionen · im sicheren Bereich</div>
       </div>
     </div>
     <div id="projList" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1">
@@ -617,6 +664,7 @@ const S={
   manualRefIndexMap:null,
   manualSearchTimer:null,
   lastReferenceSelfTest:null,
+  refStorageWarning:'',
   matching:false,
   exportRef:null,
 };
@@ -631,6 +679,7 @@ const LEARNING_KEY='KalkPilot_MatchLearning_v1';
 const REVIEW_NOTES_KEY='KalkPilot_ReviewNotes_v1';
 const MANUAL_SPLIT_KEY='KalkPilot_ManualSplit_v1';
 const MATCH_SPLIT_KEY='KalkPilot_MatchSplit_v1';
+const REF_POSITION_RECOMMENDED_MAX=15000;
 function getActiveRef(){
   return S.refProjects.filter(p=>p.active).flatMap(p=>p.positions);
 }
@@ -710,6 +759,15 @@ function buildOZKeySet(values){
     ozLookupKeys(value).forEach(key=>keySet.add(key));
   });
   return keySet;
+}
+function buildOZExactMap(values){
+  const map=new Map();
+  (values||[]).forEach(value=>{
+    ozLookupKeys(value).forEach(key=>{
+      if(key&&!map.has(key))map.set(key,String(value||''));
+    });
+  });
+  return map;
 }
 function sameOZ(a,b){
   if(!a||!b)return false;
@@ -2078,13 +2136,48 @@ function parseExportReferenceXML(txt,fileName=''){
     }
   }
   const targetOzValues=[...(majorWbs.querySelectorAll(':scope > ITEMS > WBSItem > NameWBSItem')||[])].map(n=>(n.textContent||'').trim()).filter(Boolean);
+  const templateSegments=[];
+  const templateSuffix=sampleItemOz.includes('.')?sampleItemOz.slice(sampleItemOz.lastIndexOf('.')+1):'';
+  if(sampleItemOz.includes('.')){
+    const matches=[...sampleItemOz.matchAll(/([^.]*)\./g)];
+    matches.forEach(m=>{
+      const rawSeg=m[1]??'';
+      const trimmed=rawSeg.trim();
+      templateSegments.push({
+        width:rawSeg.length,
+        trimmedWidth:trimmed.length,
+        leadSpaces:(rawSeg.match(/^\s*/)?.[0]||'').length,
+        trailSpaces:(rawSeg.match(/\s*$/)?.[0]||'').length,
+        zeroPad:!!trimmed && !/\s/.test(rawSeg) && /^0\d+$/.test(trimmed)
+      });
+    });
+  }
   const targetOzSet=new Set(targetOzValues);
   const targetOzKeySet=buildOZKeySet(targetOzValues);
-  return {fileName,namePrj,descrPrj,paCode,paName,nameWBS,descrWBS,wbsType,cgrCatalog,sampleItemOz,ozSegmentLengths,targetOzSet,targetOzKeySet};
+  const targetOzExactMap=buildOZExactMap(targetOzValues);
+  return {fileName,namePrj,descrPrj,paCode,paName,nameWBS,descrWBS,wbsType,cgrCatalog,sampleItemOz,ozSegmentLengths,templateSegments,templateSuffix,targetOzSet,targetOzKeySet,targetOzExactMap};
 }
 function formatExportOZ(raw, exportRef){
   const source=String(raw||'').trim();
   if(!source)return '';
+  const exactMap=exportRef?.targetOzExactMap instanceof Map?exportRef.targetOzExactMap:null;
+  if(exactMap){
+    const exact=ozLookupKeys(source).map(key=>exactMap.get(key)).find(Boolean);
+    if(exact)return exact;
+  }
+  const numericParts=source.split(/\D+/).filter(Boolean);
+  const templateSegments=Array.isArray(exportRef?.templateSegments)?exportRef.templateSegments.filter(seg=>seg&&seg.width>0):[];
+  if(templateSegments.length>=2&&numericParts.length===templateSegments.length){
+    const parts=numericParts.map((num,i)=>{
+      const seg=templateSegments[i]||{};
+      const width=Math.max(1,Number(seg.width)||String(num).length);
+      if(seg.zeroPad)return String(num).padStart(width,'0');
+      if((seg.leadSpaces||0)>0)return String(num).padStart(width,' ');
+      if((seg.trailSpaces||0)>0)return String(num).padEnd(width,' ');
+      return width>String(num).length?String(num).padStart(width,' '):String(num);
+    });
+    return parts.join('.')+'.'+String(exportRef?.templateSuffix??' ');
+  }
   const digits=source.replace(/\D+/g,'');
   const segs=Array.isArray(exportRef?.ozSegmentLengths)?exportRef.ozSegmentLengths.filter(n=>n>0):[];
   const sumSegs=segs.reduce((s,n)=>s+n,0);
@@ -2103,7 +2196,6 @@ function formatExportOZ(raw, exportRef){
     const parts=source.split('.').map(s=>s.trim()).filter(Boolean);
     if(parts.length)return parts.join('.')+'. ';
   }
-  const numericParts=source.split(/\D+/).filter(Boolean);
   if(numericParts.length===3)return numericParts.join('.')+'. ';
   if(numericParts.length===2&&numericParts[1].length>=3){
     return [numericParts[0],numericParts[1].slice(0,1),numericParts[1].slice(1)].filter(Boolean).join('.')+'. ';
@@ -2142,6 +2234,21 @@ function updateExportReferenceUI(){
   }
   summary.innerHTML=`<b>Zielprojekt erkannt:</b><br>Projekt: ${h(S.exportRef.namePrj)}${S.exportRef.descrPrj?` - ${h(S.exportRef.descrPrj)}`:''}<br>WBS-ID: ${h(S.exportRef.nameWBS)}${S.exportRef.descrWBS?` - ${h(S.exportRef.descrWBS)}`:''}<br>WBS-Typ: ${h(S.exportRef.wbsType)} | Phase: ${h(S.exportRef.paCode)}${S.exportRef.paName?` (${h(S.exportRef.paName)})`:''}${S.exportRef.fileName?`<br>Datei: ${h(S.exportRef.fileName)}`:''}`;
 }
+function probeExportReferenceMapping(){
+  if(!S.exportRef||!S.newLV?.length)return null;
+  const sample=S.newLV.slice(0,Math.min(12,S.newLV.length));
+  const targetSet=S.exportRef.targetOzSet instanceof Set?S.exportRef.targetOzSet:new Set();
+  const mapped=sample.map(pos=>{
+    const formatted=formatExportOZ(pos.oz,S.exportRef);
+    return {
+      sourceOz:String(pos.oz||'').trim(),
+      formattedOz:String(formatted||'').trim(),
+      exactHit:targetSet.has(String(formatted||'').trim())
+    };
+  });
+  const hits=mapped.filter(x=>x.exactHit).length;
+  return {checked:mapped.length,hits,mapped};
+}
 async function loadExportReferenceFile(file){
   try{
     const txt=await readUploadedText(file,'XML');
@@ -2150,6 +2257,14 @@ async function loadExportReferenceFile(file){
     buildXML();
     updateExportValidationSummary();
     log(`✓ Zielprojekt-Referenz geladen: ${S.exportRef.namePrj} / ${S.exportRef.nameWBS}`,'s');
+    const probe=probeExportReferenceMapping();
+    if(probe){
+      if(probe.hits===0){
+        log(`⚠ OZ-Format-Probe: 0/${probe.checked} Beispiel-OZ exakt im Zielprojekt gefunden. Bitte Export vor Import prüfen.`,'w');
+      }else{
+        log(`✓ OZ-Format-Probe: ${probe.hits}/${probe.checked} Beispiel-OZ exakt im Zielprojekt gefunden`,'s');
+      }
+    }
     if(pendingXmlExportAfterReference){
       pendingXmlExportAfterReference=false;
       doExportXML();
@@ -2409,6 +2524,7 @@ function updateRefUI(){
   const activePos=getActiveRef();
   document.getElementById('hRef').textContent=activePos.length;
   document.getElementById('projCount').textContent=S.refProjects.length;
+  updateRefLoadStatus(activePos.length);
   checkRunBtn();
 
   const list=document.getElementById('projList');
@@ -2968,15 +3084,44 @@ function setRefDataNotice(message=''){
   notice.innerHTML=`<span style="font-size:14px;line-height:1">⚠</span><div>${message}</div>`;
   notice.classList.add('show');
 }
+function updateRefLoadStatus(activeCount){
+  const box=document.getElementById('refLoadLimitHint');
+  const maxEl=document.getElementById('refLoadLimitMax');
+  const curEl=document.getElementById('refLoadCurrent');
+  const detailEl=document.getElementById('refLoadLimitDetail');
+  if(!box||!maxEl||!curEl||!detailEl)return;
+  const current=Number(activeCount)||0;
+  const ratio=REF_POSITION_RECOMMENDED_MAX>0?current/REF_POSITION_RECOMMENDED_MAX:0;
+  box.classList.remove('tone-ok','tone-warn','tone-bad');
+  let tone='tone-ok';
+  let text='Empfohlene Lastgrenze: bis ca. '+REF_POSITION_RECOMMENDED_MAX.toLocaleString('de-DE')+' aktive Referenzpositionen · im sicheren Bereich';
+  if(ratio>=1){
+    tone='tone-bad';
+    text='Empfohlene Lastgrenze überschritten · bitte Referenzen reduzieren oder in Teilmengen arbeiten';
+  }else if(ratio>=0.66){
+    tone='tone-warn';
+    text='Empfohlene Lastgrenze bald erreicht · größere Matching-Läufe können spürbar langsamer werden';
+  }
+  if(S.refStorageWarning){
+    tone='tone-bad';
+    text=S.refStorageWarning;
+  }
+  box.classList.add(tone);
+  maxEl.textContent=REF_POSITION_RECOMMENDED_MAX.toLocaleString('de-DE');
+  curEl.textContent=current.toLocaleString('de-DE');
+  detailEl.textContent=text;
+}
 
 function saveRefToStorage(){
   try{
     const data=JSON.stringify(S.refProjects);
     localStorage.setItem(STORAGE_KEY,data);
+    S.refStorageWarning='';
     // Größe anzeigen
     const kb=Math.round(data.length/1024);
     if(kb>3000)log(`⚠ Referenzdatenbank groß (${kb} KB) - Sicherung als JSON empfohlen`,'w');
   }catch(e){
+    S.refStorageWarning='Speicherhinweis: Lokales Speichern ist fehlgeschlagen · bitte Referenzdatenbank als JSON sichern';
     log('⚠ localStorage-Speichern fehlgeschlagen (Datenmenge zu groß?) - Bitte als JSON sichern!','w');
   }
 }
@@ -3867,6 +4012,15 @@ function getManualBuckets(refs){
 function canUseManualWorker(){
   return typeof Worker==='function'&&typeof Blob==='function'&&typeof URL!=='undefined'&&typeof URL.createObjectURL==='function';
 }
+function getCurrentManualRefPool(){
+  const calcOnly=!!document.getElementById('manualCalcOnly')?.checked;
+  return getManualRefPool(calcOnly);
+}
+function resolveManualReference(refIdx){
+  const pool=getCurrentManualRefPool();
+  const rp=pool?.refs?.[refIdx];
+  return rp||getActiveRef()[refIdx]||null;
+}
 function buildManualWorkerPayload(target,candidateRefs,pool){
   return{
     workerReady:canUseManualWorker(),
@@ -4028,7 +4182,7 @@ function onManualPendingToggle(){
 }
 function applyManualMatch(resultIdx,refIdx){
   const result=S.results[resultIdx];
-  const refPos=getActiveRef()[refIdx];
+  const refPos=resolveManualReference(refIdx);
   if(!result||!refPos)return;
   const evaluated=calcScore(result.newPos,refPos,{isTextOnly:!(refPos.matchedXML&&refPos.kosten?.length)});
   const manualMatch={pos:refPos,score:Math.max(1,evaluated.score),kind:(refPos.matchedXML&&refPos.kosten?.length)?'CALC':'TEXT_ONLY',debug:{...evaluated.debug,reasonText:`Manuell gesetzt. ${evaluated.debug.reasonText||''}`.trim()}};
@@ -4151,11 +4305,14 @@ function renderManualMatch(){
   }).join('');
 }
 function showRefDetailFromGlobal(refIdx){
-  const refs=getActiveRef();
-  const rp=refs[refIdx];
+  const pool=getCurrentManualRefPool();
+  const refs=pool?.refs?.length?pool.refs:getActiveRef();
+  const rp=resolveManualReference(refIdx);
   if(!rp)return;
   _refPreviewCache=refs;
-  showRefDetail(refIdx);
+  const actualIdx=refs.indexOf(rp);
+  if(actualIdx<0)return;
+  showRefDetail(actualIdx);
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
