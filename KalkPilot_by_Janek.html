@@ -975,7 +975,10 @@ const LV_STOPWORDS=new Set([
   'arbeiten','taetigkeit','massnahme','und','oder','mit','fuer','zur',
   'zum','eine','einen','dem','den','die','das','der','ist','sind',
   'von','auf','an','im','in','am','als','unter','ueber','bei',
-  'freitext','abrechnung','abrechng','auftrag','gesondert','anordnung','einrechn','einrechnen'
+  // 'gesondert' ist BEWUSST kein Stopwort: es ist ein Scope-Trägerwort ("Planum gesondert" vs
+  // "Planum nicht gesondert", "Verfüllboden gesondert"). Als Stopwort entfernt würde es die
+  // TERM_NORMS (planum gesondert / verfuellboden gesondert) und damit die Scope-Flags aushebeln.
+  'freitext','abrechnung','abrechng','auftrag','anordnung','einrechn','einrechnen'
 ]);
 function removeLVStopwords(text){
   const src=String(text||'');
@@ -1062,7 +1065,7 @@ const TERM_NORMS=[
   [/stück|stÃ¼ck|stk/g,'st'],
   [/wochen?|woche/g,'wo'],
   [/psch|pauschale?|pauschal/g,'psch'],
-  [/tonne|tonnen|to/g,'t'],
+  [/\btonnen?\b|\bto\b/g,'t'],
   [/abfallschluessel|abfallschlüssel/g,'abfallschluessel'],
   [/ersatzbaustoffverordnung/g,'ersatzbaustoffverordnung'],
   [/\bfreitext\b/g,' '],
@@ -1137,6 +1140,21 @@ function hasTerm(text,term){
   if(words.includes(term))return true;
   return term.length>=8&&text.includes(term);
 }
+// Mehrwortige Synonymgruppen (z.B. "boden loesen laden" ↔ "loesen und laden") sind über die
+// wortweise SYNONYM_MAP nicht auffindbar. Lazy aufgebaut, da normalizeConstructionTerms zur
+// Definitionszeit (TERM_NORMS-TDZ) noch nicht aufrufbar ist.
+let __SYNONYM_PHRASES=null;
+function getSynonymPhrases(){
+  if(__SYNONYM_PHRASES)return __SYNONYM_PHRASES;
+  __SYNONYM_PHRASES=[];
+  BAU_SYNONYMS.forEach((group,groupIdx)=>{
+    group.forEach(term=>{
+      const p=normalizeConstructionTerms(term);
+      if(p.includes(' ')&&p.length>=8)__SYNONYM_PHRASES.push({g:groupIdx,p});
+    });
+  });
+  return __SYNONYM_PHRASES;
+}
 function synonymScore(a,b){
   const na=normalizeConstructionTerms(a);
   const nb=normalizeConstructionTerms(b);
@@ -1144,8 +1162,43 @@ function synonymScore(a,b){
   const wordsB=nb.split(/\s+/).filter(w=>w.length>=4&&!SYNONYM_IGNORE.has(w));
   const groupsA=new Set(wordsA.map(w=>SYNONYM_MAP.get(w)).filter(g=>g!==undefined));
   const groupsB=new Set(wordsB.map(w=>SYNONYM_MAP.get(w)).filter(g=>g!==undefined));
-  for(const g of groupsA){if(groupsB.has(g))return 1.0;}
-  return tokSim(na,nb)*0.30;
+  // Mehrwort-Phrasengruppen markieren zusätzlich die enthaltenen Wörter als "von einer
+  // geteilten Synonymgruppe abgedeckt", damit die Deckungsmessung unten sie mitzählt.
+  const phraseGroupsA=new Set(),phraseGroupsB=new Set();
+  for(const {g,p} of getSynonymPhrases()){
+    if(na.includes(p)){groupsA.add(g);phraseGroupsA.add(g);}
+    if(nb.includes(p)){groupsB.add(g);phraseGroupsB.add(g);}
+  }
+  // Geteilte Synonymgruppen.
+  const inter=new Set();for(const g of groupsA){if(groupsB.has(g))inter.add(g);}
+  const fallback=tokSim(na,nb)*0.30;
+  if(inter.size===0)return fallback;
+  // Graduelle Deckung statt binärer 1.0: ein einzelnes geteiltes Nebenwort soll
+  // textConfidence NICHT mehr auf 1.0 hochziehen und so die fachlichen Hard-Caps umgehen.
+  // Stattdessen messen wir, welcher Anteil der DISTINKTIVEN Wörter je Seite über eine
+  // geteilte Synonymgruppe (oder literal) gedeckt ist. Volle Deckung der kleineren Seite → ~1.0
+  // (erhält Recall für kurze Positionen), partielle Deckung skaliert linear herunter.
+  const setA=new Set(wordsA),setB=new Set(wordsB);
+  // Längengewichtung: lange Komposita (frostschutzschicht) sind distinktiver als kurze
+  // Admin-/Füllwörter (unterlagen, einbaudoku) – ein geteiltes Hauptwort soll daher stärker
+  // wiegen als ein nicht geteiltes Nebenwort, ohne wieder pauschal auf 1.0 zu springen.
+  const wt=w=>Math.max(1,w.length-3);
+  const covered=(words,otherSet,phraseShared)=>{
+    if(!words.length)return 0;
+    const phraseHit=phraseShared.size&&[...phraseShared].some(pg=>inter.has(pg));
+    let num=0,den=0;
+    for(const w of words){
+      const g=SYNONYM_MAP.get(w);
+      const wi=wt(w);den+=wi;
+      if(otherSet.has(w)||(g!==undefined&&inter.has(g))||phraseHit)num+=wi;
+    }
+    return den?num/den:0;
+  };
+  const covA=covered(wordsA,setB,phraseGroupsA);
+  const covB=covered(wordsB,setA,phraseGroupsB);
+  // Die kleinere Seite ist i.d.R. vollständiger gedeckt → max() bevorzugt sie und erhält Recall.
+  const cover=Math.max(covA,covB);
+  return Math.max(fallback,cover);
 }
 function swSubcategory(text){
   const t=normalizeConstructionTerms(text);
@@ -1192,16 +1245,16 @@ function buildPositionMatchProfile(p){
   profile.docLike=isDocLikeText(fullNorm);
   profile.beAsset=profile.category==='BE'?detectBeAsset(fullNorm):'';
   profile.earthFamily=profile.category==='ERDBAU'?detectEarthworkFamily(fullNorm):'';
-  profile.disposalSig=profile.category==='ENTSORGUNG'?detectDisposalSignature(fullNorm):'';
+  profile.disposalSig=profile.category==='ENTSORGUNG'?detectDisposalSignature(fullRaw):'';
   profile.docSub=['DOKUMENTATION','QUALITAET_PROBEFELD','BAULEITUNG_PLANUNG','ARBEITSSCHUTZ_SW'].includes(profile.category)?detectDocSubcategory(fullNorm):'';
   profile.demolitionFamily=profile.category==='ABBRUCH_RUECKBAU'?detectDemolitionFamily(fullNorm):'';
   profile.surcharge=hasSurchargeSemantics(fullRaw);
-  profile.ebv=getEbvClass(fullNorm);
-  profile.depv=getDepvClass(fullNorm);
+  profile.ebv=getEbvClass(fullRaw);
+  profile.depv=getDepvClass(fullRaw);
   profile.siteContext=detectSiteContext(fullNorm);
-  profile.materialBand=detectMaterialBand(fullNorm);
+  profile.materialBand=detectMaterialBand(fullNorm,fullRaw);
   profile.compactionSpec=detectCompactionSpec(fullNorm);
-  profile.actionFlags=detectActionFlags(fullNorm);
+  profile.actionFlags=detectActionFlags(fullNorm,fullRaw);
   return profile;
 }
 function getMatchProfile(p){
@@ -1216,7 +1269,9 @@ function hasHoldingSemantics(text){
   return /\bvorhaltung\b|\bverlaengerte\b|\bverlangerte\b|\bzusaetzl\b|\bzusatzliche?\b|\bfortschreibung\b|\baktualisierung\b/.test(normalizeConstructionTerms(text));
 }
 function isDocLikeText(text){
-  return /\bplan\b|\bkonzept\b|\banalyse\b|\bdokumentation\b|\bnachweis\b|\bfortschreibung\b|\baktualisierung\b|\bbericht\b|\bbeurteilung\b/.test(normalizeConstructionTerms(text));
+  // plan\b (statt \bplan\b) erfasst auch Komposita wie Bauzeitenplan/Lageplan/Verlegeplan/
+  // Baustelleneinrichtungsplan – allesamt Dokumente, die der reine Wortgrenzen-Match verpasste.
+  return /plan\b|\bkonzept\b|\banalyse\b|\bdokumentation\b|\bnachweis\b|\bfortschreibung\b|\baktualisierung\b|\bbericht\b|\bbeurteilung\b/.test(normalizeConstructionTerms(text));
 }
 function detectBeAsset(text){
   const t=normalizeConstructionTerms(text);
@@ -1232,8 +1287,15 @@ function detectBeAsset(text){
     ['beleuchtung',/\bbeleuchtung|fluchtweg\b/],
     ['baustrasse',/\bbaustrasse|baustraße|ueberfahrschutz|behelfsueberfahrt\b/]
   ];
-  const found=tags.filter(([,rx])=>rx.test(t)).map(([name])=>name);
-  return found[0]||'';
+  // Leitwort-Prinzip: der BE-Gegenstand ist das Subjekt – im LV-Kurztext das am weitesten LINKS
+  // stehende Treffwort. So gewinnt "Beleuchtung Fluchtweg außerhalb Bauzaun" das beleuchtung-Tag
+  // statt des nur beiläufig genannten "bauzaun" (gleiche Klasse wie der Hecke-Beiläufig-Bug).
+  let best='',bestIdx=Infinity;
+  for(const [name,rx] of tags){
+    const m=t.match(rx);
+    if(m&&m.index<bestIdx){bestIdx=m.index;best=name;}
+  }
+  return best;
 }
 function detectEarthworkFamily(text){
   const t=normalizeConstructionTerms(text);
@@ -1256,17 +1318,19 @@ function detectEarthworkFamily(text){
   return'';
 }
 function detectDisposalSignature(text){
-  const t=normalizeConstructionTerms(text);
+  // norm() statt normalizeConstructionTerms: behält kurze Tokens (bm, 17, 05, 04), die removeLVStopwords
+  // sonst entfernt – sonst geht "BM-0" / "AVV 17 05 04" (mit Trennern) als Signatur verloren.
+  const t=norm(text);
   const parts=[];
-  const ebv=getEbvClass(t);
-  const depv=getDepvClass(t);
-  // AVV-Schlüssel: Böden und Steine
-  if(/\b170504\b/.test(t))parts.push('AVV170504');
-  if(/\b170503\b/.test(t))parts.push('AVV170503');
-  if(/\b170505\b/.test(t))parts.push('AVV170505');
-  if(/\b170506\b/.test(t))parts.push('AVV170506');
-  if(/\b170507\b/.test(t))parts.push('AVV170507');
-  if(/\b170508\b/.test(t))parts.push('AVV170508');
+  const ebv=getEbvClass(text);
+  const depv=getDepvClass(text);
+  // AVV-Schlüssel: Böden und Steine. \s* toleriert "17 05 04" ebenso wie "170504".
+  if(/\b17\s*05\s*04\b/.test(t))parts.push('AVV170504');
+  if(/\b17\s*05\s*03\b/.test(t))parts.push('AVV170503');
+  if(/\b17\s*05\s*05\b/.test(t))parts.push('AVV170505');
+  if(/\b17\s*05\s*06\b/.test(t))parts.push('AVV170506');
+  if(/\b17\s*05\s*07\b/.test(t))parts.push('AVV170507');
+  if(/\b17\s*05\s*08\b/.test(t))parts.push('AVV170508');
   if(/\bzwischenlager\b/.test(t))parts.push('ZWISCHENLAGER');
   if(/\bverwert/.test(t))parts.push('VERWERTUNG');
   if(/\bdeponi/.test(t))parts.push('DEPONIE');
@@ -1277,6 +1341,30 @@ function detectDisposalSignature(text){
   if(ebv)parts.push(ebv);
   if(depv)parts.push(depv);
   return parts.join('|');
+}
+// Zwei Entsorgungs-Signaturen widersprechen sich NUR, wenn sich eine identitätsstiftende
+// Komponente echt gegenseitig ausschließt – nicht schon bei jeder String-Differenz.
+// Verwertung/Deponie/Zwischenlager sind ENTSORGUNGSWEGE (nicht abfall-identitätsstiftend) und
+// eine einseitig genannte NGA/GA/Klasse ist kein Widerspruch zu einer Seite, die sie nicht nennt.
+// Beispiel: "Entsorgung BM-0 AVV170504 NGA" vs "Verwertung BM0 AVV170504" → gleicher Abfall, KEIN Mismatch.
+function disposalContradicts(sigA,sigB){
+  if(!sigA||!sigB)return false;
+  const A=new Set(sigA.split('|')),B=new Set(sigB.split('|'));
+  const pick=(s,pred)=>[...s].filter(pred);
+  // AVV-Schlüssel: beide nennen einen Code, aber keinen gemeinsamen → Widerspruch.
+  const aAvv=pick(A,x=>x.startsWith('AVV')),bAvv=pick(B,x=>x.startsWith('AVV'));
+  if(aAvv.length&&bAvv.length&&!aAvv.some(x=>B.has(x)))return true;
+  // Gefährlich vs. nicht gefährlich ist ein echter Widerspruch.
+  if((A.has('GA')&&B.has('NGA'))||(A.has('NGA')&&B.has('GA')))return true;
+  // EBV-Klasse (BM-*/Z*): beide nennen eine, aber keine gemeinsame → Widerspruch.
+  const isCls=x=>/^(BM-|Z\d)/.test(x);
+  const aCls=pick(A,isCls),bCls=pick(B,isCls);
+  if(aCls.length&&bCls.length&&!aCls.some(x=>B.has(x)))return true;
+  // DEPV-Klasse (DK-*): beide nennen eine, aber keine gemeinsame → Widerspruch.
+  const isDk=x=>x.startsWith('DK-');
+  const aDk=pick(A,isDk),bDk=pick(B,isDk);
+  if(aDk.length&&bDk.length&&!aDk.some(x=>B.has(x)))return true;
+  return false;
 }
 function detectDocSubcategory(text){
   const t=normalizeConstructionTerms(text);
@@ -1311,9 +1399,10 @@ function detectSiteContext(text){
   if(/\bverkehrsflaeche\b|\bverkehrsflache\b|\bfahrbahn\b|\bbaustra(s|ß)e\b/.test(t))return'VERKEHRSFLAECHE';
   return'';
 }
-function detectMaterialBand(text){
+function detectMaterialBand(text,rawText){
   const t=normalizeConstructionTerms(text);
-  const exact=t.match(/\b(\d{1,3})\s*\/\s*(\d{1,3})\b/);
+  // Kornband auf ROHTEXT prüfen: norm()/Stopwort-Entfernung killt den "/" und kurze Zahlen ("0/32" → "").
+  const exact=String(rawText||text).match(/(\d{1,3})\s*\/\s*(\d{1,3})/);
   if(exact)return `${exact[1]}/${exact[2]}`;
   if(/\bura\b/.test(t))return'URA';
   if(/\burm\b/.test(t))return'URM';
@@ -1326,9 +1415,15 @@ function detectCompactionSpec(text){
   if(/\bproctor\b|\bdpr\b|\bverdichtungsgrad\b/.test(t))return'PROCTOR';
   return'';
 }
-function detectActionFlags(text){
+function detectActionFlags(text,rawText){
   const t=normalizeConstructionTerms(text);
+  // Aktionsrichtung auf ROHTEXT (vor Stopwort-Entfernung), da "herstellen"/"liefern" Stopwörter sind.
+  const raw=norm(rawText||text);
+  const placing=/\bherstell|\bandeck|\beinbau|\baufbring|\bauftrag|\berricht|\bverleg|\baufstell|\bverfuell|\banleg|\baufschuett|\baufschutt/.test(raw);
+  const removing=/\babtrag|\babbrech|\babbruch|\bausbau|\brueckbau|\bruckbau|\babfraes|\babfras|\bentfern|\bbeseitig|\bdemontag|\bdemontier|\babraeum|\babraum|\bloesen\b|\broden\b/.test(raw);
   return{
+    placing,
+    removing,
     agProvided:/\bdurch ag gestellt\b|\bvom ag gestellt\b|\bag stellt\b/.test(t),
     controlTest:/\bkontrollpruefung\b|\bkontrollprufung\b|\bplattendruckversuch\b|\blastplattenversuch\b|\bpruefplan\b/.test(t),
     loading:/\bladen\b/.test(t),
@@ -1508,10 +1603,13 @@ function positionCategory(p){
   if(/\bqualitaetssicherungsplan\b|\bkontrollpruefung\b|\bplattendruckversuch\b|\bprobefeld\b/.test(t))return'QUALITAET_PROBEFELD';
   if(/\bvermessungsarbeiten\b|\bhauptachsen\b|\babstecken\b/.test(t))return'VERMESSUNG';
   if(/\babbrechen\b|\brueckbau\b|\bruckbau\b|\baufbrechen\b|\babbau\b|\babbruch\b/.test(t))return'ABBRUCH_RUECKBAU';
+  // Eine Baugrube/Schachtbaugrube IST Erdaushub – das generische \bschacht\b der LEITUNGSBAU-Regel
+  // darunter würde "Baugrube für Schacht herstellen" sonst fälschlich dem Leitungsbau zuordnen.
+  if(/\bschachtbaugrube\b|\bbaugrube\b[\s\S]*\bschacht\b|\bschacht\b[\s\S]*\bbaugrube\b/.test(t))return'ERDBAU';
   if(/\bsickerwasserrohr\b|\bdraenrohr\b|\bdrainagerohr\b|\brohrleitung\b|\brohrbettung\b|\bschacht\b|\bschieber\b|\bmuffe\b|\bformteil\b|\bbogen\b/.test(t))return'LEITUNGSBAU';
   if(/\bschwarzweissanlage\b|\bdekontaminationsanlage\b|\bpersonen deko\b|\bstiefelwaschanlage\b|\breifenwaschanlage\b|\batemschutz\b|\bschutzanzug\b|\bgefahrstoff\b|\bbetriebsanweisung\b|\balarmplan\b|\bnotfallplan\b|\bgefaehrdungsbeurteilung\b/.test(t))return'ARBEITSSCHUTZ_SW';
   if(/\bbaustelleneinrichtung\b|\bbauzaun\b|\bbaustelleneinrichtung raeumen\b|\bbauschild\b|\bbaucontainer\b|\bdrehfluegeltor\b|\bschiebetor\b|\bschutzgelaender\b|\btreppenturm\b|\bbaustromversorgung\b|\bbauwasserversorgung\b|\bbaustellenbeleuchtung\b|\bbaustra(s|ß)e\b|\bueberfahrschutz\b|\bbehelfsueberfahrt\b/.test(t))return'BE';
-  if(/\bbodenaushub\b|\baushub\b|\berdaushub\b|\bboden loesen\b|\bboden laden\b|\bboden fuer baugrube loesen\b|\bboden fuer baugrube laden\b|\bbaugrube herstellen\b|\bbaugrube loesen\b|\boberboden abtragen\b|\boberboden andecken\b|\boberboden liefern und andecken\b|\boberboden lagern\b|\boberboden weiterverwenden\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bplanum\b|\bprofilieren\b|\bverdichten\b|\barbeitsraum verfuellen\b|\bleerschlitz verfuellen\b|\barbeitsebene\b|\barbeitsplattform\b|\bbauwerkshinterfuellung\b|\bhinterfuellung\b|\bhinterfullung\b|\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b|\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b|\bboeschungsansaat\b|\bboeschungsbegruenung\b|\bhydrosaat\b/.test(t))return'ERDBAU';
+  if(/\bbodenaushub\b|\baushub\b|\berdaushub\b|\bboden loesen\b|\bboden laden\b|\bboden fuer baugrube loesen\b|\bboden fuer baugrube laden\b|\bbaugrube herstellen\b|\bbaugrube loesen\b|\boberboden abtragen\b|\boberboden andecken\b|\boberboden liefern und andecken\b|\boberboden lagern\b|\boberboden weiterverwenden\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bboden\b[\s\S]{0,80}\beinbauen\b|\blagenweise\b|\bplanum\b|\bprofilieren\b|\bverdichten\b|\barbeitsraum verfuellen\b|\bleerschlitz verfuellen\b|\barbeitsebene\b|\barbeitsplattform\b|\bbauwerkshinterfuellung\b|\bhinterfuellung\b|\bhinterfullung\b|\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b|\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b|\bboeschungsansaat\b|\bboeschungsbegruenung\b|\bhydrosaat\b/.test(t))return'ERDBAU';
   const categoryMap={
     'ENTSORGUNG':[/\bentsorgung\b/,/\bverwertung\b/,/\babfahren\b/,/\bdeponieren\b/,/\bdeponie\b/,/\bbeprobung\b/,/\bchemischer nachweis\b/,/\babfallinventar\b/,/\bgefaehrlicher abfall\b/,/\bnicht gefaehrlicher abfall\b/,/\bn gefaehrl abfall\b/,/\babfallschluessel\b/,/\b170504\b/,/\bbm0\b/,/\bersatzbaustoffverordnung\b/,/\bzwischenlager\b/],
     'DEPONIEBAU_ABDICHTUNG':[/\btechnische barriere\b/,/\bmineralische dichtung\b/,/\bbasisabdichtung\b/,/\bkunststoffdichtungsbahn\b/,/\bkdb\b/,/\bpehd\b/,/\bschutzvlies\b/,/\bfiltervlies\b/,/\bvliesstoff\b/,/\bsandmatte\b/,/\bentwaesserungsschicht\b/,/\brandwall\b/,/\bboeschungsbereich\b/,/\banschluss an bestand\b/],
@@ -1522,7 +1620,7 @@ function positionCategory(p){
     'VERMESSUNG':[/\bhauptachsen\b/,/\babstecken\b/,/\bvermessung\b/,/\bvermessungsarbeiten\b/,/\btrassenabsteckung\b/,/\bachspunkt\b/],
     'WASSERHALTUNG':[/\bpumpe\b/,/\bpumpen\b/,/\bwasserhaltung\b/,/\babpumpen\b/,/\bniederschlagswasser\b/,/\bstromaggregat\b/,/\bpumpensteuerung\b/],
     'RODUNG_FREIMACHUNG':[/\brodung\b/,/\bfreimach\b/,/\bbewuchs\b/,/\bbaum\b/,/\bhecke\b/,/\bstraeucher\b/],
-    'STRASSENBAU':[/\basphalt\b/,/\bbitumen\b/,/\bdeckschicht\b/,/\btragschicht\b/,/\bbelag\b/,/\bfrostschutzschicht\b/,/\bschichten ohne bindemittel\b/,/\bsob\b/,/\bfss\b/,/\bkts\b/,/\bsts\b/,/\bdob\b/,/\bbaustoffgemisch\b/,/\bmineralgemisch\b/,/\bunterlage profilieren\b/,/\bprofilausgleich\b/,/\bbankett\b/],
+    'STRASSENBAU':[/\basphalt\b/,/\bbitumen\b/,/\bdeckschicht\b/,/tragschicht\b/,/\bbelag\b/,/\bfrostschutzschicht\b/,/\bschichten ohne bindemittel\b/,/\bsob\b/,/\bfss\b/,/\bkts\b/,/\bsts\b/,/\bdob\b/,/\bbaustoffgemisch\b/,/\bmineralgemisch\b/,/\bunterlage profilieren\b/,/\bprofilausgleich\b/,/\bbankett\b/],
     'ABBRUCH_RUECKBAU':[/\babbrechen\b/,/\brueckbau\b/,/\baufbrechen\b/,/\babbau\b/,/\babbruch\b/],
     'GERÄTE':[/\bbagger\b/,/\bkettenbagger\b/,/\bhydraulikbagger\b/,/\bmobilbagger\b/,/\braupe\b/,/\bplanierraupe\b/,/\bdozer\b/,/\bwalze\b/,/\bglattmantelwalze\b/,/\bvibrationswalze\b/,/\bradlader\b/,/\bdumper\b/,/\blkw\b/,/\bkehrmaschine\b/],
     'PERSONAL':[/\bbaufacharbeiter\b/,/\bfacharbeiter\b/,/\bpolier\b/,/\bvorarbeiter\b/,/\bbauleiter\b/,/\bhelfer\b/,/\bgeraetefuehrer\b/,/\bstundenlohn\b/],
@@ -1559,22 +1657,27 @@ function isGenericLikePosition(p){
   return isGenericReference(p)||positionCategory(p)==='BAULEITUNG_PLANUNG';
 }
 function getEbvClass(text){
-  const t=normalizeConstructionTerms(text);
-  if(/\bbm[\s-]?f3\b|\bbmf3\b|\bavv[\s-]*17[\s-]*05[\s-]*06\b|\bgefaehrlicher abfall\b|\bklasse[\s-]*f3\b/.test(t))return'BM-F3';
+  // norm() statt normalizeConstructionTerms, damit kurze Klassentokens (bm, z0, z1, 17/05/04)
+  // nicht von removeLVStopwords entfernt werden.
+  const t=norm(text);
+  // "nicht gefaehrlicher abfall" (= nicht gefährlich, i.d.R. BM-0/170504) darf NICHT als BM-F3 (gefährlich)
+  // klassifiziert werden – die Negation kippt die Bedeutung. Ohne den Lookbehind matcht der Teilstring
+  // "gefaehrlicher abfall" in "nicht gefaehrlicher abfall" und deckelt echte BM-0↔BM-0-Treffer auf 10%.
+  if(/\bbm[\s-]?f3\b|\bbmf3\b|\bavv[\s-]*17[\s-]*05[\s-]*06\b|(?<!nicht )gefaehrlicher abfall\b|\bklasse[\s-]*f3\b/.test(t))return'BM-F3';
   if(/\bbm[\s-]?f2\b|\bbmf2\b|\bklasse[\s-]*f2\b/.test(t))return'BM-F2';
   if(/\bbm[\s-]?f1\b|\bbmf1\b|\bklasse[\s-]*f1\b/.test(t))return'BM-F1';
   if(/\bbm[\s-]?2\b|\bbm2\b|\beinbauklasse[\s-]*2\b|\blaga[\s-]*z1\b(?![\s.]*1)/.test(t))return'BM-2';
   if(/\bbm[\s-]?1\b|\bbm1\b|\beinbauklasse[\s-]*1\b|\blaga[\s-]*z0\b/.test(t))return'BM-1';
-  if(/\bbm[\s-]?0\b|\bbm0\b|\beinbauklasse[\s-]*0\b|\b170504\b|\bersatzbaustoffverordnung\b|\blaga[\s-]*rc\b/.test(t))return'BM-0';
+  if(/\bbm[\s-]?0\b|\bbm0\b|\beinbauklasse[\s-]*0\b|\b17\s*05\s*04\b|\bersatzbaustoffverordnung\b|\blaga[\s-]*rc\b/.test(t))return'BM-0';
   if(/\bz[\s-]?2\b|\bz2\b|\blaga[\s-]*z2\b|\bdeponieklasse[\s-]*(?:dk[\s-]*)?ii\b/.test(t))return'Z2';
   if(/\bz[\s-]?1[\s-.]?2\b|\bz1[\s-.]?2\b|\blaga[\s-]*z1[\s-.]?2\b/.test(t))return'Z1.2';
   if(/\bz[\s-]?1[\s-.]?1\b|\bz1[\s-.]?1\b|\blaga[\s-]*z1[\s-.]?1\b/.test(t))return'Z1.1';
   if(/\bz[\s-]?1\b(?![\s.]*[12])\b|\bz1\b(?![\s.]*[12])|\blaga[\s-]*z1\b(?![\s.]*[12])/.test(t))return'Z1';
-  if(/\bz[\s-]?0\b|\bz0\b|\blaga[\s-]*z0\b|\b170504\b/.test(t))return'Z0';
+  if(/\bz[\s-]?0\b|\bz0\b|\blaga[\s-]*z0\b|\b17\s*05\s*04\b/.test(t))return'Z0';
   return null;
 }
 function getDepvClass(text){
-  const t=normalizeConstructionTerms(text);
+  const t=norm(text);
   if(/\bdk[\s-]?0\b|\bdeponieklasse[\s-]*0\b|\binertabfall\b/.test(t))return'DK-0';
   if(/\bdk[\s-]?i\b(?!i)|\bdeponieklasse[\s-]*i\b(?!i)/.test(t))return'DK-I';
   if(/\bdk[\s-]?ii\b(?!i)|\bdeponieklasse[\s-]*ii\b(?!i)/.test(t))return'DK-II';
@@ -1613,6 +1716,12 @@ function literalShortSim(a,b){
   a=norm(a);
   b=norm(b);
   if(a===b)return 1;
+  // Compound-Robustheit: dt. Komposita als Bindestrich-/Leerzeichen-Variante vs. zusammengeschrieben
+  // ("Mehrfach-Gaswarngerät" / "Mehrfach Gaswarngerät" == "Mehrfachgaswarngerät").
+  // BEWUSST nur exakte Gleichheit nach Despacing – eine fuzzy Levenshtein-Variante würde textConfidence
+  // bei fast-gleichen, aber fachlich verschiedenen Texten (z.B. "ohne Entwässerung", "Planum n.ges.")
+  // über die Mismatch-Cap-Schwelle (0.98) heben und die fachlichen Strafen aushebeln.
+  if(a.replace(/\s+/g,'')===b.replace(/\s+/g,''))return 1;
   const mx=Math.max(a.length,b.length);
   if(!mx)return 1;
   if(mx>260)return tokSim(a,b);
@@ -1640,9 +1749,9 @@ function tokSim(a,b){
   const tbIndex=buildTokenIndex(tb);
   if(!ta.length&&!tb.length)return 1;
   if(!ta.length||!tb.length)return 0;
-  let score=0;
+  let score=0,exactHits=0;
   ta.forEach(t=>{
-    if(tbIndex.exact.has(t)){score+=1;return;}
+    if(tbIndex.exact.has(t)){score+=1;exactHits++;return;}
     if(t.length<4)return;
     let partial=0;
     const candidates=new Set([
@@ -1661,7 +1770,15 @@ function tokSim(a,b){
     });
     score+=partial;
   });
-  return score/ta.length;
+  const base=score/ta.length;
+  // Containment-Bonus für kurze Texte: nur bei ECHTEM Vollenthalt – der komplette kürzere Tokensatz
+  // (>=2 Tokens) steckt im längeren ("lösen laden" ⊂ "boden lösen laden"). Sonst bestraft die Division
+  // durch ta.length den längeren Text. Teilüberlappung (z.B. nur "Bauzaun" gemeinsam) gibt KEINEN Bonus.
+  const minLen=Math.min(ta.length,tb.length);
+  if(minLen>=2&&ta.length<=6&&tb.length<=6&&exactHits===minLen){
+    return Math.max(base,0.88);
+  }
+  return base;
 }
 const SCORE_WEIGHTS=Object.freeze({
   SHORT:0.28,
@@ -1753,14 +1870,18 @@ function calcScore(np,rp,meta={}){
   const disposalSigRef=rpProf.disposalSig;
   const baugrubeSignal=(earthFamilyNew==='BAUGRUBE_AUSHUB'&&earthFamilyRef==='BAUGRUBE_AUSHUB')||(/\bbaugrube\b|\bboden fuer baugrube\b/.test(npProf.fullNorm)&&/\bbaugrube\b|\bboden loesen\b|\bboden laden\b/.test(rpProf.fullNorm));
   const earthFamilyMismatch=categoryNew==='ERDBAU'&&categoryRef==='ERDBAU'&&earthFamilyNew&&earthFamilyRef&&earthFamilyNew!==earthFamilyRef;
-  const disposalStrongMatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalSigNew&&disposalSigRef&&disposalSigNew===disposalSigRef;
-  const disposalMismatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalSigNew&&disposalSigRef&&disposalSigNew!==disposalSigRef;
+  // Starker Entsorgungs-Treffer: identische Signatur ODER gemeinsame identitätsstiftende Komponente
+  // (gleicher AVV-Schlüssel / gleiche EBV-Klasse) ohne Widerspruch – z.B. "Entsorgung BM-0 AVV170504"
+  // vs "Verwertung BM0 AVV170504" (gleicher Abfall, nur anderer Entsorgungsweg).
+  const disposalShareKey=(sa,sb)=>{const A=new Set(sa.split('|')),B=new Set(sb.split('|'));return [...A].some(x=>(x.startsWith('AVV')||/^(BM-|Z\d|DK-)/.test(x))&&B.has(x));};
+  const disposalStrongMatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalSigNew&&disposalSigRef&&(disposalSigNew===disposalSigRef||(disposalShareKey(disposalSigNew,disposalSigRef)&&!disposalContradicts(disposalSigNew,disposalSigRef)));
+  const disposalMismatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalContradicts(disposalSigNew,disposalSigRef);
   const siteContextNew=npProf.siteContext;
   const siteContextRef=rpProf.siteContext;
   const siteContextMismatch=(categoryNew===categoryRef)&&siteContextNew&&siteContextRef&&siteContextNew!==siteContextRef;
-  const materialBandNew=npProf.materialBand;
-  const materialBandRef=rpProf.materialBand;
-  const materialBandMismatch=(categoryNew==='ERDBAU'||categoryNew==='STRASSENBAU')&&categoryNew===categoryRef&&materialBandNew&&materialBandRef&&materialBandNew!==materialBandRef;
+  // Korngröße/Materialart (Kies vs Schotter, 0/32 vs 0/56) sollen laut fachlicher Vorgabe KEINEN
+  // (bzw. nur vernachlässigbaren) Einfluss haben → kein materialBand-Mismatch mehr (weder Penalty,
+  // Cap noch Gleich-Band-Boost). detectMaterialBand bleibt nur als ungenutztes Profilfeld erhalten.
   const compactionSpecNew=npProf.compactionSpec;
   const compactionSpecRef=rpProf.compactionSpec;
   const compactionMismatch=(categoryNew==='ERDBAU'||categoryNew==='STRASSENBAU')&&categoryNew===categoryRef&&compactionSpecNew&&compactionSpecRef&&compactionSpecNew!==compactionSpecRef;
@@ -1795,6 +1916,14 @@ function calcScore(np,rp,meta={}){
   const profileAdjustmentMismatch=flagsNew.profileAdjustment!==flagsRef.profileAdjustment&&(flagsNew.profileAdjustment||flagsRef.profileAdjustment);
   const uf3Mismatch=flagsNew.uf3!==flagsRef.uf3&&(flagsNew.uf3||flagsRef.uf3);
   const drainageModeMismatch=(flagsNew.totalBackfillArea&&flagsRef.drainageArea)||(flagsRef.totalBackfillArea&&flagsNew.drainageArea)||(flagsNew.drainageAreaExcluded&&flagsRef.drainageArea)||(flagsRef.drainageAreaExcluded&&flagsNew.drainageArea);
+  // Aktionsrichtung: reines Herstellen/Einbauen vs. reines Abtragen/Rückbau auf demselben Objekt ist
+  // eine Antonym-Leistung (Preis darf NICHT vererbt werden). Nur greifen, wenn jede Seite eindeutig EINE
+  // Richtung hat (sonst Kombi-Position wie "abtragen und wieder einbauen" → mehrdeutig → überspringen).
+  const dirNewPlace=flagsNew.placing&&!flagsNew.removing;
+  const dirNewRemove=flagsNew.removing&&!flagsNew.placing;
+  const dirRefPlace=flagsRef.placing&&!flagsRef.removing;
+  const dirRefRemove=flagsRef.removing&&!flagsRef.placing;
+  const actionDirMismatch=(dirNewPlace&&dirRefRemove)||(dirNewRemove&&dirRefPlace);
   let penalties=0,genericPenalty=0,textOnlyPenalty=0,unitPenalty=0,quantityPenalty=0,swPenalty=0,holdingPenalty=0,docPenalty=0,assetPenalty=0,surchargePenalty=0,earthPenalty=0,disposalPenalty=0,docSubPenalty=0,demolitionPenalty=0,sitePenalty=0,materialBandPenalty=0,compactionPenalty=0,agPenalty=0,controlPenalty=0,lineZonePenalty=0,backfillModePenalty=0,shoringModePenalty=0,waterModePenalty=0,reuseSidePenalty=0,planumModePenalty=0,profileAdjustmentPenalty=0,uf3Penalty=0,drainageModePenalty=0;
   const hardCapsApplied=[];
   if(genericWrongCategory){genericPenalty=0.20;penalties+=genericPenalty;}
@@ -1811,7 +1940,6 @@ function calcScore(np,rp,meta={}){
   if(disposalMismatch&&textConfidence<0.98){disposalPenalty=0.18;penalties+=disposalPenalty;}
   if(demolitionMismatch&&textConfidence<0.95){demolitionPenalty=0.16;penalties+=demolitionPenalty;}
   if(siteContextMismatch&&textConfidence<0.95){sitePenalty=0.10;penalties+=sitePenalty;}
-  if(materialBandMismatch&&textConfidence<0.98){materialBandPenalty=0.12;penalties+=materialBandPenalty;}
   if(compactionMismatch&&textConfidence<0.98){compactionPenalty=0.10;penalties+=compactionPenalty;}
   if(agMismatch&&textConfidence<0.98){agPenalty=0.12;penalties+=agPenalty;}
   if(controlMismatch&&textConfidence<0.98){controlPenalty=0.12;penalties+=controlPenalty;}
@@ -1843,7 +1971,6 @@ function calcScore(np,rp,meta={}){
   if(ansaatSignal)final+=0.08;
   if(strassenbauSchichtSignal)final+=0.07;
   if(siteContextNew&&siteContextNew===siteContextRef)final+=0.04;
-  if(materialBandNew&&materialBandNew===materialBandRef)final+=0.06;
   if(compactionSpecNew&&compactionSpecNew===compactionSpecRef)final+=0.05;
   if(loadPairSignal)final+=0.05;
   if(storageSignal)final+=0.04;
@@ -1866,31 +1993,47 @@ function calcScore(np,rp,meta={}){
   if(meta.isTextOnly&&literalShortScore<0.97){final=Math.min(final,0.74);hardCapsApplied.push('D83-only');}
   if(unitScore<=0.10&&categoryScore<1.0){final=Math.min(final,0.59);hardCapsApplied.push('Einheit schwach');}
   if(swPenalty>0&&textConfidence<0.85){final=Math.min(final,0.39);hardCapsApplied.push('SW-Untergruppe unpassend');}
-  if(holdingMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Vorhaltung unpassend');}
+  // Vorhaltung/Standzeit vs. Liefern+Aufstellen = anderer Kostentyp. Literale (nicht synonym-getriebene)
+  // Ähnlichkeit als Gate, damit der grobe synScore (gemeinsames "Bauzaun") den Deckel nicht umgeht.
+  if(holdingMismatch&&literalShortScore<0.95){final=Math.min(final,0.45);hardCapsApplied.push('Vorhaltung unpassend');}
   if(docMismatch&&textConfidence<0.95){final=Math.min(final,0.39);hardCapsApplied.push('Dokumenttyp unpassend');}
   if(docSubMismatch&&textConfidence<0.95){final=Math.min(final,0.35);hardCapsApplied.push('Doku-/QS-Typ unpassend');}
-  if(beAssetMismatch&&textConfidence<0.95){final=Math.min(final,0.45);hardCapsApplied.push('BE-Anlage unpassend');}
+  // Anderer BE-Gegenstand (Beleuchtung vs Bauzaun) = andere Leistung. NICHT über textConfidence gaten,
+  // da der grobe synScore (gemeinsames Nebenwort "Bauzaun") ihn auf ~1 treibt. Stattdessen literale
+  // (zeichenbasierte) Ähnlichkeit als Schutz: bei wirklich wortgleichem Kurztext wird nicht gedeckelt.
+  if(beAssetMismatch&&literalShortScore<0.95){final=Math.min(final,0.45);hardCapsApplied.push('BE-Anlage unpassend');}
   if(surchargeMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Kosten/Zuschlag unpassend');}
   if(earthFamilyMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Erdbau-Familie unpassend');}
   if(disposalMismatch&&textConfidence<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Entsorgungsklasse unpassend');}
   if(demolitionMismatch&&textConfidence<0.95){final=Math.min(final,0.35);hardCapsApplied.push('Abbruch-Familie unpassend');}
   if(siteContextMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Einbauort unpassend');}
-  if(materialBandMismatch&&textConfidence<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Kornband/Materialklasse unpassend');}
   if(compactionMismatch&&textConfidence<0.98){final=Math.min(final,0.52);hardCapsApplied.push('Verdichtungs-/Pruefwert unpassend');}
   if(agMismatch&&textConfidence<0.98){final=Math.min(final,0.39);hardCapsApplied.push('AG-Stellung unpassend');}
   if(controlMismatch&&textConfidence<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Pruef-/Ausfuehrungslogik unpassend');}
   if(lineZoneMismatch&&textConfidence<0.98){final=Math.min(final,0.49);hardCapsApplied.push('Leitungszone unpassend');}
-  if(separateBackfillMismatch&&textConfidence<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Verfuellmodus unpassend');}
+  // Binäre Scope-Toggle (gesondert/integriert, mit/ohne): ein Flag-MISMATCH bedeutet per Definition
+  // unterschiedlicher Leistungsumfang – deshalb NICHT durch textConfidence gaten. Genau diese Paare
+  // ("...gesondert" vs "...nicht gesondert", "...Entwässerungsbereich" vs "ohne Entwässerungsbereich")
+  // sind lexikalisch fast identisch (textConfidence≈1) und würden den Deckel sonst umgehen.
+  if(separateBackfillMismatch){final=Math.min(final,0.45);hardCapsApplied.push('Verfuellmodus unpassend');}
   if(shoringModeMismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Verbaumodus unpassend');}
   if(waterModeMismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Wasserhaltungsmodus unpassend');}
   if(reuseSideMismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Einbau/Lagerort unpassend');}
-  if(planumModeMismatch&&textConfidence<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Planumlogik unpassend');}
+  if(planumModeMismatch){final=Math.min(final,0.45);hardCapsApplied.push('Planumlogik unpassend');}
   if(profileAdjustmentMismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Profilausgleich unpassend');}
   if(uf3Mismatch&&textConfidence<0.98){final=Math.min(final,0.55);hardCapsApplied.push('Feinanteil UF3 unpassend');}
-  if(drainageModeMismatch&&textConfidence<0.98){final=Math.min(final,0.45);hardCapsApplied.push('Hinterfuellbereich unpassend');}
+  if(drainageModeMismatch){final=Math.min(final,0.45);hardCapsApplied.push('Hinterfuellbereich unpassend');}
+  // Antonym-Aktionsrichtung (herstellen/einbauen vs. abtragen/rückbau): lexikalisch fast identisch
+  // (gleiches Objektwort, textConfidence≈1), daher NICHT durch textConfidence gaten.
+  if(actionDirMismatch){final=Math.min(final,0.45);hardCapsApplied.push('Aktionsrichtung unpassend');}
   if(literalShortScore>=0.995&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.99);
   else if(literalShortScore>=0.97&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.96);
   else if(literalShortScore>=0.94&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.92);
+  // Wortgleicher Kurztext (auch zusammengeschriebene Komposita, s. literalShortSim) ist das stärkste
+  // Signal und soll eine schwache/uneindeutige Kategorie überstimmen (z.B. Geräte/Messmittel wie
+  // "Mehrfachgaswarngerät", die je nach Text in GERÄTE/ARBEITSSCHUTZ_SW/SONSTIGES landen).
+  // Greift nur, wenn keine fachliche Strafe (Hard-Cap) ausgelöst wurde und die Referenz nicht generisch ist.
+  if(literalShortScore>=0.97&&unitScore>=0.80&&!genericWrongCategory&&!hardCapsApplied.length)final=Math.max(final,0.90);
   if(ebvNew&&ebvRef&&ebvNew!==ebvRef){
     const ebvCap=ebvCompat(ebvNew,ebvRef);
     final=Math.min(final,ebvCap);
@@ -5014,13 +5157,18 @@ function runMatchingSelfTest(showUI=false){
     ,{kind:'good',a:{kurztext:'Planum herstellen EV2 100',me:'m2'},b:{kurztext:'Unterlage profilieren, EV2 mindestens 100',me:'m2'},min:65,label:'Planum EV2 100 match'}
     ,{kind:'bad',a:{kurztext:'Boden bzw. Fels lösen und einbauen, Planum gesondert',me:'m3'},b:{kurztext:'Boden bzw. Fels lösen und einbauen, Planum nicht gesondert',me:'m3'},max:45,label:'Planum gesondert != n. ges.'}
     ,{kind:'good',a:{kurztext:'Frostschutzschicht 0/45 Feinanteil UF3 EV2 100',me:'m3'},b:{kurztext:'FSS 0/45 UF3 herstellen, EV2 mindestens 100',me:'m3'},min:72,label:'FSS 0/45 UF3 match'}
-    ,{kind:'bad',a:{kurztext:'Kiestragschicht 0/32 herstellen',me:'m2'},b:{kurztext:'Schottertragschicht 0/56 herstellen',me:'m2'},max:55,label:'KTS != STS'}
+    ,{kind:'good',a:{kurztext:'Kiestragschicht 0/32 herstellen',me:'m2'},b:{kurztext:'Schottertragschicht 0/56 herstellen',me:'m2'},min:75,label:'KTS == STS (Korngröße/Materialart egal)'}
     ,{kind:'bad',a:{kurztext:'Bankett profilgerecht herstellen',me:'m'},b:{kurztext:'Bankett abtragen einschließlich Vegetationsdecke',me:'m3'},max:45,label:'Bankett herstellen != abtragen'}
     // EBV/BM Entsorgung
     ,{kind:'good',a:{kurztext:'Entsorgung BM-0, AVV 17 05 04, nicht gefährlicher Abfall',me:'t'},b:{kurztext:'Verwertung BM0 Boden AVV 170504',me:'t'},min:75,label:'BM-0 Entsorgung match'}
     ,{kind:'bad',a:{kurztext:'Entsorgung BM-F3 gefährlicher Abfall AVV 170506',me:'t'},b:{kurztext:'Entsorgung BM-0 AVV 170504',me:'t'},max:35,label:'BM-F3 != BM-0'}
     // Doku Grenzfall
     ,{kind:'bad',a:{kurztext:'Qualitätssicherungsplan erstellen',me:'psch'},b:{kurztext:'Bauzeitenplan erstellen',me:'psch'},max:39,label:'QS-Plan != Bauzeitenplan'}
+    // Compound-Robustheit: Bindestrich/Leerzeichen-Variante == zusammengeschrieben (Praxisfall)
+    ,{kind:'good',a:{kurztext:'Mehrfach-Gaswarngerät',me:'st'},b:{kurztext:'Mehrfachgaswarngerät',me:'st'},min:90,label:'Mehrfach-Gaswarngerät == Mehrfachgaswarngerät'}
+    ,{kind:'good',a:{kurztext:'Mehrfach Gaswarngerät vorhalten',me:'st'},b:{kurztext:'Mehrfachgaswarngerät vorhalten',me:'st'},min:88,label:'Mehrfach Gaswarngerät (Leerzeichen) match'}
+    // Kurztext-Subset: kürzerer Text vollständig im längeren (Praxisfall lösen/laden)
+    ,{kind:'good',a:{kurztext:'Boden lösen, laden',me:'m3'},b:{kurztext:'lösen laden',me:'m3'},min:70,label:'Boden lösen laden ⊃ lösen laden'}
   ];
   const results=cases.map(c=>{
     const ev=calcScore(c.a,c.b,{isTextOnly:false});
