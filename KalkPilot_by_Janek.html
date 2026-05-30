@@ -426,7 +426,8 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
             <div id="matchMemorySummary"><b>Matching-Wissen:</b> Noch nichts geladen.</div>
             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
               <button class="btn btn-s btn-sm" onclick="document.getElementById('fileMatchMemoryJSON').click()" title="Top-Treffer und Lernstand aus JSON laden">📂 Wissen laden</button>
-              <button class="btn btn-s btn-sm" onclick="exportMatchMemoryJSON()" title="Top-Treffer und Lernstand als JSON speichern">💾 Wissen sichern</button>
+              <button class="btn btn-s btn-sm" onclick="exportMatchMemoryJSON()" title="Top-Treffer, Lernstand, abgelehnte Matches und Lernhistorie als JSON speichern">💾 Wissen sichern</button>
+              <button class="btn btn-s btn-sm" onclick="resetMatchMemory()" title="Gelerntes Matching-Wissen löschen (Startmuster bleiben erhalten)">🗑 Wissen zurücksetzen</button>
               <span style="font-size:11px;color:var(--muted)">Vor dem automatischen Matching optional laden, damit eure geprüften Treffer direkt mitwirken.</span>
             </div>
           </div>
@@ -501,7 +502,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
           <th class="decision-col">Aktion</th>
           <th class="sortable" onclick="toggleSort('oz')">OZ <span id="siOZ"></span></th>
           <th>Neue Position</th>
-          <th>Menge / ME</th>
+          <th class="sortable" onclick="toggleSort('menge')">Menge / ME <span id="siMenge"></span></th>
           <th class="sortable" onclick="toggleSort('score')">Match% <span id="siScore">↓</span></th>
           <th>Referenz-Treffer</th>
           <th>Kosten L·M·G·N·B·S</th>
@@ -706,6 +707,8 @@ const P={
 };
 const TOP_MATCH_KEY='KalkPilot_TopMatches_v1';
 const LEARNING_KEY='KalkPilot_MatchLearning_v1';
+const REJECTED_KEY='KalkPilot_MatchRejected_v1';
+const EXPORT_HISTORY_KEY='KalkPilot_ExportHistory_v1';
 const REVIEW_NOTES_KEY='KalkPilot_ReviewNotes_v1';
 const MANUAL_SPLIT_KEY='KalkPilot_ManualSplit_v1';
 const MATCH_SPLIT_KEY='KalkPilot_MatchSplit_v1';
@@ -949,6 +952,10 @@ const BAU_SYNONYMS=[
   ['abfall avv','avv schluessel','abfallverzeichnisverordnung'],
   ['nicht gefaehrlicher abfall','nga','nicht gefaehrlich avv','abfall nicht gefaehrlich'],
   ['gefaehrlicher abfall','gefaehrlich avv','gefaehrliche abfaelle avv'],
+  // --- Transport (eigene Gruppe; "abfahren" bleibt zusätzlich in der Entsorgungsgruppe) ---
+  ['transportieren','transport','bodentransport','abtransport','antransport','umlagern','transportarbeiten'],
+  // --- Abbruch / Rückbau (Komposita-Phrasen, bewusst eng gehalten) ---
+  ['betonabbruch','beton abbrechen','betonabbrucharbeiten','beton rueckbau'],
 ];
 const SYNONYM_IGNORE=new Set(['be','bau','boden','material','leitung','anlage','arbeiten','herstellen','liefern','einbauen','ausfuehren','position']);
 const SYNONYM_MAP=new Map();
@@ -1006,6 +1013,11 @@ const TERM_NORMS=[
   [/boden[\s-]*laden/g,'boden laden'],
   [/boden[\s-]*fuer[\s-]*baugrube[\s-]*(loesen|lösen)/g,'boden fuer baugrube loesen'],
   [/boden[\s-]*fuer[\s-]*baugrube[\s-]*laden/g,'boden fuer baugrube laden'],
+  [/\bleitungsgr\b/g,'leitungsgraben'],
+  [/\bschachtbaugr\b/g,'schachtbaugrube'],
+  [/\bherst\b/g,'herstellen'],
+  [/\boberboden[\s-]*(antragen|auftrag|auftragen)\b/g,'oberboden andecken'],
+  [/\bdichtheit[\s-]*(rohrleitung|schacht)[\s-]*(pruefen|prüfen)\b/g,'dichtheitspruefung $1'],
   [/baugrube[\s-]*(herstellen|herstellung)/g,'baugrube herstellen'],
   [/baugrube[\s-]*(loesen|lösen|ausheben)/g,'baugrube loesen'],
   [/boden[\s-]*(einbauen|einbau)/g,'boden einbauen'],
@@ -1058,11 +1070,12 @@ const TERM_NORMS=[
   [/kunststoff[\s-]*dichtungsbahn/g,'kunststoffdichtungsbahn'],
   [/std\.?|stunden?|akh|arbeitskraftstunden?/g,'h'],
   [/lfm|laufmeter/g,'m'],
+  [/\blastkraftwagen\b|\blastwagen\b|\blastzug\b/g,'lkw'],
   [/stmt|st[\s\-\/]*mt/g,'stmt'],
   [/mmt|m[\s\-\/]*mt/g,'mmt'],
   [/stwo|st[\s\-\/]*wo/g,'stwo'],
   [/mt|monat|monate/g,'mt'],
-  [/stück|stÃ¼ck|stk/g,'st'],
+  [/\bstück\b|\bstÃ¼ck\b|\bstk\b/g,'st'],
   [/wochen?|woche/g,'wo'],
   [/psch|pauschale?|pauschal/g,'psch'],
   [/\btonnen?\b|\bto\b/g,'t'],
@@ -1162,17 +1175,25 @@ function synonymScore(a,b){
   const wordsB=nb.split(/\s+/).filter(w=>w.length>=4&&!SYNONYM_IGNORE.has(w));
   const groupsA=new Set(wordsA.map(w=>SYNONYM_MAP.get(w)).filter(g=>g!==undefined));
   const groupsB=new Set(wordsB.map(w=>SYNONYM_MAP.get(w)).filter(g=>g!==undefined));
-  // Mehrwort-Phrasengruppen markieren zusätzlich die enthaltenen Wörter als "von einer
-  // geteilten Synonymgruppe abgedeckt", damit die Deckungsmessung unten sie mitzählt.
-  const phraseGroupsA=new Set(),phraseGroupsB=new Set();
+  // Mehrwort-Phrasengruppen (z.B. "boden loesen laden") über die wortweise Map nicht auffindbar →
+  // als zusätzliche Gruppensignale je Seite ergänzen.
   for(const {g,p} of getSynonymPhrases()){
-    if(na.includes(p)){groupsA.add(g);phraseGroupsA.add(g);}
-    if(nb.includes(p)){groupsB.add(g);phraseGroupsB.add(g);}
+    if(na.includes(p))groupsA.add(g);
+    if(nb.includes(p))groupsB.add(g);
   }
   // Geteilte Synonymgruppen.
   const inter=new Set();for(const g of groupsA){if(groupsB.has(g))inter.add(g);}
   const fallback=tokSim(na,nb)*0.30;
   if(inter.size===0)return fallback;
+  // Wörter, die zu einer GETEILTEN Mehrwort-Phrasengruppe gehören, gelten als gedeckt –
+  // aber nur DIESE Wörter, nicht pauschal die ganze Seite (sonst erneut 1.0-Inflation, wenn
+  // eine Seite neben der Phrase viele unverwandte distinktive Wörter trägt).
+  const phraseWordsA=new Set(),phraseWordsB=new Set();
+  for(const {g,p} of getSynonymPhrases()){
+    if(!inter.has(g))continue;
+    if(na.includes(p))for(const pw of p.split(/\s+/))if(pw.length>=4)phraseWordsA.add(pw);
+    if(nb.includes(p))for(const pw of p.split(/\s+/))if(pw.length>=4)phraseWordsB.add(pw);
+  }
   // Graduelle Deckung statt binärer 1.0: ein einzelnes geteiltes Nebenwort soll
   // textConfidence NICHT mehr auf 1.0 hochziehen und so die fachlichen Hard-Caps umgehen.
   // Stattdessen messen wir, welcher Anteil der DISTINKTIVEN Wörter je Seite über eine
@@ -1183,19 +1204,18 @@ function synonymScore(a,b){
   // Admin-/Füllwörter (unterlagen, einbaudoku) – ein geteiltes Hauptwort soll daher stärker
   // wiegen als ein nicht geteiltes Nebenwort, ohne wieder pauschal auf 1.0 zu springen.
   const wt=w=>Math.max(1,w.length-3);
-  const covered=(words,otherSet,phraseShared)=>{
+  const covered=(words,otherSet,phraseWords)=>{
     if(!words.length)return 0;
-    const phraseHit=phraseShared.size&&[...phraseShared].some(pg=>inter.has(pg));
     let num=0,den=0;
     for(const w of words){
       const g=SYNONYM_MAP.get(w);
       const wi=wt(w);den+=wi;
-      if(otherSet.has(w)||(g!==undefined&&inter.has(g))||phraseHit)num+=wi;
+      if(otherSet.has(w)||(g!==undefined&&inter.has(g))||phraseWords.has(w))num+=wi;
     }
     return den?num/den:0;
   };
-  const covA=covered(wordsA,setB,phraseGroupsA);
-  const covB=covered(wordsB,setA,phraseGroupsB);
+  const covA=covered(wordsA,setB,phraseWordsA);
+  const covB=covered(wordsB,setA,phraseWordsB);
   // Die kleinere Seite ist i.d.R. vollständiger gedeckt → max() bevorzugt sie und erhält Recall.
   const cover=Math.max(covA,covB);
   return Math.max(fallback,cover);
@@ -1236,6 +1256,7 @@ function buildPositionMatchProfile(p){
     siteContext:'',
     materialBand:'',
     compactionSpec:'',
+    transportDir:'',
     actionFlags:null
   };
   profile.category=positionCategory({...p,kurztext:shortRaw,langtext:longRaw,outlineSpecs:p?.outlineSpecs||''});
@@ -1254,6 +1275,7 @@ function buildPositionMatchProfile(p){
   profile.siteContext=detectSiteContext(fullNorm);
   profile.materialBand=detectMaterialBand(fullNorm,fullRaw);
   profile.compactionSpec=detectCompactionSpec(fullNorm);
+  profile.transportDir=profile.category==='TRANSPORT'?detectTransportDirection(fullRaw):'';
   profile.actionFlags=detectActionFlags(fullNorm,fullRaw);
   return profile;
 }
@@ -1415,11 +1437,17 @@ function detectCompactionSpec(text){
   if(/\bproctor\b|\bdpr\b|\bverdichtungsgrad\b/.test(t))return'PROCTOR';
   return'';
 }
+function detectTransportDirection(text){
+  const t=normalizeConstructionTerms(text);
+  if(/\bantransport|\bantransporte|\bantransportieren\b/.test(t))return'IN';
+  if(/\babtransport|\babtransporte|\babtransportieren\b|\babfahren\b/.test(t))return'OUT';
+  return'';
+}
 function detectActionFlags(text,rawText){
   const t=normalizeConstructionTerms(text);
   // Aktionsrichtung auf ROHTEXT (vor Stopwort-Entfernung), da "herstellen"/"liefern" Stopwörter sind.
   const raw=norm(rawText||text);
-  const placing=/\bherstell|\bandeck|\beinbau|\baufbring|\bauftrag|\berricht|\bverleg|\baufstell|\bverfuell|\banleg|\baufschuett|\baufschutt/.test(raw);
+  const placing=/\bherstell|\bandeck|\beinbau|\baufbring|\bauftrag|\bantrag|\berricht|\bverleg|\baufstell|\bverfuell|\banleg|\baufschuett|\baufschutt/.test(raw);
   const removing=/\babtrag|\babbrech|\babbruch|\bausbau|\brueckbau|\bruckbau|\babfraes|\babfras|\bentfern|\bbeseitig|\bdemontag|\bdemontier|\babraeum|\babraum|\bloesen\b|\broden\b/.test(raw);
   return{
     placing,
@@ -1431,6 +1459,7 @@ function detectActionFlags(text,rawText){
     delivery:/\bliefern\b/.test(t),
     storage:/\bzwischenlager\b|\blagern\b|\bseitlich lagern\b|\bbodenmiete\b/.test(t),
     recovery:/\bverwert/.test(t),
+    transport:/\btransport|\bbodentransport\b|\bantransport|\babtransport|\babfahren\b|\bumlagern\b|\bverbringen\b/.test(t),
     lineZoneAbove:/\boberhalb leitungszone\b/.test(t),
     lineZoneIncl:/\beinschliesslich leitungszone\b/.test(t),
     lineZoneOnly:/\bin leitungszone\b/.test(t),
@@ -1597,19 +1626,36 @@ function isPlausibleCandidate(npProf,rpProf){
 }
 function positionCategory(p){
   const t=normalizeConstructionTerms((p?.kurztext||'')+' '+(p?.langtext||'')+' '+(p?.outlineSpecs||''));
+  // Kurztext separat normalisiert: "weiche" Kategorien (DOKUMENTATION, VERMESSUNG) werden NUR aus
+  // dem Titel erkannt, damit ein beiläufiges "nachweis/vermessen" im Langtext keine physische
+  // Leistung kapert. (normalizeConstructionTerms ist gecached – kein doppelter Rechenaufwand.)
+  const kt=normalizeConstructionTerms(p?.kurztext||'');
   if(/\bbauzeitenplan\b|\bbalkendiagramm\b|\bsoll ist vergleich\b|\bbaustelleneinrichtungsplan\b|\bwerks und montageplanung\b|\bmontageplanung\b/.test(t))return'BAULEITUNG_PLANUNG';
-  if(/\bqualitaetssicherungsplan\b|\bsondierungskonzept\b|\brettungskonzept\b|\bhavariekonzept\b|\bgefaehrdungsanalyse\b|\bdokumentation\b|\bnachweis\b|\bbericht\b/.test(t))return'DOKUMENTATION';
+  // Hochprioritäts-Vorabcheck nur für ECHTE Dokumentation. "nachweis"/"bericht" bewusst NICHT hier
+  // (kapern sonst physische Leistungen mit beiläufigem Nachweis im Langtext) – bleiben als später
+  // categoryMap-Fallback erhalten, greifen also nur wenn keine physische Kategorie zutrifft.
+  if(/\bqualitaetssicherungsplan\b|\bsondierungskonzept\b|\brettungskonzept\b|\bhavariekonzept\b|\bgefaehrdungsanalyse\b|dokumentation\b/.test(kt))return'DOKUMENTATION';
   if(/\brettungskonzept\b|\bhavariekonzept\b|\bgefaehrdungsanalyse\b|\bgefaehrdungsbeurteilung\b|\bbetriebsanweisung\b|\balarmplan\b|\bnotfallplan\b/.test(t))return'ARBEITSSCHUTZ_SW';
   if(/\bqualitaetssicherungsplan\b|\bkontrollpruefung\b|\bplattendruckversuch\b|\bprobefeld\b/.test(t))return'QUALITAET_PROBEFELD';
-  if(/\bvermessungsarbeiten\b|\bhauptachsen\b|\babstecken\b/.test(t))return'VERMESSUNG';
-  if(/\babbrechen\b|\brueckbau\b|\bruckbau\b|\baufbrechen\b|\babbau\b|\babbruch\b/.test(t))return'ABBRUCH_RUECKBAU';
+  // VERMESSUNG nur, wenn das Signal im KURZTEXT (Titel) steht – nicht bei beiläufigem "einmessen/
+  // vermessen" im Langtext einer physischen Leistung (sonst Hijack wie zuvor bei "nachweis").
+  if(/vermessung\b|\bhauptachsen\b|\babstecken\b|\baufmass\b/.test(kt))return'VERMESSUNG';
+  if(/\babbrechen\b|rueckbau\b|\bruckbau\b|\baufbrechen\b|aufbruch\b|\babbau\b|abbruch\b/.test(t))return'ABBRUCH_RUECKBAU';
   // Eine Baugrube/Schachtbaugrube IST Erdaushub – das generische \bschacht\b der LEITUNGSBAU-Regel
   // darunter würde "Baugrube für Schacht herstellen" sonst fälschlich dem Leitungsbau zuordnen.
   if(/\bschachtbaugrube\b|\bbaugrube\b[\s\S]*\bschacht\b|\bschacht\b[\s\S]*\bbaugrube\b/.test(t))return'ERDBAU';
-  if(/\bsickerwasserrohr\b|\bdraenrohr\b|\bdrainagerohr\b|\brohrleitung\b|\brohrbettung\b|\bschacht\b|\bschieber\b|\bmuffe\b|\bformteil\b|\bbogen\b/.test(t))return'LEITUNGSBAU';
+  if(/\bsickerwasserrohr\b|\bdraenrohr\b|\bdrainagerohr\b|\brohrleitung\b|\brohrbettung\b|rohr\b|\bschacht\b|\bkontrollschacht\b|\bschachtbauwerk\b|\bschachtabdeckung\b|\bauflagering\b|\bschieber\b|\bmuffe\b|\bformteil\b|\bbogen\b/.test(t))return'LEITUNGSBAU';
   if(/\bschwarzweissanlage\b|\bdekontaminationsanlage\b|\bpersonen deko\b|\bstiefelwaschanlage\b|\breifenwaschanlage\b|\batemschutz\b|\bschutzanzug\b|\bgefahrstoff\b|\bbetriebsanweisung\b|\balarmplan\b|\bnotfallplan\b|\bgefaehrdungsbeurteilung\b/.test(t))return'ARBEITSSCHUTZ_SW';
+  // Eindeutige Abdichtungs-Begriffe gehören zu DEPONIEBAU – auch wenn "Deponie" (als Ort) im Text steht,
+  // sonst zieht die ENTSORGUNG-Regel z.B. "Schutzvlies … vom Lager der Deponie" fälschlich zu sich.
+  if(/\bkunststoffdichtungsbahn\b|\bschutzvlies\b|\bbentonitmatte\b|\bgeosynthetische tondichtung\b|\bbasisabdichtung\b|\bkdb\b/.test(t))return'DEPONIEBAU_ABDICHTUNG';
+  const hasDisposalSignal=/\bentsorg|\bdepon|\babfall|\bavv\b|\bbm[\s-]?\w|\bdk[\s-]?\w|\bgefaehrl|\bverwert/.test(t);
+  const hasRemovalSignal=/\babtrag|\babbruch|\babbrechen|\brueckbau|\baufbruch|\baufbrechen|\bloesen\b/.test(t);
+  // \btransport(?!beton|moertel|anker): "Transport/transportieren/-arbeiten" als Leistung erkennen,
+  // aber NICHT Material-Komposita wie "Transportbeton"/"Transportmörtel"/"Transportanker".
+  if(/\btransport(?!beton|moertel|anker)|\bbodentransport\b|\bantransport|\babtransport|\babfahren\b|\bumlagern\b|\bverbringen\b/.test(t)&&!hasDisposalSignal&&!hasRemovalSignal)return'TRANSPORT';
   if(/\bbaustelleneinrichtung\b|\bbauzaun\b|\bbaustelleneinrichtung raeumen\b|\bbauschild\b|\bbaucontainer\b|\bdrehfluegeltor\b|\bschiebetor\b|\bschutzgelaender\b|\btreppenturm\b|\bbaustromversorgung\b|\bbauwasserversorgung\b|\bbaustellenbeleuchtung\b|\bbaustra(s|ß)e\b|\bueberfahrschutz\b|\bbehelfsueberfahrt\b/.test(t))return'BE';
-  if(/\bbodenaushub\b|\baushub\b|\berdaushub\b|\bboden loesen\b|\bboden laden\b|\bboden fuer baugrube loesen\b|\bboden fuer baugrube laden\b|\bbaugrube herstellen\b|\bbaugrube loesen\b|\boberboden abtragen\b|\boberboden andecken\b|\boberboden liefern und andecken\b|\boberboden lagern\b|\boberboden weiterverwenden\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bboden\b[\s\S]{0,80}\beinbauen\b|\blagenweise\b|\bplanum\b|\bprofilieren\b|\bverdichten\b|\barbeitsraum verfuellen\b|\bleerschlitz verfuellen\b|\barbeitsebene\b|\barbeitsplattform\b|\bbauwerkshinterfuellung\b|\bhinterfuellung\b|\bhinterfullung\b|\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b|\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b|\bboeschungsansaat\b|\bboeschungsbegruenung\b|\bhydrosaat\b/.test(t))return'ERDBAU';
+  if(/\bbodenaushub\b|\baushub\b|\berdaushub\b|\bboden loesen\b|\bboden laden\b|\bboden fuer baugrube loesen\b|\bboden fuer baugrube laden\b|\bbaugrube herstellen\b|\bbaugrube loesen\b|\boberboden abtragen\b|\boberboden andecken\b|\boberboden liefern und andecken\b|\boberboden lagern\b|\boberboden weiterverwenden\b|\bmutterboden\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bboden\b[\s\S]{0,80}\beinbauen\b|\blagenweise\b|planum\b|profilier|\bverdichten\b|\bverdichtung\b|\bnachverdicht|\barbeitsraum verfuellen\b|\bleerschlitz verfuellen\b|\barbeitsebene\b|\barbeitsplattform\b|\bbauwerkshinterfuellung\b|\bhinterfuellung\b|\bhinterfullung\b|\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b|\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b|\bboeschungsansaat\b|\bboeschungsbegruenung\b|\bboeschungssicherung\b|\bhydrosaat\b/.test(t))return'ERDBAU';
   const categoryMap={
     'ENTSORGUNG':[/\bentsorgung\b/,/\bverwertung\b/,/\babfahren\b/,/\bdeponieren\b/,/\bdeponie\b/,/\bbeprobung\b/,/\bchemischer nachweis\b/,/\babfallinventar\b/,/\bgefaehrlicher abfall\b/,/\bnicht gefaehrlicher abfall\b/,/\bn gefaehrl abfall\b/,/\babfallschluessel\b/,/\b170504\b/,/\bbm0\b/,/\bersatzbaustoffverordnung\b/,/\bzwischenlager\b/],
     'DEPONIEBAU_ABDICHTUNG':[/\btechnische barriere\b/,/\bmineralische dichtung\b/,/\bbasisabdichtung\b/,/\bkunststoffdichtungsbahn\b/,/\bkdb\b/,/\bpehd\b/,/\bschutzvlies\b/,/\bfiltervlies\b/,/\bvliesstoff\b/,/\bsandmatte\b/,/\bentwaesserungsschicht\b/,/\brandwall\b/,/\bboeschungsbereich\b/,/\banschluss an bestand\b/],
@@ -1622,9 +1668,9 @@ function positionCategory(p){
     'RODUNG_FREIMACHUNG':[/\brodung\b/,/\bfreimach\b/,/\bbewuchs\b/,/\bbaum\b/,/\bhecke\b/,/\bstraeucher\b/],
     'STRASSENBAU':[/\basphalt\b/,/\bbitumen\b/,/\bdeckschicht\b/,/tragschicht\b/,/\bbelag\b/,/\bfrostschutzschicht\b/,/\bschichten ohne bindemittel\b/,/\bsob\b/,/\bfss\b/,/\bkts\b/,/\bsts\b/,/\bdob\b/,/\bbaustoffgemisch\b/,/\bmineralgemisch\b/,/\bunterlage profilieren\b/,/\bprofilausgleich\b/,/\bbankett\b/],
     'ABBRUCH_RUECKBAU':[/\babbrechen\b/,/\brueckbau\b/,/\baufbrechen\b/,/\babbau\b/,/\babbruch\b/],
-    'GERÄTE':[/\bbagger\b/,/\bkettenbagger\b/,/\bhydraulikbagger\b/,/\bmobilbagger\b/,/\braupe\b/,/\bplanierraupe\b/,/\bdozer\b/,/\bwalze\b/,/\bglattmantelwalze\b/,/\bvibrationswalze\b/,/\bradlader\b/,/\bdumper\b/,/\blkw\b/,/\bkehrmaschine\b/],
-    'PERSONAL':[/\bbaufacharbeiter\b/,/\bfacharbeiter\b/,/\bpolier\b/,/\bvorarbeiter\b/,/\bbauleiter\b/,/\bhelfer\b/,/\bgeraetefuehrer\b/,/\bstundenlohn\b/],
-    'MATERIAL':[/\brohr\b/,/\bbeton\b/,/\bstahl\b/,/\bholz\b/,/\bsand\b/,/\bkies\b/,/\bschotter\b/,/\bzement\b/,/\bbitumen\b/,/\basphalt\b/,/\bvlies\b/,/\bmaterial\b/,/\brc material\b/]
+    'GERÄTE':[/\bbagger\b/,/\bkettenbagger\b/,/\bhydraulikbagger\b/,/\bmobilbagger\b/,/\braupe\b/,/\bplanierraupe\b/,/\bdozer\b/,/\bwalze\b/,/\bglattmantelwalze\b/,/\bvibrationswalze\b/,/\bradlader\b/,/\bdumper\b/,/\blkw\b/,/\blastkraftwagen\b/,/verdichtungsger/,/ruettler/,/\bruettelplatte\b/,/\bfrontlader/,/\bmotorsaege\b/,/\bkehrmaschine\b/],
+    'PERSONAL':[/\bbaufacharbeiter\b/,/\bfacharbeiter\b/,/\bhilfsarbeiter\b/,/\bpolier\b/,/vorarbeiter\b/,/\bbauleiter\b/,/helfer\b/,/\bgeraetefuehrer\b/,/\bstundenlohn\b/],
+    'MATERIAL':[/\brohr\b/,/\bbeton\b/,/\bstahl\b/,/\bholz\b/,/\bsand\b/,/\bbrechsand\b/,/\bkies\b/,/\bschotter\b/,/\bzement\b/,/\bbitumen\b/,/\basphalt\b/,/\bvlies\b/,/\btrennvlies\b/,/material\b/,/\bvorsiebmaterial\b/]
   };
   for(const [cat,patterns] of Object.entries(categoryMap)){if(patterns.some(rx=>rx.test(t)))return cat;}
   return 'SONSTIGES';
@@ -1638,7 +1684,7 @@ function categoryCompatibility(a,b,np=null,rp=null){
     'ERDBAU|STRASSENBAU':0.45,'MATERIAL|DEPONIEBAU_ABDICHTUNG':0.50,'GERÄTE|ERDBAU':0.35,'GERÄTE|STRASSENBAU':0.30,'PERSONAL|ERDBAU':0.35,
     'PERSONAL|LEITUNGSBAU':0.35,'MATERIAL|LEITUNGSBAU':0.45,'MATERIAL|STRASSENBAU':0.45,'QUALITAET_PROBEFELD|ERDBAU':0.45,
     'QUALITAET_PROBEFELD|DEPONIEBAU_ABDICHTUNG':0.45,'DOKUMENTATION|BAULEITUNG_PLANUNG':0.55,'DOKUMENTATION|QUALITAET_PROBEFELD':0.45,
-    'ABBRUCH_RUECKBAU|ENTSORGUNG':0.45
+    'ABBRUCH_RUECKBAU|ENTSORGUNG':0.45,'TRANSPORT|ERDBAU':0.55,'TRANSPORT|BE':0.45,'TRANSPORT|ENTSORGUNG':0.25
   };
   const pair=a+'|'+b, rev=b+'|'+a;
   if(related[pair]!=null)return related[pair];
@@ -1848,6 +1894,7 @@ function calcScore(np,rp,meta={}){
   const genericWrongCategory=rpProf.generic&&!(npProf.generic||npProf.category==='BAULEITUNG_PLANUNG');
   const topBoost=topMatchBoost(np,rp,{categoryScore,genericWrongCategory,isTextOnly:!!meta.isTextOnly});
   const learnBoost=learningBoost(np,rp,{categoryScore,genericWrongCategory,isTextOnly:!!meta.isTextOnly});
+  const rejectPenalty=rejectionPenalty(np,rp,{categoryScore,genericWrongCategory,isTextOnly:!!meta.isTextOnly});
   const swSubNew=npProf.swSub;
   const swSubRef=rpProf.swSub;
   const newText=npProf.fullRaw;
@@ -1876,6 +1923,7 @@ function calcScore(np,rp,meta={}){
   const disposalShareKey=(sa,sb)=>{const A=new Set(sa.split('|')),B=new Set(sb.split('|'));return [...A].some(x=>(x.startsWith('AVV')||/^(BM-|Z\d|DK-)/.test(x))&&B.has(x));};
   const disposalStrongMatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalSigNew&&disposalSigRef&&(disposalSigNew===disposalSigRef||(disposalShareKey(disposalSigNew,disposalSigRef)&&!disposalContradicts(disposalSigNew,disposalSigRef)));
   const disposalMismatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalContradicts(disposalSigNew,disposalSigRef);
+  const transportEntsorgungMismatch=(categoryNew==='TRANSPORT'&&categoryRef==='ENTSORGUNG')||(categoryNew==='ENTSORGUNG'&&categoryRef==='TRANSPORT');
   const siteContextNew=npProf.siteContext;
   const siteContextRef=rpProf.siteContext;
   const siteContextMismatch=(categoryNew===categoryRef)&&siteContextNew&&siteContextRef&&siteContextNew!==siteContextRef;
@@ -1891,6 +1939,10 @@ function calcScore(np,rp,meta={}){
   const controlMismatch=flagsNew.controlTest!==flagsRef.controlTest;
   const loadPairSignal=(flagsNew.loading&&flagsRef.loading)||(flagsNew.loading&&flagsRef.loosening)||(flagsNew.loosening&&flagsRef.loading);
   const storageSignal=(flagsNew.storage&&flagsRef.storage)||(flagsNew.recovery&&flagsRef.recovery);
+  const transportDirNew=npProf.transportDir;
+  const transportDirRef=rpProf.transportDir;
+  const transportDirMatch=categoryNew==='TRANSPORT'&&categoryRef==='TRANSPORT'&&transportDirNew&&transportDirRef&&transportDirNew===transportDirRef;
+  const transportDirMismatch=categoryNew==='TRANSPORT'&&categoryRef==='TRANSPORT'&&transportDirNew&&transportDirRef&&transportDirNew!==transportDirRef;
   const ebvNew=npProf.ebv;
   const ebvRef=rpProf.ebv;
   const depvNew=npProf.depv;
@@ -1974,6 +2026,7 @@ function calcScore(np,rp,meta={}){
   if(compactionSpecNew&&compactionSpecNew===compactionSpecRef)final+=0.05;
   if(loadPairSignal)final+=0.05;
   if(storageSignal)final+=0.04;
+  if(transportDirMatch)final+=0.08;
   if(flagsNew.lineZoneAbove&&flagsRef.lineZoneAbove)final+=0.05;
   if(flagsNew.lineZoneIncl&&flagsRef.lineZoneIncl)final+=0.05;
   if(flagsNew.lineZoneOnly&&flagsRef.lineZoneOnly)final+=0.05;
@@ -2005,6 +2058,7 @@ function calcScore(np,rp,meta={}){
   if(surchargeMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Kosten/Zuschlag unpassend');}
   if(earthFamilyMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Erdbau-Familie unpassend');}
   if(disposalMismatch&&textConfidence<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Entsorgungsklasse unpassend');}
+  if(transportEntsorgungMismatch){final=Math.min(final,0.55);hardCapsApplied.push('Transport ohne Entsorgungsnachweis');}
   if(demolitionMismatch&&textConfidence<0.95){final=Math.min(final,0.35);hardCapsApplied.push('Abbruch-Familie unpassend');}
   if(siteContextMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Einbauort unpassend');}
   if(compactionMismatch&&textConfidence<0.98){final=Math.min(final,0.52);hardCapsApplied.push('Verdichtungs-/Pruefwert unpassend');}
@@ -2026,9 +2080,10 @@ function calcScore(np,rp,meta={}){
   // Antonym-Aktionsrichtung (herstellen/einbauen vs. abtragen/rückbau): lexikalisch fast identisch
   // (gleiches Objektwort, textConfidence≈1), daher NICHT durch textConfidence gaten.
   if(actionDirMismatch){final=Math.min(final,0.45);hardCapsApplied.push('Aktionsrichtung unpassend');}
-  if(literalShortScore>=0.995&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.99);
-  else if(literalShortScore>=0.97&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.96);
-  else if(literalShortScore>=0.94&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.92);
+  if(transportDirMismatch){final=Math.min(final,0.45);hardCapsApplied.push('Transportrichtung unpassend');}
+  if(!hardCapsApplied.length&&literalShortScore>=0.995&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.99);
+  else if(!hardCapsApplied.length&&literalShortScore>=0.97&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.96);
+  else if(!hardCapsApplied.length&&literalShortScore>=0.94&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.92);
   // Wortgleicher Kurztext (auch zusammengeschriebene Komposita, s. literalShortSim) ist das stärkste
   // Signal und soll eine schwache/uneindeutige Kategorie überstimmen (z.B. Geräte/Messmittel wie
   // "Mehrfachgaswarngerät", die je nach Text in GERÄTE/ARBEITSSCHUTZ_SW/SONSTIGES landen).
@@ -2040,8 +2095,13 @@ function calcScore(np,rp,meta={}){
     hardCapsApplied.push('EBV '+ebvNew+'≠'+ebvRef+' (max '+Math.round(ebvCap*100)+'%)');
   }
   if(ebvNew&&!ebvRef&&categoryRef==='ENTSORGUNG'){
-    final=Math.min(final,0.45);
-    hardCapsApplied.push('EBV '+ebvNew+' vs. unklassifiziert');
+    // Klassenabhängig: bei gefährlichen/teuren Klassen (BM-F*, Z2) ist ein Fehlgriff teuer →
+    // hart deckeln. Häufige/günstige Klassen (BM-0/BM-1/Z0/Z1) nur leicht deckeln, damit eine
+    // unklassifizierte Referenz im manuellen Matching auftaucht (Recall), aber unter Auto-Accept bleibt.
+    const expensiveOneSided=/^BM-F/.test(ebvNew)||ebvNew==='Z2';
+    const oneSidedCap=expensiveOneSided?0.45:0.68;
+    final=Math.min(final,oneSidedCap);
+    hardCapsApplied.push('EBV '+ebvNew+' vs. unklassifiziert (max '+Math.round(oneSidedCap*100)+'%)');
   }
   if(depvNew&&depvRef&&depvNew!==depvRef&&depvNew!=='DEPV_UNSPEC'&&depvRef!=='DEPV_UNSPEC'){
     const depvCap=ebvCompat(depvNew,depvRef);
@@ -2050,10 +2110,49 @@ function calcScore(np,rp,meta={}){
   }
   const textGate=Math.max(shortScore,longScore,synScore);
   if(textGate<0.25){final=Math.min(final,0.19);hardCapsApplied.push('Textbasis schwach');}
+  // Negatives Lernen ganz am Schluss: senkt den Score auch unter die literalen Soft-Floors,
+  // wenn der Nutzer dieses (oder ein sehr ähnliches) Paar bereits als "falsch" markiert hat.
+  // Reines Absenken – verletzt keine fachliche Obergrenze (Hard-Cap), die per Math.min gilt.
+  if(rejectPenalty>0)final=Math.max(0,final-rejectPenalty);
   const score=Math.max(0,Math.min(100,Math.round(final*100)));
   const debug={shortScore:Math.round(shortScore*100),literalShortScore:Math.round(literalShortScore*100),longScore:Math.round(longScore*100),synonymScore:Math.round(synScore*100),categoryNew,categoryRef,categoryScore:Math.round(categoryScore*100),unitScore:Math.round(unitScore*100),quantityScore:Math.round(quantityScore*100),learningBoost:Math.round(learnBoost*100),topMatchBoost:Math.round(topBoost*100),linkedReferenceBoost:0,genericPenalty:Math.round(genericPenalty*100),textOnlyPenalty:Math.round(textOnlyPenalty*100),unitPenalty:Math.round(unitPenalty*100),quantityPenalty:Math.round(quantityPenalty*100),holdingPenalty:Math.round(holdingPenalty*100),docPenalty:Math.round(docPenalty*100),docSubPenalty:Math.round(docSubPenalty*100),assetPenalty:Math.round(assetPenalty*100),surchargePenalty:Math.round(surchargePenalty*100),earthPenalty:Math.round(earthPenalty*100),disposalPenalty:Math.round(disposalPenalty*100),demolitionPenalty:Math.round(demolitionPenalty*100),sitePenalty:Math.round(sitePenalty*100),materialBandPenalty:Math.round(materialBandPenalty*100),compactionPenalty:Math.round(compactionPenalty*100),agPenalty:Math.round(agPenalty*100),controlPenalty:Math.round(controlPenalty*100),lineZonePenalty:Math.round(lineZonePenalty*100),backfillModePenalty:Math.round(backfillModePenalty*100),shoringModePenalty:Math.round(shoringModePenalty*100),waterModePenalty:Math.round(waterModePenalty*100),reuseSidePenalty:Math.round(reuseSidePenalty*100),planumModePenalty:Math.round(planumModePenalty*100),profileAdjustmentPenalty:Math.round(profileAdjustmentPenalty*100),uf3Penalty:Math.round(uf3Penalty*100),drainageModePenalty:Math.round(drainageModePenalty*100),hardCapsApplied,finalScore:score,newUnit:normUnit(np.me),refUnit:normUnit(refMatchUnit),reasonText:''};
   debug.reasonText=buildReasonText(debug);
-  return{score,debug};
+  // ---- Erklärbarer, gruppierter Score-Aufbau (additiv, ändert `score` NICHT) ----
+  // Leitet die bereits oben berechneten Teilwerte in eine kompakte, menschen- und
+  // UI-lesbare Struktur um. Quelle für Tooltip/Detailansicht; keine Mathe-Rückwirkung.
+  let actionObjectScore=Math.round(categoryScore*100);
+  if(actionDirMismatch)actionObjectScore=Math.min(actionObjectScore,30);
+  if(loadPairSignal||storageSignal)actionObjectScore=Math.min(100,actionObjectScore+5);
+  const ctxPos=[baugrubeSignal,(earthFamilyNew&&earthFamilyNew===earthFamilyRef),disposalStrongMatch,ebvSignal,oberbodenSignal,hinterfuellungSignal,ansaatSignal,strassenbauSchichtSignal,(siteContextNew&&siteContextNew===siteContextRef),(compactionSpecNew&&compactionSpecNew===compactionSpecRef),loadPairSignal,storageSignal,transportDirMatch].filter(Boolean).length;
+  const ctxNeg=[earthFamilyMismatch,disposalMismatch,siteContextMismatch,compactionMismatch,demolitionMismatch,beAssetMismatch,actionDirMismatch,lineZoneMismatch,transportDirMismatch].filter(Boolean).length;
+  const contextScore=Math.max(0,Math.min(100,50+ctxPos*12-ctxNeg*20));
+  const scoreParts={
+    textScore:Math.round(Math.max(shortScore,longScore,literalShortScore)*100),
+    keywordScore:Math.round(synScore*100),
+    actionObjectScore,
+    unitScore:Math.round(unitScore*100),
+    quantityScore:Math.round(quantityScore*100),
+    contextScore,
+    learningScore:Math.round((learnBoost+topBoost-rejectPenalty)*100),
+    penaltyScore:Math.round(penalties*100),
+    reasons:[],
+    warnings:hardCapsApplied.slice()
+  };
+  if(scoreParts.textScore>=95)scoreParts.reasons.push('Kurztext (fast) wortgleich');
+  else if(scoreParts.textScore>=80)scoreParts.reasons.push('starker Texttreffer');
+  if(scoreParts.keywordScore>=80)scoreParts.reasons.push('Fachbegriffe/Synonyme decken sich');
+  if(scoreParts.unitScore>=80)scoreParts.reasons.push('Einheit '+(debug.newUnit||'-')+' passt');
+  else if(scoreParts.unitScore<=10)scoreParts.warnings.push('Einheit '+(debug.newUnit||'-')+' vs '+(debug.refUnit||'-')+' unpassend');
+  if(scoreParts.quantityScore>=80)scoreParts.reasons.push('Mengenbild plausibel');
+  if(contextScore>=70)scoreParts.reasons.push('Bau-Kontext stimmig');
+  if(learnBoost>0||topBoost>0)scoreParts.reasons.push('Ähnliches Match wurde früher bestätigt.');
+  if(rejectPenalty>0){
+    scoreParts.warnings.push('Ähnliches Match wurde früher abgelehnt.');
+    if(hardCapsApplied.length)scoreParts.warnings.push('Lernhistorie widerspricht fachlichem Ausschlusskriterium – Score begrenzt.');
+  }
+  if(penalties>0&&!hardCapsApplied.length)scoreParts.warnings.push('weiche Abzüge '+Math.round(penalties*100)+'%');
+  debug.scoreParts=scoreParts;
+  return{score,debug,scoreParts};
 }
 function classCoC(name,descr,unit){
   const c=repairLegacyGermanText(name+' '+descr).toLowerCase(),u=repairLegacyGermanText(unit||'').toLowerCase();
@@ -3632,7 +3731,7 @@ function parseMemorySignature(signature=''){
 function normalizeMemoryEntry(entry){
   if(!entry||typeof entry!=='object')return null;
   const parsed=parseMemorySignature(entry.signature||'');
-  return {
+  const out={
     ...parsed,
     ...entry,
     refProject:String(entry.refProject??parsed.refProject??'').trim(),
@@ -3646,9 +3745,10 @@ function normalizeMemoryEntry(entry){
     demolitionKey:String(entry.demolitionKey??parsed.demolitionKey??'').trim(),
     newShortNorm:String(entry.newShortNorm??parsed.newShortNorm??'').trim(),
     refShortNorm:String(entry.refShortNorm??parsed.refShortNorm??'').trim(),
-    count:Number(entry.count)||1,
-    avgScoreAtUse:Number(entry.avgScoreAtUse)||0
+    count:Number(entry.count)||1
   };
+  if(entry.avgScoreAtUse!=null&&entry.avgScoreAtUse!==''&&Number.isFinite(Number(entry.avgScoreAtUse)))out.avgScoreAtUse=Number(entry.avgScoreAtUse);
+  return out;
 }
 function normalizeMemoryStore(store){
   const src=store&&typeof store==='object'?store:{};
@@ -3660,6 +3760,55 @@ function normalizeMemoryStore(store){
       })
       .filter(Boolean)
   );
+}
+function memoryStoreFromLearningDataRecords(records=[],fallbackDecision=''){
+  const out={};
+  (Array.isArray(records)?records:[]).forEach((record,idx)=>{
+    if(!record||typeof record!=='object')return;
+    const contextParts=String(record.sourceContext||'').split('|');
+    const entry={
+      signature:String(record.signature||''),
+      refProject:String(record.targetContext||record.projectName||'').trim(),
+      newCategory:String(record.sourceActionObject||'').trim(),
+      refCategory:String(record.targetActionObject||'').trim(),
+      newUnit:String(record.sourceUnit||'').trim(),
+      refUnit:String(record.targetUnit||'').trim(),
+      earthKey:contextParts[0]||'',
+      disposalKey:contextParts[1]||'',
+      docKey:contextParts[2]||'',
+      demolitionKey:contextParts[3]||'',
+      newShortNorm:String(record.sourceTextNormalized||'').trim(),
+      refShortNorm:String(record.targetTextNormalized||'').trim(),
+      sourceQuantity:record.sourceQuantity??null,
+      targetQuantity:record.targetQuantity??null,
+      userDecision:record.userDecision||fallbackDecision,
+      exportedAt:record.exportedAt||'',
+      projectName:record.projectName||'',
+      confidenceAtExport:record.confidenceAtExport??null,
+      scoreParts:record.scoreParts||null,
+      count:Number(record.count)||1,
+      createdAt:record.exportedAt||record.createdAt||'',
+      lastUsed:record.exportedAt||record.lastUsed||''
+    };
+    if(!entry.signature){
+      entry.signature=[
+        entry.refProject||'learningData',
+        entry.newCategory||'',
+        entry.refCategory||'',
+        entry.newUnit||'',
+        entry.refUnit||'',
+        entry.earthKey||'',
+        entry.disposalKey||'',
+        entry.docKey||'',
+        entry.demolitionKey||'',
+        entry.newShortNorm||('source-'+idx),
+        entry.refShortNorm||('target-'+idx)
+      ].join('|');
+    }
+    const normalized=normalizeMemoryEntry(entry);
+    if(normalized)out[normalized.signature]=normalized;
+  });
+  return out;
 }
 const BUILTIN_MATCH_MEMORY={
   topMatches:{
@@ -3801,8 +3950,9 @@ function toggleTopMatch(resultIdx,matchIdx=0){
   const match=result?.matches?.[matchIdx];
   if(!result||!match)return;
   if(isTopMatch(result.newPos,match.pos))removeTopMatch(result.newPos,match.pos);
-  else recordTopMatch(result.newPos,match.pos);
-  renderMatch();
+  else{recordTopMatch(result.newPos,match.pos);removeRejectedMatch(result.newPos,match.pos);}
+  applyStoredMatchDecisions(result);
+  renderMatch();updateExport();
 }
 function topMatchBoost(newPos,refPos,ctx={}){
   if(ctx.categoryScore===0||ctx.genericWrongCategory)return 0;
@@ -3827,13 +3977,15 @@ function updateMatchMemoryUI(){
   if(!summary)return;
   const topCount=Object.keys(getTopMatchStore()||{}).length;
   const learningCount=Object.keys(getLearningStore()||{}).length;
+  const rejectedCount=Object.keys(getRejectedStore()||{}).length;
+  const historyCount=getExportHistory().length;
   const builtInTopCount=Object.keys(BUILTIN_MATCH_MEMORY.topMatches||{}).length;
   const builtInLearningCount=Object.keys(BUILTIN_MATCH_MEMORY.learning||{}).length;
-  if(!topCount&&!learningCount){
+  if(!topCount&&!learningCount&&!rejectedCount&&!historyCount){
     summary.innerHTML=`<b>Matching-Wissen:</b> Noch nichts geladen oder gespeichert. Eingebaut sind bereits ${builtInTopCount} Startmuster und ${builtInLearningCount} Lernanker.`;
     return;
   }
-  summary.innerHTML=`<b>Matching-Wissen:</b> ${topCount} geladene Top-Treffer, ${learningCount} geladene Lernsignaturen plus ${builtInTopCount}/${builtInLearningCount} eingebaute Startmuster aktiv.`;
+  summary.innerHTML=`<b>Matching-Wissen:</b> ${topCount} Top-Treffer, ${learningCount} Lernsignaturen, ${rejectedCount} abgelehnte Matches, ${historyCount} Export-Einträge plus ${builtInTopCount}/${builtInLearningCount} eingebaute Startmuster aktiv.`;
 }
 function learningBoost(newPos,refPos,ctx={}){
   if(ctx.categoryScore===0||ctx.genericWrongCategory||ctx.isTextOnly)return 0;
@@ -3844,22 +3996,265 @@ function learningBoost(newPos,refPos,ctx={}){
   if((hit.count||0)<=1)return 0.03;
   return Math.min(0.08,0.03+((hit.count||0)-1)*0.01);
 }
+// ---- Negatives Lernen: vom Nutzer als "falsch" markierte Matches senken den Score ----
+function getRejectedStore(){
+  try{return normalizeMemoryStore(JSON.parse(localStorage.getItem(REJECTED_KEY)||'{}'));}catch(_){return{};}
+}
+function saveRejectedStore(store){
+  localStorage.setItem(REJECTED_KEY,JSON.stringify(pruneEntryMap(normalizeMemoryStore(store),500)));
+  updateMatchMemoryUI();
+}
+function getAllRejectedEntries(){
+  return [...Object.values(getRejectedStore()||{}).map(normalizeMemoryEntry).filter(Boolean),...Object.values(BUILTIN_MATCH_MEMORY.rejected||{}).map(normalizeMemoryEntry).filter(Boolean)];
+}
+function recordRejectedMatch(newPos,refPos){
+  if(!refPos)return;
+  const sig=buildMatchSignature(newPos,refPos);
+  const store=getRejectedStore();
+  const now=new Date().toISOString();
+  const cur=store[sig.signature]||{signature:sig.signature,newShortNorm:sig.newShortNorm,refShortNorm:sig.refShortNorm,newCategory:sig.newCategory,refCategory:sig.refCategory,newUnit:sig.newUnit,refUnit:sig.refUnit,earthKey:sig.earthKey,disposalKey:sig.disposalKey,docKey:sig.docKey,demolitionKey:sig.demolitionKey,refProject:sig.refProject,count:0,createdAt:now,lastUsed:now};
+  cur.count=(cur.count||0)+1;cur.lastUsed=now;
+  store[sig.signature]=cur;
+  saveRejectedStore(store);
+}
+function removeRejectedMatch(newPos,refPos){
+  const sig=buildMatchSignature(newPos,refPos);
+  const store=getRejectedStore();
+  delete store[sig.signature];
+  saveRejectedStore(store);
+}
+function isRejectedMatch(newPos,refPos){
+  const sig=buildMatchSignature(newPos,refPos);
+  return !!getRejectedStore()[sig.signature];
+}
+// Penalty (>0) wenn ein ähnliches Paar früher als "falsch" markiert wurde. Wird am Score-Ende
+// subtrahiert, kann also fachliche Caps nie nach oben überschreiben.
+function rejectionPenalty(newPos,refPos,ctx={}){
+  const sig=buildMatchSignature(newPos,refPos);
+  const entries=getAllRejectedEntries();
+  const exact=entries.find(entry=>entry.signature===sig.signature||memoryEntryMatches(entry,sig));
+  if(exact)return Math.min(0.40,0.25+((exact.count||1)-1)*0.05);
+  const similar=entries.some(entry=>
+    memoryFieldMatches(entry.refProject,sig.refProject)&&entry.newCategory===sig.newCategory&&entry.refCategory===sig.refCategory&&entry.newUnit===sig.newUnit&&entry.refUnit===sig.refUnit&&
+    memoryFieldMatches(entry.earthKey,sig.earthKey)&&memoryFieldMatches(entry.disposalKey,sig.disposalKey)&&memoryFieldMatches(entry.docKey,sig.docKey)&&memoryFieldMatches(entry.demolitionKey,sig.demolitionKey)&&
+    memoryTextMatches(entry.newShortNorm,sig.newShortNorm)&&memoryTextMatches(entry.refShortNorm,sig.refShortNorm)
+  );
+  return similar?0.15:0;
+}
+function toggleRejectMatch(resultIdx,matchIdx=0){
+  const result=S.results[resultIdx];
+  const match=result?.matches?.[matchIdx];
+  if(!result||!match)return;
+  if(isRejectedMatch(result.newPos,match.pos)){removeRejectedMatch(result.newPos,match.pos);}
+  else{recordRejectedMatch(result.newPos,match.pos);removeTopMatch(result.newPos,match.pos);}
+  applyStoredMatchDecisions(result);
+  renderMatch();updateExport();
+}
+function currentProjectName(){
+  try{return String(S.xmlName||S.newLVName||S.newLvName||'').trim();}catch(_){return'';}
+}
 function recordExportedMatches(exportType){
   const accepted=S.results.filter(r=>r.accepted&&r.matches?.[r.sel||0]?.kind==='CALC');
   if(!accepted.length)return;
   const store=getLearningStore();
   const now=new Date().toISOString();
+  const projectName=currentProjectName();
+  let sumScore=0;
   accepted.forEach(r=>{
     const best=r.matches[r.sel||0];
     const sig=buildMatchSignature(r.newPos,best.pos);
-    const cur=store[sig.signature]||{signature:sig.signature,newCategory:sig.newCategory,refCategory:sig.refCategory,newUnit:sig.newUnit,refUnit:sig.refUnit,earthKey:sig.earthKey,disposalKey:sig.disposalKey,docKey:sig.docKey,demolitionKey:sig.demolitionKey,refProject:sig.refProject,count:0,lastUsed:now,avgScoreAtUse:0,exportTypes:[]};
+    const cur=store[sig.signature]||{signature:sig.signature,newShortNorm:sig.newShortNorm,refShortNorm:sig.refShortNorm,newCategory:sig.newCategory,refCategory:sig.refCategory,newUnit:sig.newUnit,refUnit:sig.refUnit,earthKey:sig.earthKey,disposalKey:sig.disposalKey,docKey:sig.docKey,demolitionKey:sig.demolitionKey,refProject:sig.refProject,count:0,lastUsed:now,avgScoreAtUse:0,exportTypes:[]};
     cur.count=(cur.count||0)+1;
     cur.lastUsed=now;
     cur.avgScoreAtUse=Number((((cur.avgScoreAtUse||0)*(cur.count-1)+(best.score||0))/cur.count).toFixed(2));
     cur.exportTypes=[...new Set([...(cur.exportTypes||[]),exportType])];
+    // angereicherte Lern-Felder (für learningData-Export; überschreiben Vorhandenes nicht blind)
+    cur.userDecision='korrekt';
+    cur.confidenceAtExport=best.score||0;
+    cur.sourceQuantity=Number(r.newPos?.menge)||0;
+    cur.targetQuantity=getReferenceMatchQty(best.pos);
+    cur.projectName=projectName||cur.projectName||'';
+    cur.exportedAt=now;
+    if(best.debug&&best.debug.scoreParts)cur.scoreParts=best.debug.scoreParts;
     store[sig.signature]=cur;
+    sumScore+=best.score||0;
   });
   saveLearningStore(store);
+  recordExportHistoryEntry({exportType,projectName,acceptedCount:accepted.length,avgScore:Number((sumScore/accepted.length).toFixed(2)),exportedAt:now});
+}
+function getExportHistory(){
+  try{const a=JSON.parse(localStorage.getItem(EXPORT_HISTORY_KEY)||'[]');return Array.isArray(a)?a:[];}catch(_){return[];}
+}
+function recordExportHistoryEntry(entry){
+  try{const hist=getExportHistory();hist.push(entry);localStorage.setItem(EXPORT_HISTORY_KEY,JSON.stringify(hist.slice(-200)));}catch(_){}
+}
+function newerIso(a,b){
+  const ta=Date.parse(a||''),tb=Date.parse(b||'');
+  if(!Number.isFinite(ta))return b||a||'';
+  if(!Number.isFinite(tb))return a||b||'';
+  return tb>ta?b:a;
+}
+function olderIso(a,b){
+  const ta=Date.parse(a||''),tb=Date.parse(b||'');
+  if(!Number.isFinite(ta))return b||a||'';
+  if(!Number.isFinite(tb))return a||b||'';
+  return tb<ta?b:a;
+}
+function uniqueList(...lists){
+  const out=[];
+  lists.flat().forEach(v=>{if(v!=null&&v!==''&&!out.includes(v))out.push(v);});
+  return out;
+}
+function hasFiniteValue(obj,field){
+  return obj?.[field]!=null&&obj?.[field]!==''&&Number.isFinite(Number(obj[field]));
+}
+function weightedAverageScore(a,b,field){
+  const hasA=hasFiniteValue(a,field);
+  const hasB=hasFiniteValue(b,field);
+  const av=hasA?Number(a[field]):undefined,bv=hasB?Number(b[field]):undefined;
+  const ac=Math.max(0,Number(a?.count)||0),bc=Math.max(0,Number(b?.count)||0);
+  if(hasA&&hasB&&ac+bc>0)return Number(((av*ac+bv*bc)/(ac+bc)).toFixed(2));
+  if(hasB)return bv;
+  if(hasA)return av;
+  return undefined;
+}
+function sameMemoryImportEntry(a,b){
+  const fields=['signature','count','createdAt','lastUsed','exportedAt','avgScoreAtUse','confidenceAtExport','newShortNorm','refShortNorm','newCategory','refCategory','newUnit','refUnit','earthKey','disposalKey','docKey','demolitionKey','refProject'];
+  return fields.every(f=>String(a?.[f]??'')===String(b?.[f]??''))&&
+    JSON.stringify(a?.exportTypes||[])===JSON.stringify(b?.exportTypes||[]);
+}
+function mergeMemoryEntry(existing,incoming){
+  const a=normalizeMemoryEntry(existing)||{};
+  const b=normalizeMemoryEntry(incoming)||{};
+  const signature=b.signature||a.signature;
+  if(sameMemoryImportEntry(a,b))return a;
+  const aCount=Number(a.count)||0,bCount=Number(b.count)||0;
+  const newerDate=newerIso(a.exportedAt||a.lastUsed,b.exportedAt||b.lastUsed);
+  const preferB=(newerDate&&(newerDate===(b.exportedAt||b.lastUsed)));
+  const merged={...a,...b,signature};
+  merged.count=aCount+bCount||bCount||aCount||1;
+  merged.createdAt=olderIso(a.createdAt,b.createdAt)||a.createdAt||b.createdAt||'';
+  merged.lastUsed=newerIso(a.lastUsed,b.lastUsed)||a.lastUsed||b.lastUsed||'';
+  merged.exportedAt=newerIso(a.exportedAt,b.exportedAt)||a.exportedAt||b.exportedAt||'';
+  const avg=weightedAverageScore(a,b,'avgScoreAtUse');
+  if(avg!==undefined)merged.avgScoreAtUse=avg;
+  if(hasFiniteValue(a,'confidenceAtExport')&&hasFiniteValue(b,'confidenceAtExport')){
+    merged.confidenceAtExport=preferB?Number(b.confidenceAtExport):Number(a.confidenceAtExport);
+  }else if(hasFiniteValue(b,'confidenceAtExport'))merged.confidenceAtExport=Number(b.confidenceAtExport);
+  else if(hasFiniteValue(a,'confidenceAtExport'))merged.confidenceAtExport=Number(a.confidenceAtExport);
+  merged.exportTypes=uniqueList(a.exportTypes||[],b.exportTypes||[]);
+  if(!merged.scoreParts)merged.scoreParts=a.scoreParts||b.scoreParts||null;
+  return merged;
+}
+function mergeMemoryStores(existing,incoming){
+  const out={...normalizeMemoryStore(existing)};
+  Object.values(normalizeMemoryStore(incoming)||{}).forEach(entry=>{
+    if(!entry?.signature)return;
+    out[entry.signature]=out[entry.signature]?mergeMemoryEntry(out[entry.signature],entry):entry;
+  });
+  return pruneEntryMap(out,500);
+}
+function mergeExportHistory(existing,incoming){
+  const byKey=new Map();
+  const key=e=>[e.exportedAt||'',e.exportType||'',e.projectName||'',e.acceptedCount??'',e.avgScore??''].join('|');
+  [...(Array.isArray(existing)?existing:[]),...(Array.isArray(incoming)?incoming:[])].forEach(entry=>{
+    if(!entry||typeof entry!=='object')return;
+    const clean={...entry};
+    byKey.set(key(clean),clean);
+  });
+  return [...byKey.values()].sort((a,b)=>(Date.parse(a.exportedAt||0)||0)-(Date.parse(b.exportedAt||0)||0)).slice(-200);
+}
+function mergeImportedMatchMemoryStores(stores){
+  if(!stores||typeof stores!=='object')throw new Error('Kein gueltiges Matching-Wissen zum Mergen');
+  const topMatches=mergeMemoryStores(getTopMatchStore(),stores.topMatches||{});
+  const learning=mergeMemoryStores(getLearningStore(),stores.learning||{});
+  const rejected=mergeMemoryStores(getRejectedStore(),stores.rejected||{});
+  saveTopMatchStore(topMatches);
+  saveLearningStore(learning);
+  saveRejectedStore(rejected);
+  if(Array.isArray(stores.exportHistory)){
+    localStorage.setItem(EXPORT_HISTORY_KEY,JSON.stringify(mergeExportHistory(getExportHistory(),stores.exportHistory)));
+  }
+  updateMatchMemoryUI();
+  return {topMatches,learning,rejected,exportHistory:getExportHistory()};
+}
+// Baut die im Verbesserungs-Brief geforderte learningData-Struktur aus den vorhandenen Stores.
+function buildLearningData(){
+  const enrich=e=>({
+    sourceTextNormalized:e.newShortNorm||'',targetTextNormalized:e.refShortNorm||'',
+    sourceUnit:e.newUnit||'',targetUnit:e.refUnit||'',
+    sourceQuantity:e.sourceQuantity??null,targetQuantity:e.targetQuantity??null,
+    sourceActionObject:e.newCategory||'',targetActionObject:e.refCategory||'',
+    sourceContext:[e.earthKey,e.disposalKey,e.docKey,e.demolitionKey].filter(Boolean).join('|'),
+    targetContext:e.refProject||'',
+    userDecision:e.userDecision||'',exportedAt:e.exportedAt||e.lastUsed||'',
+    projectName:e.projectName||'',confidenceAtExport:e.confidenceAtExport??e.avgScoreAtUse??null,
+    scoreParts:e.scoreParts||null,count:e.count||1,signature:e.signature||''
+  });
+  return {
+    version:1,
+    confirmedMatches:Object.values(getLearningStore()||{}).map(enrich),
+    rejectedMatches:Object.values(getRejectedStore()||{}).map(e=>({...enrich(e),userDecision:'falsch'})),
+    exportHistory:getExportHistory()
+  };
+}
+// === Selbstverbesserungs-Werkzeuge (nutzen learningData/Reject-Store als Feedback) ===
+// 1) Reject-Cluster-Analyse: gruppiert abgelehnte Matches nach Muster, damit sichtbar wird,
+//    welche Kategorie-/Einheiten-Verwechslung am häufigsten falsch ist (datengetrieben statt geraten).
+function analyzeRejectClusters(showUI=false){
+  const entries=getAllRejectedEntries();
+  const clusters={};
+  entries.forEach(e=>{
+    const catPair=(e.newCategory||'?')+'→'+(e.refCategory||'?');
+    const tags=[];
+    if(e.newUnit&&e.refUnit&&e.newUnit!==e.refUnit)tags.push('Einheit≠');
+    if(e.disposalKey)tags.push('Entsorgung');
+    if(e.earthKey)tags.push('Erdbau');
+    if(e.demolitionKey)tags.push('Abbruch');
+    const key=catPair+(tags.length?' ['+tags.join(',')+']':'');
+    const c=clusters[key]||(clusters[key]={pattern:key,count:0,samples:[]});
+    c.count+=(e.count||1);
+    if(c.samples.length<3)c.samples.push((e.newShortNorm||'?')+' ↔ '+(e.refShortNorm||'?'));
+  });
+  const rows=Object.values(clusters).sort((a,b)=>b.count-a.count);
+  console.table(rows.map(r=>({Muster:r.pattern,Anzahl:r.count,Beispiel:r.samples[0]||''})));
+  if(!rows.length)log('Reject-Cluster: noch keine abgelehnten Matches vorhanden.','i');
+  else log(`Reject-Cluster: ${rows.length} Muster, häufigstes „${rows[0].pattern}" (${rows[0].count}×). Details in der Konsole.`,'i');
+  if(showUI){
+    const summary=rows.map(r=>`${r.count}× ${r.pattern}\n    z.B. ${r.samples[0]||''}`).join('\n');
+    const area=document.getElementById('reviewPromptArea');
+    if(area)area.value='Reject-Cluster (häufigste abgelehnte Match-Muster)\n\n'+(summary||'(keine Daten)');
+    document.getElementById('reviewModal')?.classList.add('open');
+  }
+  return rows;
+}
+// 2) learningData → Self-Test-Generator: macht aus echten Nutzerentscheidungen Self-Test-Kandidaten.
+//    Bestätigt → good (min aus confidence), abgelehnt → bad (max 55). Gibt einfügbaren Code zurück.
+function generateSelfTestsFromLearning(opts={}){
+  const minCount=opts.minCount||1;
+  const ld=buildLearningData();
+  const toCase=(m,kind)=>{
+    const conf=Number(m.confidenceAtExport)||0;
+    const a=`{kurztext:${JSON.stringify(m.sourceTextNormalized)},me:${JSON.stringify(m.sourceUnit||'')}}`;
+    const b=`{kurztext:${JSON.stringify(m.targetTextNormalized)},me:${JSON.stringify(m.targetUnit||'')}}`;
+    const bound=kind==='good'?`min:${Math.max(60,Math.round(conf)-15)}`:'max:55';
+    return `    ,{kind:'${kind}',a:${a},b:${b},${bound},label:${JSON.stringify('aus Lerndaten ('+(m.userDecision||kind)+')')}}`;
+  };
+  const valid=m=>(m.count||1)>=minCount&&m.sourceTextNormalized&&m.targetTextNormalized;
+  const good=(ld.confirmedMatches||[]).filter(valid).map(m=>toCase(m,'good'));
+  const bad=(ld.rejectedMatches||[]).filter(valid).map(m=>toCase(m,'bad'));
+  const code=[...good,...bad].join('\n');
+  log(`Self-Test-Generator: ${good.length} good + ${bad.length} bad aus Lerndaten. Code in der Konsole (vor schließendem ] in runMatchingSelfTest einfügen).`,'i');
+  if(code)console.log('%c--- generierte Self-Test-Fälle ---','font-weight:bold');
+  console.log(code||'(keine Lerndaten mit beidseitigem Text)');
+  return {good:good.length,bad:bad.length,code};
+}
+function resetMatchMemory(){
+  if(!confirm('Wirklich das gesamte gelernte Matching-Wissen (Top-Treffer, Lernsignaturen, abgelehnte Matches, Export-Historie) löschen? Eingebaute Startmuster bleiben erhalten.'))return;
+  try{localStorage.removeItem(TOP_MATCH_KEY);localStorage.removeItem(LEARNING_KEY);localStorage.removeItem(REJECTED_KEY);localStorage.removeItem(EXPORT_HISTORY_KEY);}catch(_){}
+  updateMatchMemoryUI();
+  if(typeof renderMatch==='function')renderMatch();
+  log('✓ Gelerntes Matching-Wissen zurückgesetzt (Startmuster bleiben aktiv)','s');
 }
 function loadReviewNotes(){
   try{return localStorage.getItem(REVIEW_NOTES_KEY)||'';}catch(_){return'';}
@@ -3877,10 +4272,12 @@ function exportMatchMemoryJSON(){
     exportedAt:new Date().toISOString(),
     version:1,
     topMatches:getTopMatchStore(),
-    learning:getLearningStore()
+    learning:getLearningStore(),
+    rejected:getRejectedStore(),
+    learningData:buildLearningData()
   };
   dl(JSON.stringify(payload,null,2),`KalkPilot_by_Janek_Matching_Wissen_${new Date().toISOString().slice(0,10)}.json`,'application/json');
-  log(`Matching-Wissen exportiert: ${Object.keys(payload.topMatches||{}).length} Top-Treffer, ${Object.keys(payload.learning||{}).length} Lernsignaturen`,'s');
+  log(`Matching-Wissen exportiert: ${Object.keys(payload.topMatches||{}).length} Top-Treffer, ${Object.keys(payload.learning||{}).length} Lernsignaturen, ${Object.keys(payload.rejected||{}).length} abgelehnte`,'s');
 }
 function normalizeImportedJSONText(raw){
   return String(raw??'')
@@ -3898,11 +4295,16 @@ function coerceReferenceProjectsPayload(payload){
 function coerceMatchMemoryPayload(payload){
   if(!payload||typeof payload!=='object')return null;
   const topMatches=payload.topMatches??payload.top??payload.topStore??payload.matchTopStore??payload.data?.topMatches;
-  const learning=payload.learning??payload.learningStore??payload.matchLearningStore??payload.data?.learning??{};
-  if(topMatches==null&&learning==null)return null;
+  const learningData=payload.learningData??payload.data?.learningData??{};
+  const learning=payload.learning??payload.learningStore??payload.matchLearningStore??payload.data?.learning??memoryStoreFromLearningDataRecords(learningData.confirmedMatches||[],'korrekt');
+  const rejected=payload.rejected??payload.rejectedStore??payload.matchRejectedStore??payload.data?.rejected??memoryStoreFromLearningDataRecords(learningData.rejectedMatches||[],'falsch');
+  const exportHistory=payload.exportHistory??payload.learningData?.exportHistory??payload.data?.exportHistory??[];
+  if(topMatches==null&&learning==null&&rejected==null)return null;
   return {
     topMatches:normalizeMemoryStore(topMatches),
-    learning:normalizeMemoryStore(learning)
+    learning:normalizeMemoryStore(learning),
+    rejected:normalizeMemoryStore(rejected),
+    exportHistory:Array.isArray(exportHistory)?exportHistory:[]
   };
 }
 function importMatchMemoryJSON(file){
@@ -3912,11 +4314,11 @@ function importMatchMemoryJSON(file){
       const payload=JSON.parse(normalizeImportedJSONText(e.target.result));
       const stores=coerceMatchMemoryPayload(payload);
       if(!stores||typeof stores.topMatches!=='object'||typeof stores.learning!=='object')throw new Error('JSON enthält kein gültiges Matching-Wissen');
-      saveTopMatchStore(stores.topMatches);
-      saveLearningStore(stores.learning);
+      const merged=mergeImportedMatchMemoryStores(stores);
+      applyStoredMatchDecisionsToResults();
       renderMatch();
       updateExport();
-      log(`✓ Matching-Wissen geladen: ${Object.keys(stores.topMatches).length} Top-Treffer, ${Object.keys(stores.learning).length} Lernsignaturen`,'s');
+      log(`✓ Matching-Wissen gemerged: ${Object.keys(merged.topMatches).length} Top-Treffer, ${Object.keys(merged.learning).length} Lernsignaturen, ${Object.keys(merged.rejected||{}).length} abgelehnte`,'s');
     }catch(err){
       alert('Matching-Wissen konnte nicht geladen werden: '+err.message);
       log('⚠ Laden des Matching-Wissens fehlgeschlagen: '+err.message,'w');
@@ -4128,7 +4530,7 @@ async function runMatch(){
       const top3=ranked.slice(0,3);
       const best=top3[0];
       const accepted=!!(best&&best.score>=80&&best.kind==='CALC'&&(best.pos?.kosten||[]).some(k=>k.typ!=='S')&&!(best.debug?.hardCapsApplied||[]).length);
-      nextResults.push({newPos:np,matches:top3,sel:0,accepted});
+      nextResults.push(applyStoredMatchDecisions({newPos:np,matches:top3,sel:0,accepted}));
     }
     const now=performance.now();
     if((now-lastYield)>18||i===S.newLV.length-1){
@@ -4158,7 +4560,7 @@ async function runMatch(){
       current:'Trefferliste, Exportvorschau und Selbsttest werden vorbereitet',
       etaText:'fast fertig'
     });
-    S.results=nextResults;
+    S.results=applyStoredMatchDecisionsToResults(nextResults);
     renderMatch();updateExport();
     updateDiagnosticSummary();
     document.getElementById('matchSum').innerHTML=summarizeBadges();
@@ -4196,6 +4598,7 @@ function toggleSort(col){
   if(S.sortCol===col)S.sortDir=S.sortDir==='desc'?'asc':'desc';
   else{S.sortCol=col;S.sortDir=col==='oz'?'asc':'desc';}
   document.getElementById('siOZ').textContent=S.sortCol==='oz'?(S.sortDir==='asc'?'↑':'↓'):'';
+  const siMenge=document.getElementById('siMenge');if(siMenge)siMenge.textContent=S.sortCol==='menge'?(S.sortDir==='asc'?'↑':'↓'):'';
   document.getElementById('siScore').textContent=S.sortCol==='score'?(S.sortDir==='asc'?'↑':'↓'):'';
   renderMatch();
 }
@@ -4210,6 +4613,30 @@ function onUnitToggle(){
 function hasExportableMatch(result){
   const best=result?.matches?.[result?.sel||0];
   return !!(best&&best.kind==='CALC'&&(best.pos?.kosten||[]).some(k=>k.typ!=='S'));
+}
+function applyStoredMatchDecisions(result){
+  if(!result||!Array.isArray(result.matches)||!result.matches.length)return result;
+  const topIdx=result.matches.findIndex(m=>m?.pos&&isTopMatch(result.newPos,m.pos));
+  if(topIdx>=0){
+    result.sel=topIdx;
+    result.accepted=hasExportableMatch(result);
+    return result;
+  }
+  const selIdx=result.sel||0;
+  const selected=result.matches[selIdx];
+  if(selected?.pos&&isRejectedMatch(result.newPos,selected.pos)){
+    result.accepted=false;
+    const nextIdx=result.matches.findIndex(m=>m?.pos&&!isRejectedMatch(result.newPos,m.pos));
+    if(nextIdx>=0)result.sel=nextIdx;
+    return result;
+  }
+  const anyRejected=result.matches.some(m=>m?.pos&&isRejectedMatch(result.newPos,m.pos));
+  if(anyRejected&&!hasExportableMatch(result))result.accepted=false;
+  return result;
+}
+function applyStoredMatchDecisionsToResults(results=S.results){
+  (results||[]).forEach(applyStoredMatchDecisions);
+  return results;
 }
 function setAccepted(idx,val){
   const result=S.results[idx];
@@ -4250,6 +4677,7 @@ function renderMatch(){
   if(search)rows=rows.filter(r=>r.newPos.oz.toLowerCase().includes(search)||r.newPos.kurztext.toLowerCase().includes(search));
   rows.sort((a,b)=>{
     if(S.sortCol==='oz'){const c=a.newPos.oz.localeCompare(b.newPos.oz,undefined,{numeric:true});return S.sortDir==='asc'?c:-c;}
+    if(S.sortCol==='menge'){const ma=Number(a.newPos.menge)||0,mb=Number(b.newPos.menge)||0;return S.sortDir==='asc'?ma-mb:mb-ma;}
     const sa=fs(a),sb=fs(b);return S.sortDir==='desc'?sb-sa:sa-sb;
   });
   S.visibleResults=rows;
@@ -4264,6 +4692,7 @@ function renderMatch(){
     const meOk=refMe&&newMe&&norm(refMe)===norm(newMe);
     const meCls=!refMe?'me-none':meOk?'me-ok':'me-diff';
     const topMarked=best?isTopMatch(r.newPos,best.pos):false;
+    const rejMarked=best?isRejectedMatch(r.newPos,best.pos):false;
     const srcType=best?.pos?.matchedD83&&best?.pos?.matchedXML?'🔗':best?.pos?.matchedXML?'📊':'📋';
     const exportable=!!(best&&best.kind==='CALC'&&(best.pos?.kosten||[]).some(k=>k.typ!=='S'));
     const hasAlt=r.matches.length>1;
@@ -4274,7 +4703,8 @@ function renderMatch(){
       </td>
       <td class="oz">${h(r.newPos.oz)}</td>
       <td><div class="kt">${h(r.newPos.kurztext)}</div>
-          <div class="lt">${h((r.newPos.langtext||'').substring(0,55))}${(r.newPos.langtext||'').length>55?'...':''}</div></td>
+          <div class="lt">${h((r.newPos.langtext||'').substring(0,55))}${(r.newPos.langtext||'').length>55?'...':''}</div>
+          ${(r.newPos.langtext||'').trim()?`<button class="info-btn" style="margin-top:3px;font-size:10px;padding:2px 6px" onclick="openManualTargetLang(${idx},event)" title="Vollständigen Langtext anzeigen">📄 Langtext</button>`:''}</td>
       <td style="white-space:nowrap;font-size:11px">${r.newPos.menge>0?`<b>${r.newPos.menge.toLocaleString('de-DE',{maximumFractionDigits:3})}</b> ${h(newMe)}`:'-'}</td>
       <td>${sc>0?`<span class="badge ${bc}">${sc}%</span>`:`<span style="color:var(--muted);font-size:10px">-</span>`}</td>
       <td style="min-width:185px">${best?`
@@ -4289,11 +4719,12 @@ function renderMatch(){
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0">
             <button class="info-btn" onclick="showDetail(${idx})" title="Vollständige Referenzposition">🔍</button>
-            <button class="top-btn ${topMarked?'active':''}" onclick="toggleTopMatch(${idx},${selIdx})" title="Als Top-Treffer markieren">${topMarked?'⭐ Top':'☆ Top'}</button>
+            <button class="top-btn ${topMarked?'active':''}" onclick="toggleTopMatch(${idx},${selIdx})" title="Als korrekt (Top-Treffer) markieren">${topMarked?'⭐ Top':'☆ Top'}</button>
+            <button class="top-btn ${rejMarked?'active':''}" onclick="toggleRejectMatch(${idx},${selIdx})" title="Als falsch markieren (senkt künftige Scores ähnlicher Paare)">${rejMarked?'✗ Falsch':'✗'}</button>
             ${hasAlt?`<button class="info-btn" onclick="cycleAlt(${idx})" title="Alternative Treffer (${altLabel})">⇄ ${altLabel}</button>`:''}
             <button class="info-btn" onclick="openManualMatch(${idx})" title="Manuell passende Referenz suchen">Manuell</button>
           </div>
-        </div>${!exportable?'<div style="margin-top:4px;font-size:10px;color:#fbbf24">Kein XML-Kalkulationsmatch - nicht exportierbar</div>':''}`:'<span style="color:var(--muted);font-size:10px">Kein Treffer</span>'}</td>
+        </div>${!exportable?'<div style="margin-top:4px;font-size:10px;color:#fbbf24">Kein XML-Kalkulationsmatch - nicht exportierbar</div>':''}${(best.debug&&best.debug.scoreParts&&((best.debug.scoreParts.warnings||[]).length||(best.debug.scoreParts.reasons||[]).length))?`<div style="margin-top:3px;font-size:10px" title="Detail über 🔍">${(best.debug.scoreParts.warnings||[]).length?`<span style="color:#fbbf24">⚠ ${h(best.debug.scoreParts.warnings[0])}</span>`:`<span style="color:var(--muted)">✓ ${h(best.debug.scoreParts.reasons[0])}</span>`}</div>`:''}`:'<span style="color:var(--muted);font-size:10px">Kein Treffer</span>'}</td>
       <td>${renderPills(kosten)}</td>
       <td class="ep" style="white-space:nowrap">${ep>0?ep.toFixed(2)+' €':'-'}</td>
     </tr>`;
@@ -4388,6 +4819,7 @@ function showDetail(idx){
       <span class="detail-lbl">Einheit / Menge:</span><span class="detail-val">${dbg.unitScore??0}% / ${dbg.quantityScore??0}%</span>
       <span class="detail-lbl">Deckel:</span><span class="detail-val">${dbg.hardCapsApplied?.length?h(dbg.hardCapsApplied.join(', ')):'-'}</span>
       <span class="detail-lbl">Grund:</span><span class="detail-val detail-lt">${h(dbg.reasonText||'')}</span>
+      ${dbg.scoreParts?`<span class="detail-lbl">Score-Aufbau:</span><span class="detail-val" style="font-size:11px;line-height:1.6">Text ${dbg.scoreParts.textScore}% · Fachbegriffe ${dbg.scoreParts.keywordScore}% · Aktion/Objekt ${dbg.scoreParts.actionObjectScore}% · Einheit ${dbg.scoreParts.unitScore}% · Menge ${dbg.scoreParts.quantityScore}% · Kontext ${dbg.scoreParts.contextScore}% · Lernen ${dbg.scoreParts.learningScore}% · Abzug ${dbg.scoreParts.penaltyScore}%${dbg.scoreParts.reasons&&dbg.scoreParts.reasons.length?'<br><span style="color:var(--green)">✓ '+h(dbg.scoreParts.reasons.join(' · '))+'</span>':''}${dbg.scoreParts.warnings&&dbg.scoreParts.warnings.length?'<br><span style="color:#fbbf24">⚠ '+h(dbg.scoreParts.warnings.join(' · '))+'</span>':''}</span>`:''}
       ${rp.rawWBSItemXml?'<span class="detail-lbl">Export:</span><span class="detail-val" style="color:var(--green);font-size:11px">✓ 1:1 Rohkopie aus Referenz-XML</span>':'<span class="detail-lbl">Export:</span><span class="detail-val" style="color:var(--yellow);font-size:11px">⚠ Rekonstruiert (keine Rohkopie)</span>'}
     </div>
     <div>
@@ -4503,6 +4935,51 @@ function computeManualCandidateRowsSync(target,candidateRefs,pool){
     };
   }).sort((a,b)=>b.score-a.score);
 }
+// Globale Referenzsuche: Wenn im manuellen Matching ein Suchtext eingegeben ist, soll über den
+// GESAMTEN aktiven Referenzpool gesucht werden – nicht nur über die nach Kategorie vorgefilterten
+// Kandidaten der aktuell gewählten Zielposition. Sonst tauchen Referenzen aus anderen Kategorie-
+// Buckets (z.B. "Mehrfachgaswarngerät" während eine Erdbau-Position gewählt ist) nie auf.
+// Normalisierte Suchfelder je Referenz cachen: getGlobalManualSearchRows läuft sonst pro
+// Tastendruck mit 4×norm() über den GESAMTEN Pool. Referenzobjekte sind nach dem Laden stabil.
+const __manualHayCache=new WeakMap();
+function manualHayFields(rp){
+  let c=__manualHayCache.get(rp);
+  if(c)return c;
+  const searchOz=norm(rp.oz||''),searchShort=norm(rp.kurztext||''),searchLong=norm(rp.langtext||''),searchSource=norm(rp.source||'');
+  c={searchOz,searchShort,searchLong,searchSource,hay:searchOz+' '+searchShort+' '+searchLong+' '+searchSource,exportable:!!(rp.matchedXML&&(rp.kosten||[]).some(k=>k.typ!=='S'))};
+  __manualHayCache.set(rp,c);
+  return c;
+}
+function getGlobalManualSearchRows(target,calcOnly,search,searchTokens){
+  const pool=getManualRefPool(calcOnly);
+  const projectPref=getManualProjectPreference(target);
+  const scored=[];
+  for(const rp of pool.refs){
+    const f=manualHayFields(rp);
+    // Günstiges Vorfilter, bewahrt aber Kompositum-/Fuzzy-Recall (Präfix-5-Treffer).
+    const quick=f.hay.includes(search)
+      ||searchTokens.some(t=>f.hay.includes(t))
+      ||(search.length>=5&&searchTokens.some(t=>t.length>=5&&f.hay.includes(t.slice(0,5))));
+    if(!quick)continue;
+    const ss=scoreManualSearch(search,searchTokens,f);
+    if(ss>=0.18)scored.push({rp,ss,searchOz:f.searchOz,searchShort:f.searchShort,searchLong:f.searchLong,searchSource:f.searchSource});
+  }
+  scored.sort((a,b)=>b.ss-a.ss);
+  const top=scored.slice(0,80);
+  return top.map(({rp,ss,searchOz,searchShort,searchLong,searchSource})=>{
+    const evaluated=calcScore(target.newPos,rp,{isTextOnly:!(rp.matchedXML&&rp.kosten?.length)});
+    const projectBoost=(projectPref&&rp.source===projectPref.project)?Math.min(8,2+projectPref.weight):0;
+    return{
+      rp,
+      refIdx:pool.indexMap.get(rp),
+      score:Math.min(100,evaluated.score+projectBoost),
+      debug:{...evaluated.debug,projectBoost},
+      exportable:!!(rp.matchedXML&&(rp.kosten||[]).some(k=>k.typ!=='S')),
+      searchScore:ss,
+      searchOz,searchShort,searchLong,searchSource
+    };
+  });
+}
 function scoreManualSearch(queryNorm,queryTokens,row){
   if(!queryNorm)return 1;
   const q=queryNorm;
@@ -4597,6 +5074,13 @@ function openManualMatch(idx){
   resetManualCache();
   switchTab('t4');
   renderManualMatch();
+  // Bei Positionswechsel die Referenz-Trefferliste wieder ganz nach oben scrollen,
+  // damit man immer beim besten Kandidaten startet (Referenzen bleiben sichtbar).
+  if(changed)scrollManualResultsTop();
+}
+function scrollManualResultsTop(){
+  const el=document.getElementById('manualMatchResults');
+  if(el)el.scrollTop=0;
 }
 function onManualCalcToggle(){
   document.getElementById('manualCalcOnlyLbl')?.classList.toggle('on',document.getElementById('manualCalcOnly')?.checked);
@@ -4631,6 +5115,7 @@ function applyManualMatch(resultIdx,refIdx){
   renderMatch();
   updateExport();
   renderManualMatch();
+  scrollManualResultsTop();
   log(`✓ Manuelles Matching gesetzt: ${result.newPos.oz} → ${refPos.oz} (${refPos.source})`,'s');
 }
 function renderManualMatch(){
@@ -4694,12 +5179,15 @@ function renderManualMatch(){
   const search=norm(document.getElementById('manualSearch')?.value||'');
   const searchTokens=search?[...new Set(tokenizeForMatch(search))]:[];
   const calcOnly=!!document.getElementById('manualCalcOnly')?.checked;
-  let refs=getManualCandidatesForTarget(target,calcOnly);
+  let refs;
   if(search){
-    refs=refs
-      .map(x=>({...x,searchScore:scoreManualSearch(search,searchTokens,x)}))
-      .filter(x=>x.searchScore>=0.18)
+    // Bei aktiver Suche global über den gesamten Referenzpool suchen (nicht nur die
+    // kategorie-gebucketeten Kandidaten der Zielposition) – sonst sind Referenzen aus
+    // anderen Buckets über die Suche unauffindbar.
+    refs=getGlobalManualSearchRows(target,calcOnly,search,searchTokens)
       .sort((a,b)=>(b.searchScore-a.searchScore)||(b.score-a.score));
+  }else{
+    refs=getManualCandidatesForTarget(target,calcOnly);
   }
   refs=refs.slice(0,60);
   if(!refs.length){
@@ -5169,6 +5657,49 @@ function runMatchingSelfTest(showUI=false){
     ,{kind:'good',a:{kurztext:'Mehrfach Gaswarngerät vorhalten',me:'st'},b:{kurztext:'Mehrfachgaswarngerät vorhalten',me:'st'},min:88,label:'Mehrfach Gaswarngerät (Leerzeichen) match'}
     // Kurztext-Subset: kürzerer Text vollständig im längeren (Praxisfall lösen/laden)
     ,{kind:'good',a:{kurztext:'Boden lösen, laden',me:'m3'},b:{kurztext:'lösen laden',me:'m3'},min:70,label:'Boden lösen laden ⊃ lösen laden'}
+    // Entsorgung: Entsorgungsweg (Verwertung/Deponie) ist NICHT abfall-identitätsstiftend → gleicher
+    // AVV+Klasse darf trotz unterschiedlichem Weg matchen (disposalContradicts route-agnostisch).
+    ,{kind:'good',a:{kurztext:'Deponierung Boden BM-0 AVV 170504',me:'t'},b:{kurztext:'Verwertung Boden BM-0 AVV 170504',me:'t'},min:80,label:'Entsorgungsweg egal bei gleichem AVV/Klasse'}
+    // Echte Entsorgungs-Widersprüche müssen gedeckelt bleiben.
+    ,{kind:'bad',a:{kurztext:'Entsorgung Boden AVV 170503 gefährlicher Abfall',me:'t'},b:{kurztext:'Entsorgung Boden AVV 170503 nicht gefährlicher Abfall',me:'t'},max:55,label:'GA != NGA (gleicher AVV)'}
+    ,{kind:'bad',a:{kurztext:'Deponie Boden DK-I einbauen',me:'t'},b:{kurztext:'Deponie Boden DK-III einbauen',me:'t'},max:35,label:'DK-I != DK-III'}
+    // synScore-Kalibrierung: ein einzelnes geteiltes Nebenwort (Synonymgruppe) darf NICHT zum Treffer
+    // inflationieren, wenn die Positionen sonst unverwandt sind.
+    ,{kind:'bad',a:{kurztext:'Sickerrohr DN 200 verlegen',me:'m'},b:{kurztext:'Schutzrohr für Kabel einziehen',me:'m'},max:60,label:'geteiltes "rohr" inflationiert nicht'}
+    ,{kind:'bad',a:{kurztext:'Sauberkeitsschicht Beton herstellen',me:'m2'},b:{kurztext:'Betonschacht abbrechen und entsorgen',me:'st'},max:35,label:'geteiltes "beton" inflationiert nicht'}
+    // Einseitige Abfallklasse: günstige/häufige Klasse (BM-0) soll trotz unklassifizierter Referenz
+    // auffindbar bleiben (Recall), gefährliche/teure Klasse (BM-F3) bleibt hart gedeckelt (Präzision).
+    ,{kind:'good',a:{kurztext:'Boden entsorgen AVV 170504 BM-0',me:'t'},b:{kurztext:'Boden entsorgen und abfahren',me:'t'},min:60,label:'BM-0 vs. unklassifiziert bleibt auffindbar'}
+    ,{kind:'bad',a:{kurztext:'Boden entsorgen AVV 170506 BM-F3 gefährlich',me:'t'},b:{kurztext:'Boden entsorgen und abfahren',me:'t'},max:50,label:'BM-F3 vs. unklassifiziert bleibt gedeckelt'}
+    // P5-Synonyme: Transport + Betonabbruch sollen matchen, ohne Entsorgung/andere zu kapern.
+    ,{kind:'good',a:{kurztext:'Bodentransport abfahren',me:'m3'},b:{kurztext:'Boden transportieren',me:'m3'},min:75,label:'Bodentransport ↔ Boden transportieren (Transport-Kategorie)'}
+    ,{kind:'good',a:{kurztext:'Beton abbrechen',me:'m3'},b:{kurztext:'Betonabbruch',me:'m3'},min:65,label:'Beton abbrechen ↔ Betonabbruch'}
+    ,{kind:'bad',a:{kurztext:'Boden transportieren',me:'m3'},b:{kurztext:'Boden entsorgen Deponie DK II',me:'t'},max:55,label:'Transport ist nicht Entsorgung'}
+    ,{kind:'bad',a:{kurztext:'Boden abfahren',me:'m3'},b:{kurztext:'Boden entsorgen Deponie DK I',me:'t'},max:55,label:'Boden abfahren ist ohne Deponie-/Abfallsignal kein Entsorgungsmatch'}
+    ,{kind:'bad',a:{kurztext:'Boden entsorgen und abfahren',me:'t'},b:{kurztext:'Boden transportieren',me:'m3'},max:55,label:'Entsorgung mit abfahren wird nicht zu reinem Transport'}
+    ,{kind:'bad',a:{kurztext:'Oberboden abfahren',me:'m3'},b:{kurztext:'Boden transportieren',me:'m3'},max:55,label:'Oberboden abfahren bleibt Erdbau/Abtrag, nicht reiner Transport'}
+    ,{kind:'good',a:{kurztext:'Antransporte',me:'psch'},b:{kurztext:'Antransport Baustelleneinrichtung',me:'psch'},min:60,label:'Antransport knapper Kurztext matcht Richtung IN'}
+    ,{kind:'good',a:{kurztext:'Abtransporte',me:'psch'},b:{kurztext:'Abtransport Baustelleneinrichtung',me:'psch'},min:60,label:'Abtransport knapper Kurztext matcht Richtung OUT'}
+    ,{kind:'bad',a:{kurztext:'Abtransporte',me:'psch'},b:{kurztext:'Antransport Baustelleneinrichtung',me:'psch'},max:45,label:'Abtransport ist nicht Antransport'}
+    ,{kind:'bad',a:{kurztext:'Abtransport Baustelleneinrichtung',me:'psch'},b:{kurztext:'Antransport Baustelleneinrichtung',me:'psch'},max:45,label:'Abtransport/Antransport darf nicht durch Wortgleichheit hochrutschen'}
+    ,{kind:'good',a:{kurztext:'Leitungsgr. m. Schachtbaugr. herst.',me:'m3'},b:{kurztext:'Leitungsgraben mit Schachtbaugrube herstellen',me:'m3'},min:70,label:'LV-Abkuerzungen Leitungsgr./Schachtbaugr. matchen'}
+    ,{kind:'good',a:{kurztext:'Dichtheit Rohrleitung pruefen',me:'m'},b:{kurztext:'Dichtheitspruefung Rohrleitung',me:'m'},min:80,label:'Dichtheit Rohrleitung ↔ Dichtheitspruefung'}
+    ,{kind:'good',a:{kurztext:'Oberboden antragen',me:'m2'},b:{kurztext:'Oberboden liefern und andecken',me:'m2'},min:75,label:'Oberboden antragen ↔ andecken'}
+    // Komposita-Wortgrenzen: "Mutterboden" muss als ERDBAU klassifizieren (nicht SONSTIGES),
+    // sonst kippt der Action-Object-Score wegen Kategorie-Mismatch unter die Andecken-Schwelle.
+    ,{kind:'good',a:{kurztext:'Mutterboden andecken 20cm',me:'m2'},b:{kurztext:'Oberboden andecken 20 cm',me:'m2'},min:65,label:'Mutterboden ↔ Oberboden andecken (Komposita-Klassifikation)'}
+    // Aus echten LVs gelernt (Claude-Oracle über GAEB-Datei.X83): Klassifikator-/Normalizer-Fixes absichern.
+    // "Transportbeton" ist Material, KEIN Transport-Service → darf nicht mit Bodentransport matchen.
+    ,{kind:'bad',a:{kurztext:'Transportbeton C 25/30 liefern und einbauen',me:'m3'},b:{kurztext:'Boden transportieren',me:'m3'},max:55,label:'Transportbeton ist Material, nicht Transport'}
+    // "Lastkraftwagen" == "LKW" (Synonym + Normalizer-Fix: kein "stk→st"-Verschlucken mehr).
+    ,{kind:'good',a:{kurztext:'Lastkraftwagen 12,5 to',me:'h'},b:{kurztext:'LKW 12,5 to',me:'h'},min:60,label:'Lastkraftwagen ↔ LKW (Synonym + Komposita)'}
+    // Aus echten LVs gelernt (Claude-Oracle über Hyd_Trennung_BA_01_02.X83):
+    // DOKUMENTATION-Hijack entschärft + Komposita/Klassifikator-Fixes absichern.
+    ,{kind:'good',a:{kurztext:'Nachverdichtung und Feinplanum herstellen',me:'m2'},b:{kurztext:'Planum herstellen und verdichten',me:'m2'},min:50,label:'Nachverdichtung/Feinplanum ↔ Planum (ERDBAU-Komposita, kein DOKU-Hijack)'}
+    ,{kind:'good',a:{kurztext:'KDB PEHD 2,5 mm liefern und verlegen',me:'m2'},b:{kurztext:'Kunststoffdichtungsbahn PEHD verlegen',me:'m2'},min:80,label:'KDB ↔ Kunststoffdichtungsbahn (DEPONIEBAU, kein DOKU-Hijack)'}
+    ,{kind:'bad',a:{kurztext:'KDB PEHD liefern und verlegen',me:'m2'},b:{kurztext:'Boden lösen und laden',me:'m2'},max:55,label:'Abdichtung ist nicht Erdaushub'}
+    // Komposita-Klassifikation (Schachtabdeckung→LEITUNGSBAU) gegen Erdaushub abgrenzen.
+    ,{kind:'good',a:{kurztext:'Schachtabdeckung Klasse D 800 mm',me:'st'},b:{kurztext:'Schachtabdeckung BEGU Klasse D 400',me:'st'},min:55,label:'Schachtabdeckung ↔ Schachtabdeckung (LEITUNGSBAU-Komposita)'}
   ];
   const results=cases.map(c=>{
     const ev=calcScore(c.a,c.b,{isTextOnly:false});
@@ -5183,6 +5714,294 @@ function runMatchingSelfTest(showUI=false){
     document.getElementById('reviewModal')?.classList.add('open');
   }
   return results;
+}
+
+function runMatchMemoryMergeSelfTest(){
+  const keys=[TOP_MATCH_KEY,LEARNING_KEY,REJECTED_KEY,EXPORT_HISTORY_KEY];
+  const snapshot=Object.fromEntries(keys.map(k=>[k,localStorage.getItem(k)]));
+  const failures=[];
+  const check=(cond,msg)=>{if(!cond)failures.push(msg);};
+  const existingEntry={signature:'merge-sig',count:2,createdAt:'2026-01-01T00:00:00.000Z',lastUsed:'2026-01-10T00:00:00.000Z',avgScoreAtUse:80,confidenceAtExport:78,exportTypes:['csv'],newShortNorm:'boden transport',refShortNorm:'boden transportieren'};
+  const incomingEntry={signature:'merge-sig',count:3,createdAt:'2026-01-05T00:00:00.000Z',lastUsed:'2026-02-10T00:00:00.000Z',exportedAt:'2026-02-11T00:00:00.000Z',avgScoreAtUse:90,confidenceAtExport:92,exportTypes:['xml'],newShortNorm:'boden transport',refShortNorm:'boden transportieren'};
+  const addedEntry={signature:'added-sig',count:1,createdAt:'2026-03-01T00:00:00.000Z',lastUsed:'2026-03-01T00:00:00.000Z',newShortNorm:'mutterboden',refShortNorm:'oberboden'};
+  try{
+    localStorage.setItem(TOP_MATCH_KEY,JSON.stringify({'merge-sig':existingEntry}));
+    localStorage.setItem(LEARNING_KEY,JSON.stringify({'merge-sig':existingEntry}));
+    localStorage.setItem(REJECTED_KEY,JSON.stringify({'merge-sig':existingEntry}));
+    localStorage.setItem(EXPORT_HISTORY_KEY,JSON.stringify([{exportType:'csv',projectName:'Alt',acceptedCount:2,avgScore:80,exportedAt:'2026-01-10T00:00:00.000Z'}]));
+    mergeImportedMatchMemoryStores({
+      topMatches:{'merge-sig':incomingEntry,'added-sig':addedEntry},
+      learning:{'merge-sig':incomingEntry,'added-sig':addedEntry},
+      rejected:{'merge-sig':incomingEntry,'added-sig':addedEntry},
+      exportHistory:[
+        {exportType:'csv',projectName:'Alt',acceptedCount:2,avgScore:80,exportedAt:'2026-01-10T00:00:00.000Z'},
+        {exportType:'xml',projectName:'Neu',acceptedCount:3,avgScore:90,exportedAt:'2026-02-11T00:00:00.000Z'}
+      ]
+    });
+    const top=getTopMatchStore(),learning=getLearningStore(),rejected=getRejectedStore(),hist=getExportHistory();
+    check(top['merge-sig']&&top['merge-sig'].count===5,'Top-Match count wurde nicht addiert');
+    check(learning['merge-sig']&&learning['merge-sig'].count===5,'Learning count wurde nicht addiert');
+    check(rejected['merge-sig']&&rejected['merge-sig'].count===5,'Rejected count wurde nicht addiert');
+    check(top['added-sig']&&learning['added-sig']&&rejected['added-sig'],'Neue Signatur wurde nicht uebernommen');
+    check(top['merge-sig']?.lastUsed==='2026-02-10T00:00:00.000Z','Neueres lastUsed wurde nicht behalten');
+    check(top['merge-sig']?.createdAt==='2026-01-01T00:00:00.000Z','Aelteres createdAt wurde nicht behalten');
+    check(Math.round(top['merge-sig']?.avgScoreAtUse||0)===86,'avgScoreAtUse wurde nicht gewichtet gemittelt');
+    check((top['merge-sig']?.exportTypes||[]).includes('csv')&&(top['merge-sig']?.exportTypes||[]).includes('xml'),'exportTypes wurden nicht vereinigt');
+    check(top['merge-sig']?.confidenceAtExport===92,'confidenceAtExport wurde nicht sinnvoll behalten');
+    check(hist.length===2,'Export-Historie wurde nicht gemerged/dedupliziert');
+    const sparseMerge=mergeMemoryEntry(
+      {signature:'sparse-sig',count:2,avgScoreAtUse:80,confidenceAtExport:77,lastUsed:'2026-01-01T00:00:00.000Z'},
+      {signature:'sparse-sig',count:3,lastUsed:'2026-02-01T00:00:00.000Z'}
+    );
+    check(sparseMerge.avgScoreAtUse===80,'Fehlender avgScoreAtUse darf vorhandenen Durchschnitt nicht herunterziehen');
+    check(sparseMerge.confidenceAtExport===77,'Fehlende confidenceAtExport darf vorhandene Sicherheit nicht ueberschreiben');
+    const nullConfidenceMerge=mergeMemoryEntry(
+      {signature:'null-conf-sig',count:1,confidenceAtExport:77,lastUsed:'2026-01-01T00:00:00.000Z'},
+      {signature:'null-conf-sig',count:1,confidenceAtExport:null,lastUsed:'2026-03-01T00:00:00.000Z'}
+    );
+    check(nullConfidenceMerge.confidenceAtExport===77,'confidenceAtExport:null darf vorhandene Sicherheit nicht auf 0 setzen');
+    const idempotentImport=mergeMemoryStores(
+      {'dup-sig':{signature:'dup-sig',count:2,avgScoreAtUse:80,confidenceAtExport:80,lastUsed:'2026-01-01T00:00:00.000Z'}},
+      {'dup-sig':{signature:'dup-sig',count:2,avgScoreAtUse:80,confidenceAtExport:80,lastUsed:'2026-01-01T00:00:00.000Z'}}
+    );
+    check(idempotentImport['dup-sig']?.count===2,'Doppelter Import derselben Signatur darf count nicht erneut addieren');
+    const laterImport=mergeMemoryStores(
+      {'later-sig':{signature:'later-sig',count:2,avgScoreAtUse:80,confidenceAtExport:80,lastUsed:'2026-01-01T00:00:00.000Z'}},
+      {'later-sig':{signature:'later-sig',count:1,avgScoreAtUse:90,confidenceAtExport:90,lastUsed:'2026-02-01T00:00:00.000Z'}}
+    );
+    check(laterImport['later-sig']?.count===3,'Neuerer Import derselben Signatur muss weiterhin addiert werden');
+    const learningDataOnly=coerceMatchMemoryPayload({
+      learningData:{
+        confirmedMatches:[{sourceTextNormalized:'boden transport',targetTextNormalized:'boden transportieren',sourceUnit:'m3',targetUnit:'m3',sourceActionObject:'TRANSPORT',targetActionObject:'TRANSPORT',targetContext:'LD',count:2,confidenceAtExport:81,exportedAt:'2026-04-01T00:00:00.000Z'}],
+        rejectedMatches:[{sourceTextNormalized:'boden transport',targetTextNormalized:'deponie dk ii',sourceUnit:'m3',targetUnit:'t',sourceActionObject:'TRANSPORT',targetActionObject:'ENTSORGUNG',targetContext:'LD',count:1,exportedAt:'2026-04-02T00:00:00.000Z'}],
+        exportHistory:[{exportType:'json',projectName:'LD',acceptedCount:1,avgScore:81,exportedAt:'2026-04-01T00:00:00.000Z'}]
+      }
+    });
+    check(Object.keys(learningDataOnly.learning||{}).length===1,'learningData.confirmedMatches wurde nicht in learning konvertiert');
+    check(Object.keys(learningDataOnly.rejected||{}).length===1,'learningData.rejectedMatches wurde nicht in rejected konvertiert');
+    check((learningDataOnly.exportHistory||[]).length===1,'learningData.exportHistory wurde nicht uebernommen');
+  }catch(err){
+    failures.push(err.message);
+  }finally{
+    keys.forEach(k=>{
+      if(snapshot[k]==null)localStorage.removeItem(k);
+      else localStorage.setItem(k,snapshot[k]);
+    });
+    updateMatchMemoryUI();
+  }
+  const result={ok:failures.length===0,failures};
+  console.log('MatchMemoryMergeSelfTest:',result);
+  return result;
+}
+
+function runStoredDecisionSelfTest(){
+  const keys=[TOP_MATCH_KEY,REJECTED_KEY];
+  const snapshot=Object.fromEntries(keys.map(k=>[k,localStorage.getItem(k)]));
+  const failures=[];
+  const check=(cond,msg)=>{if(!cond)failures.push(msg);};
+  const newPos={kurztext:'Bodentransport abfahren',me:'m3',menge:10};
+  const refA={kurztext:'Boden entsorgen Deponie DK I',me:'t',menge:10,source:'A',kosten:[{typ:'L',betrag:1}]};
+  const refB={kurztext:'Boden transportieren',me:'m3',menge:10,source:'B',kosten:[{typ:'L',betrag:1}]};
+  const refText={kurztext:'Boden transportieren D83',me:'m3',menge:10,source:'TXT',kosten:[]};
+  try{
+    keys.forEach(k=>localStorage.removeItem(k));
+    let result={newPos,matches:[{pos:refA,kind:'CALC',score:90},{pos:refB,kind:'CALC',score:70}],sel:0,accepted:true};
+    recordTopMatch(newPos,refB);
+    applyStoredMatchDecisions(result);
+    check(result.sel===1,'Top-Treffer muss automatisch die gespeicherte Alternative auswaehlen');
+    check(result.accepted===true,'Top-Treffer muss automatisch uebernommen werden, wenn exportierbar');
+
+    removeTopMatch(newPos,refB);
+    result={newPos,matches:[{pos:refB,kind:'CALC',score:90}],sel:0,accepted:true};
+    recordRejectedMatch(newPos,refB);
+    applyStoredMatchDecisions(result);
+    check(result.accepted===false,'Falsch markierter ausgewaehlter Treffer muss automatisch abgewaehlt werden');
+
+    result={newPos,matches:[{pos:refB,kind:'CALC',score:90},{pos:refA,kind:'CALC',score:65}],sel:0,accepted:true};
+    applyStoredMatchDecisions(result);
+    check(result.sel===1,'Bei falschem Treffer soll zur naechsten nicht abgelehnten Alternative gewechselt werden');
+    check(result.accepted===false,'Nach Falsch-Wechsel bleibt die Position nicht automatisch uebernommen');
+
+    removeRejectedMatch(newPos,refB);
+    recordTopMatch(newPos,refText);
+    result={newPos,matches:[{pos:refText,kind:'TEXT_ONLY',score:95}],sel:0,accepted:false};
+    applyStoredMatchDecisions(result);
+    check(result.accepted===false,'D83-/Text-only Top-Treffer darf nicht exportierbar uebernommen werden');
+  }catch(err){
+    failures.push(err.message);
+  }finally{
+    keys.forEach(k=>{
+      if(snapshot[k]==null)localStorage.removeItem(k);
+      else localStorage.setItem(k,snapshot[k]);
+    });
+    updateMatchMemoryUI();
+  }
+  const result={ok:failures.length===0,failures};
+  console.log('StoredDecisionSelfTest:',result);
+  return result;
+}
+
+// Qualitätsauswertung: Ranking-Metrik (Top-1/3/5) über interne LV-Testfälle plus
+// aggregierte Score-Statistik aus dem paarweisen Self-Test. Rein additiv, kein Scoring-Eingriff.
+const QUALITY_REF_POOL=[
+  {kurztext:'Boden lösen und laden',me:'m3'},
+  {kurztext:'Boden transportieren',me:'m3'},
+  {kurztext:'Boden entsorgen Deponie DK I',me:'t'},
+  {kurztext:'Boden entsorgen Deponie DK II',me:'t'},
+  {kurztext:'Boden einbauen und verdichten',me:'m3'},
+  {kurztext:'Oberboden abtragen',me:'m2'},
+  {kurztext:'Schottertragschicht herstellen',me:'m2'},
+  {kurztext:'Frostschutzschicht herstellen',me:'m3'},
+  {kurztext:'RC-Schotter liefern',me:'t'},
+  {kurztext:'Asphalttragschicht herstellen',me:'m2'},
+  {kurztext:'Rohrleitung DN 300 verlegen',me:'m'},
+  {kurztext:'Kontrollschacht herstellen',me:'st'},
+  {kurztext:'Betonabbruch',me:'m3'},
+  {kurztext:'Kampfmittelsondierung',me:'st'},
+  {kurztext:'Wasserhaltung',me:'psch'},
+  {kurztext:'Großlochbohrung',me:'m'},
+  {kurztext:'Baustelleneinrichtung',me:'psch'},
+  {kurztext:'Vermessung',me:'psch'},
+  {kurztext:'Dokumentation',me:'psch'},
+  // Reale schwierige Motive aus Ruhrbruecke/TEST-LVs: knappe Kurztexte,
+  // Komposita, EBV-Zulagen und Leitungsbau-Spezialfaelle.
+  {kurztext:'Oberboden liefern und andecken',me:'m2'},
+  {kurztext:'Oberboden abtragen und lagern',me:'m3'},
+  {kurztext:'Oberbodenlager ansaeen',me:'m2'},
+  {kurztext:'Zulage Materialwerte EBV BM-F1',me:'m3'},
+  {kurztext:'Zulage Materialwerte EBV BM-F2',me:'m3'},
+  {kurztext:'Zulage Materialwerte EBV BM-F3',me:'m3'},
+  {kurztext:'Boden entsorgen Deponie DK 0',me:'t'},
+  {kurztext:'Leitungsgraben mit Schachtbaugrube herstellen',me:'m3'},
+  {kurztext:'Dichtheitspruefung Rohrleitung',me:'m'},
+  {kurztext:'Dichtheitspruefung Schacht',me:'st'},
+  {kurztext:'Passschnitt Rohrleitung ausfuehren',me:'st'},
+  {kurztext:'Schachtbauwerk herstellen',me:'st'},
+  {kurztext:'Antransport Baustelleneinrichtung',me:'psch'},
+  {kurztext:'Abtransport Baustelleneinrichtung',me:'psch'}
+].map((p,i)=>({...p,langtext:'',menge:1,source:'QUALITY_POOL',_idx:i}));
+const QUALITY_QUERIES=[
+  {q:{kurztext:'Erdaushub lösen und verladen',me:'m3'},want:'Boden lösen und laden'},
+  {q:{kurztext:'Bodentransport abfahren',me:'m3'},want:'Boden transportieren'},
+  {q:{kurztext:'Boden lagenweise einbauen verdichten',me:'m3'},want:'Boden einbauen und verdichten'},
+  {q:{kurztext:'Mutterboden abtragen',me:'m2'},want:'Oberboden abtragen'},
+  {q:{kurztext:'STS herstellen',me:'m2'},want:'Schottertragschicht herstellen'},
+  {q:{kurztext:'FSS herstellen',me:'m3'},want:'Frostschutzschicht herstellen'},
+  {q:{kurztext:'Recycling-Schotter liefern',me:'t'},want:'RC-Schotter liefern'},
+  {q:{kurztext:'Kanalrohr DN 300 verlegen',me:'m'},want:'Rohrleitung DN 300 verlegen'},
+  {q:{kurztext:'Schachtbauwerk Kontrollschacht herstellen',me:'st'},want:'Kontrollschacht herstellen'},
+  {q:{kurztext:'Beton abbrechen',me:'m3'},want:'Betonabbruch'},
+  {q:{kurztext:'Kampfmittel sondieren',me:'st'},want:'Kampfmittelsondierung'},
+  {q:{kurztext:'Oberboden antragen',me:'m2'},want:'Oberboden liefern und andecken',note:'Ruhrbruecke: antragen/andecken ist fachlich nah, oft Mittelband'},
+  {q:{kurztext:'Oberboden des AG andecken',me:'m2'},want:'Oberboden liefern und andecken',note:'Ruhrbruecke: AG-Material vs. Lieferposition ist bewusst pruefpflichtig'},
+  {q:{kurztext:'Oberboden abtragen und mietenfoermig lagern',me:'m3'},want:'Oberboden abtragen und lagern'},
+  {q:{kurztext:'Oberbodenlager ansaeen',me:'m2'},want:'Oberbodenlager ansaeen'},
+  {q:{kurztext:'Zulage Boden Materialwerte EBV BM-F2',me:'m3'},want:'Zulage Materialwerte EBV BM-F2'},
+  {q:{kurztext:'Boden bzw. Fels Materialwerte BM-F3 Zulage',me:'m3'},want:'Zulage Materialwerte EBV BM-F3'},
+  {q:{kurztext:'Entsorgung Boden Deponieklasse 0',me:'t'},want:'Boden entsorgen Deponie DK 0'},
+  {q:{kurztext:'Entsorgung von Boden der Deponieklasse I',me:'t'},want:'Boden entsorgen Deponie DK I'},
+  {q:{kurztext:'Leitungsgr. m. Schachtbaugr. herst.',me:'m3'},want:'Leitungsgraben mit Schachtbaugrube herstellen'},
+  {q:{kurztext:'Dichtheit Rohrleitung pruefen',me:'m'},want:'Dichtheitspruefung Rohrleitung'},
+  {q:{kurztext:'Dichtheit Schacht pruefen',me:'st'},want:'Dichtheitspruefung Schacht'},
+  {q:{kurztext:'Passschnitt Rohrleitung ausfuehren',me:'st'},want:'Passschnitt Rohrleitung ausfuehren'},
+  {q:{kurztext:'Schachtbauwerk TG-2 herstellen',me:'st'},want:'Schachtbauwerk herstellen'},
+  {q:{kurztext:'Antransporte',me:'psch'},want:'Antransport Baustelleneinrichtung',note:'Sehr knapper Kurztext: korrektes Mittelband ist akzeptabel'},
+  {q:{kurztext:'Abtransporte',me:'psch'},want:'Abtransport Baustelleneinrichtung',note:'Sehr knapper Kurztext: korrektes Mittelband ist akzeptabel'}
+];
+function runMatchingQualityReport(showUI=false){
+  let top1=0,top3=0,top5=0,critical=0,correctMiddleBand=0;
+  const rows=QUALITY_QUERIES.map(({q,want,note})=>{
+    const ranked=QUALITY_REF_POOL.map(rp=>({rp,score:calcScore(q,rp,{isTextOnly:false}).score}))
+      .sort((x,y)=>y.score-x.score);
+    const rank=ranked.findIndex(r=>r.rp.kurztext===want)+1;
+    const inTop=k=>rank>=1&&rank<=k;
+    if(inTop(1))top1++; if(inTop(3))top3++; if(inTop(5))top5++;
+    if(inTop(1)&&ranked[0].score>=40&&ranked[0].score<60)correctMiddleBand++;
+    const wrongTop=ranked[0].rp.kurztext!==want&&ranked[0].score>=80;
+    if(wrongTop)critical++;
+    return {query:q.kurztext,want,rank:rank||'-',top:ranked[0].rp.kurztext,topScore:ranked[0].score,critical:wrongTop,note:note||''};
+  });
+  // aggregierte Score-Statistik aus paarweisem Self-Test (good=bestätigt-Proxy, bad=abgelehnt-Proxy)
+  const st=Array.from(runMatchingSelfTest(false));
+  const good=st.filter(c=>c.kind==='good'),bad=st.filter(c=>c.kind==='bad');
+  const avg=arr=>arr.length?Math.round(arr.reduce((s,c)=>s+c.score,0)/arr.length):0;
+  const report={
+    queries:QUALITY_QUERIES.length,
+    top1,top3,top5,
+    top1Pct:Math.round(100*top1/QUALITY_QUERIES.length),
+    top3Pct:Math.round(100*top3/QUALITY_QUERIES.length),
+    top5Pct:Math.round(100*top5/QUALITY_QUERIES.length),
+    criticalFalseMatches:critical,
+    correctMiddleBand,
+    avgScoreConfirmedProxy:avg(good),
+    avgScoreRejectedProxy:avg(bad),
+    highScoringRejects:bad.filter(c=>c.score>=80).length,
+    rows
+  };
+  console.table(rows);
+  console.log('Quality:',JSON.stringify({top1:report.top1+'/'+report.queries,top3:report.top3+'/'+report.queries,top5:report.top5+'/'+report.queries,critical:report.criticalFalseMatches,middleBand:report.correctMiddleBand,avgGood:report.avgScoreConfirmedProxy,avgBad:report.avgScoreRejectedProxy}));
+  if(showUI){
+    const lines=['Matching-Qualitätsauswertung','━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      `Geprüfte Positionen: ${report.queries}`,
+      `Top-1 korrekt: ${report.top1} (${report.top1Pct}%)`,
+      `Top-3 korrekt: ${report.top3} (${report.top3Pct}%)`,
+      `Top-5 korrekt: ${report.top5} (${report.top5Pct}%)`,
+      `Kritische Fehlmatches (falscher Top-1 ≥80%): ${report.criticalFalseMatches}`,
+      `Korrekte Mittelband-Top-1 (40-59%): ${report.correctMiddleBand}`,
+      `Ø-Score bestätigt (Proxy): ${report.avgScoreConfirmedProxy}%`,
+      `Ø-Score abgelehnt (Proxy): ${report.avgScoreRejectedProxy}%`,
+      `Hoch bewertete Fehlpaare (≥80%): ${report.highScoringRejects}`,
+      '','Details (Rang des korrekten Treffers):',
+      ...rows.map(r=>`  ${r.critical?'⚠':r.rank===1?'✓':'·'} "${r.query}" → Rang ${r.rank} (Top: "${r.top}" ${r.topScore}%)${r.note?' - '+r.note:''}`)];
+    const area=document.getElementById('reviewPromptArea');
+    if(area)area.value=lines.join('\n');
+    document.getElementById('reviewModal')?.classList.add('open');
+  }
+  return report;
+}
+
+// Echte-LV-Qualitätsmetrik: spielt die TATSÄCHLICHEN Nutzerentscheidungen (learningData)
+// gegen den aktuellen Scorer – keine erfundenen Beispiele. Misst Recall (bestätigte Matches
+// landen wieder oben) und Präzision (abgelehnte Paare bleiben niedrig). Wächst mit echtem Gebrauch.
+function runLearningQualityReport(showUI=false){
+  const ld=buildLearningData();
+  const confirmed=(ld.confirmedMatches||[]).filter(m=>m.sourceTextNormalized&&m.targetTextNormalized);
+  const rejected=(ld.rejectedMatches||[]).filter(m=>m.sourceTextNormalized&&m.targetTextNormalized);
+  const poolMap=new Map();
+  confirmed.forEach(m=>{const k=m.targetTextNormalized+'|'+(m.targetUnit||'');if(!poolMap.has(k))poolMap.set(k,{kurztext:m.targetTextNormalized,me:m.targetUnit||'',menge:1,langtext:''});});
+  const pool=[...poolMap.values()];
+  const enough=pool.length>=3&&confirmed.length>=3;
+  let top1=0,top3=0,top5=0;const rows=[];
+  if(enough){
+    confirmed.forEach(m=>{
+      const q={kurztext:m.sourceTextNormalized,me:m.sourceUnit||'',menge:1,langtext:''};
+      const ranked=pool.map(rp=>({rp,score:calcScore(q,rp,{}).score})).sort((a,b)=>b.score-a.score);
+      const rank=ranked.findIndex(r=>r.rp.kurztext===m.targetTextNormalized)+1;
+      if(rank===1)top1++; if(rank>=1&&rank<=3)top3++; if(rank>=1&&rank<=5)top5++;
+      rows.push({query:m.sourceTextNormalized,want:m.targetTextNormalized,rank:rank||'-',top:ranked[0].rp.kurztext,topScore:ranked[0].score});
+    });
+  }
+  const stickyRejects=rejected.map(m=>({pair:m.sourceTextNormalized+' ↔ '+m.targetTextNormalized,
+    score:calcScore({kurztext:m.sourceTextNormalized,me:m.sourceUnit||'',menge:1,langtext:''},{kurztext:m.targetTextNormalized,me:m.targetUnit||'',menge:1,langtext:''},{}).score})).filter(x=>x.score>=80);
+  const report={confirmed:confirmed.length,rejected:rejected.length,poolSize:pool.length,enough,
+    top1,top3,top5,top1Pct:enough?Math.round(100*top1/confirmed.length):null,
+    stickyRejects:stickyRejects.length,stickyRejectList:stickyRejects,rows};
+  if(!enough)log(`Echte-LV-Metrik: Datenbasis zu klein (${confirmed.length} bestätigt, ${pool.length} Ziele). Mind. 3 nötig – wächst mit Exporten.`,'i');
+  else log(`Echte-LV-Metrik: Top-1 ${top1}/${confirmed.length} (${report.top1Pct}%), abgelehnte Paare mit Score≥80: ${stickyRejects.length}. Details in Konsole.`,'i');
+  console.table(rows);
+  if(stickyRejects.length)console.table(stickyRejects);
+  if(showUI){
+    const lines=['Echte-LV-Qualität (aus deinen bestätigten/abgelehnten Matches)','━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      enough?`Bestätigte Matches: ${report.confirmed}  ·  Ziel-Pool: ${report.poolSize}`:`Datenbasis zu klein (${report.confirmed} bestätigt) – wächst mit jedem Export.`,
+      ...(enough?[`Top-1: ${top1} (${report.top1Pct}%)`,`Top-3: ${top3}`,`Top-5: ${top5}`]:[]),
+      `Abgelehnte Paare, die der Scorer noch ≥80 bewertet: ${report.stickyRejects}`,
+      ...(stickyRejects.length?['','⚠ Hartnäckige Fehlpaare:',...stickyRejects.map(s=>`  ${s.score}% ${s.pair}`)]:[]),
+      ...(enough?['','Details:',...rows.map(r=>`  ${r.rank===1?'✓':'·'} "${r.query}" → Rang ${r.rank}`)]:[])];
+    const area=document.getElementById('reviewPromptArea');
+    if(area)area.value=lines.join('\n');
+    document.getElementById('reviewModal')?.classList.add('open');
+  }
+  return report;
 }
 
 function runDiagnosticsSelfTest(showUI=false,verbose=false){
@@ -5209,6 +6028,21 @@ function runDiagnosticsSelfTest(showUI=false,verbose=false){
     `- Bestanden: ${matchOk}/${match.length}`,
     `- Fehlgeschlagen: ${matchBad}`,
     ...match.filter(x=>!x.ok).slice(0,10).map(x=>`  • ${x.a.kurztext} ↔ ${x.b.kurztext} = ${x.score}%`),
+    ...(function(){
+      const q=runMatchingQualityReport(false);
+      const clusters=analyzeRejectClusters(false);
+      const lq=runLearningQualityReport(false);
+      const out=['',`Matching-Qualität (synthetisch)`,
+        `- Top-1/3/5: ${q.top1}/${q.top3}/${q.top5} von ${q.queries}`,
+        `- Kritische Fehlmatches (≥80%): ${q.criticalFalseMatches}`,
+        '',`Echte-LV-Qualität (aus deinen Entscheidungen)`];
+      if(lq.enough)out.push(`- Top-1: ${lq.top1}/${lq.confirmed} (${lq.top1Pct}%)  ·  hartnäckige Fehlpaare ≥80%: ${lq.stickyRejects}`);
+      else out.push(`- Datenbasis zu klein (${lq.confirmed} bestätigt) – wächst mit jedem Export`);
+      out.push('',`Reject-Cluster (häufigste abgelehnte Muster)`);
+      if(clusters.length)clusters.slice(0,5).forEach(c=>out.push(`  • ${c.count}× ${c.pattern}`));
+      else out.push(`  (noch keine abgelehnten Matches)`);
+      return out;
+    })(),
     ``,
     `OZ-Format-Selbsttest`,
     `- Bestanden: ${exportFormatOk}/${exportFormat.length}`,
