@@ -3,1067 +3,1122 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Schweiz-Rundreise 2026 · 11.–19.9.2026</title>
+<title>Schweiz 2026 · 11.–19. September</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Mulish:wght@400;500;600;700;800&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-  crossorigin="" />
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <style>
 :root{
-  --c-bg:#F5F7FA; --c-surface:#FFFFFF; --c-text:#1A2434; --c-muted:#5C6B7A;
-  --c-border:#DDE5ED; --c-border-strong:#B6C2D0;
-  --c-primary:#0B3D5C; --c-primary-2:#1E6F92; --c-accent:#14B89A; --c-accent-2:#0E8C76;
-  --c-warn-bg:#FFF6E5; --c-warn-border:#F5C57B; --c-warn-text:#7A4D00;
-  --c-info-bg:#E6F1FB; --c-info-text:#0C447C;
-  --c-good-bg:#E7F5EF; --c-good-text:#0E6C50;
-  --c-danger-bg:#FBEAEA; --c-danger-text:#8B1F1F;
-  --c-d1:#D85A30; --c-d2:#993C1D; --c-d3:#6D5DC4; --c-d4:#3C3489;
-  --c-d5:#1D9E75; --c-d6:#185FA5; --c-d7:#0C447C; --c-d8:#D4537E; --c-d9:#5F5E5A;
-  --rad:10px; --rad-lg:14px; --shadow:0 1px 3px rgba(11,61,92,.05),0 4px 12px rgba(11,61,92,.04);
+  --paper:#FAF3E7; --paper-2:#F1E6D2; --surface:#FFFCF5; --surface-warm:#FBF4E6;
+  --ink:#2B2620; --ink-soft:#6E6052; --ink-faint:#988877;
+  --line:#E7D9C2; --line-strong:#D6C2A2;
+  --terra:#C0653C; --terra-deep:#9C4A26; --terra-soft:#F4E1D4;
+  --pine:#4A6650; --pine-deep:#34493A; --pine-soft:#E3ECE2;
+  --lake:#3C6A85; --lake-soft:#DEEAF0;
+  --gold:#C19A4B; --gold-soft:#F6ECD3;
+  --d1:#C0653C; --d2:#9C4A26; --d3:#7E5F88; --d4:#4F5C84;
+  --d5:#4A6650; --d6:#3C6A85; --d7:#2E6E72; --d8:#B25975; --d9:#7C6F5C;
+  --rad:12px; --rad-lg:18px; --rad-xl:26px;
+  --shadow-sm:0 1px 2px rgba(60,40,20,.05), 0 2px 8px rgba(60,40,20,.04);
+  --shadow:0 4px 14px rgba(70,45,20,.08), 0 18px 40px -22px rgba(70,45,20,.20);
+  --shadow-lift:0 10px 30px -10px rgba(70,45,20,.28);
+  --maxw:1160px;
+  --serif:"Cormorant Garamond", Georgia, serif;
+  --sans:"Mulish", system-ui, -apple-system, sans-serif;
+  --hand:"Caveat", cursive;
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--c-bg);color:var(--c-text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,Cantarell,sans-serif;line-height:1.55;font-size:15px;-webkit-font-smoothing:antialiased}
-h1,h2,h3,h4{font-weight:600;color:var(--c-primary);letter-spacing:-0.01em;margin:0 0 12px}
-h1{font-size:34px;line-height:1.15}
-h2{font-size:24px;border-bottom:2px solid var(--c-accent);padding-bottom:6px;margin:0 0 18px;display:inline-block}
-h3{font-size:18px}
-h4{font-size:16px;color:var(--c-primary-2)}
-p{margin:0 0 10px}
-a{color:var(--c-primary-2);text-decoration:none}
-a:hover{text-decoration:underline}
-.container{max-width:1180px;margin:0 auto;padding:0 20px}
+html{scroll-behavior:smooth; scroll-padding-top:74px}
+body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility}
+body::before{content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.5;
+  background:radial-gradient(circle at 12% 18%, rgba(193,154,75,.05), transparent 40%), radial-gradient(circle at 88% 72%, rgba(60,106,133,.045), transparent 45%)}
+img{max-width:100%; display:block}
+a{color:var(--terra-deep); text-decoration:none}
+a:hover{text-decoration:underline; text-underline-offset:3px}
+h1,h2,h3,h4{font-family:var(--serif); font-weight:600; color:var(--ink); margin:0; line-height:1.1}
+p{margin:0 0 12px}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 26px; position:relative; z-index:1}
+.hand{font-family:var(--hand)} .muted{color:var(--ink-soft)} .small{font-size:14px} .tiny{font-size:12.5px} .center{text-align:center}
+.kicker{font-family:var(--hand); font-size:30px; color:var(--terra); line-height:1; display:inline-block; transform:rotate(-2deg)}
+.sec{padding:70px 0; position:relative; z-index:1}
+.sec.tint{background:var(--paper-2)}
+.sec-head{margin-bottom:34px}
+.sec-num{font-family:var(--serif); font-size:15px; letter-spacing:.32em; text-transform:uppercase; color:var(--terra); font-weight:600; display:flex; align-items:center; gap:12px; margin-bottom:6px}
+.sec-num::before{content:""; width:30px; height:2px; background:var(--terra); display:inline-block}
+.sec-title{font-size:clamp(32px,4.4vw,52px); letter-spacing:-.01em}
+.sec-lead{font-size:17px; color:var(--ink-soft); max-width:680px; margin-top:12px}
 
-header.hero{background:linear-gradient(135deg,#0B3D5C 0%,#1E6F92 60%,#14B89A 130%);color:#fff;padding:48px 0 36px;position:relative;overflow:hidden}
-header.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 80% 10%,rgba(255,255,255,.10) 0,transparent 50%),radial-gradient(circle at 20% 90%,rgba(20,184,154,.30) 0,transparent 45%);pointer-events:none}
-header.hero h1{color:#fff;margin:0 0 6px;font-size:38px}
-header.hero .subtitle{color:rgba(255,255,255,.92);font-size:17px;margin:0 0 10px;font-weight:400}
-header.hero .lead{color:rgba(255,255,255,.88);max-width:780px;margin-bottom:24px}
-.keyfacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:20px}
-.kf{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);padding:12px 14px;border-radius:var(--rad);backdrop-filter:blur(6px)}
-.kf .lbl{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;opacity:.8;margin-bottom:4px}
-.kf .val{font-size:17px;font-weight:600}
+.hero{position:relative; min-height:78vh; display:flex; align-items:flex-end; overflow:hidden; color:#fff; isolation:isolate;
+  background:linear-gradient(135deg, #2B5163 0%, #4A7185 25%, #6B8B8C 50%, #9B7E5F 75%, #8B5A38 100%)}
+.hero::before{content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:radial-gradient(ellipse at 30% 110%, rgba(255,228,180,.20), transparent 55%), radial-gradient(ellipse at 80% 10%, rgba(255,255,255,.10), transparent 50%);}
+.hero::after{content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+  background:linear-gradient(180deg, rgba(30,22,15,.20) 0%, rgba(30,22,15,.05) 32%, rgba(30,22,15,.55) 78%, rgba(25,18,12,.82) 100%)}
+.hero-mountains{position:absolute; bottom:0; left:0; right:0; height:50%; z-index:1; pointer-events:none}
+.hero-mountains svg{position:absolute; bottom:0; left:0; width:100%; height:100%; opacity:.7}
+.hero-inner{position:relative; z-index:2; width:100%; padding-bottom:54px}
+.hero-eyebrow{font-family:var(--hand); font-size:34px; color:#FCE9D2; transform:rotate(-3deg); display:inline-block; margin-bottom:4px; text-shadow:0 2px 18px rgba(0,0,0,.4)}
+.hero h1{font-size:clamp(48px,10vw,128px); color:#fff; font-weight:600; letter-spacing:-.02em; line-height:.92; text-shadow:0 4px 40px rgba(0,0,0,.4); margin:0}
+.hero h1 em{font-style:italic; color:#F6D9B8}
+.hero-sub{font-size:clamp(16px,2vw,21px); color:rgba(255,255,255,.92); max-width:660px; margin:18px 0 0; font-weight:400; text-shadow:0 2px 14px rgba(0,0,0,.45)}
+.hero-sig{font-family:var(--hand); font-size:26px; color:#FCE9D2; margin-top:14px; text-shadow:0 2px 14px rgba(0,0,0,.4)}
+.hero-date-stamp{position:absolute; top:34px; right:34px; z-index:2; border:2px solid rgba(255,255,255,.7); border-radius:50%; width:118px; height:118px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; transform:rotate(7deg); color:#fff; backdrop-filter:blur(2px); background:rgba(192,101,60,.32); box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.hero-date-stamp .d{font-family:var(--serif); font-size:26px; font-weight:700; line-height:1}
+.hero-date-stamp .m{font-size:11px; letter-spacing:.18em; text-transform:uppercase; margin-top:4px}
+.keyfacts{display:flex; flex-wrap:wrap; gap:10px; margin-top:26px}
+.kf{background:rgba(255,252,245,.14); border:1px solid rgba(255,255,255,.28); border-radius:var(--rad); padding:10px 16px; backdrop-filter:blur(8px)}
+.kf .lbl{display:block; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:rgba(255,255,255,.78); margin-bottom:2px}
+.kf .val{font-family:var(--serif); font-size:20px; font-weight:600; color:#fff}
 
-nav.sticky{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--c-border);box-shadow:0 1px 3px rgba(0,0,0,.04)}
-nav.sticky .navinner{display:flex;gap:4px;overflow-x:auto;padding:8px 20px;max-width:1180px;margin:0 auto;scrollbar-width:thin}
-nav.sticky a{flex:0 0 auto;padding:7px 12px;border-radius:6px;font-size:13.5px;color:var(--c-primary);font-weight:500;white-space:nowrap}
-nav.sticky a:hover{background:var(--c-bg);text-decoration:none}
+nav.bar{position:sticky; top:0; z-index:900; background:rgba(250,243,231,.86); backdrop-filter:blur(12px); border-bottom:1px solid var(--line)}
+.bar-inner{max-width:var(--maxw); margin:0 auto; display:flex; align-items:center; gap:6px; padding:9px 26px; overflow-x:auto; scrollbar-width:none}
+.bar-inner::-webkit-scrollbar{display:none}
+.bar-brand{font-family:var(--hand); font-size:22px; color:var(--terra); white-space:nowrap; margin-right:8px; flex:0 0 auto}
+nav.bar a:not(.bar-brand){flex:0 0 auto; padding:6px 12px; border-radius:99px; font-size:13.5px; font-weight:600; color:var(--ink-soft); white-space:nowrap; transition:all .16s}
+nav.bar a:not(.bar-brand):hover{background:var(--terra-soft); color:var(--terra-deep); text-decoration:none}
 
-section{padding:36px 0;border-bottom:1px solid var(--c-border)}
-section:last-child{border-bottom:0}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--rad-lg); padding:26px; box-shadow:var(--shadow-sm)}
+.grid{display:grid; gap:20px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.metric{background:var(--surface-warm); border:1px solid var(--line); border-radius:var(--rad); padding:14px 16px}
+.metric .lbl{display:block; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:3px}
+.metric .val{font-family:var(--serif); font-size:24px; font-weight:600; color:var(--pine-deep)}
 
-.card{background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--rad-lg);padding:20px;box-shadow:var(--shadow)}
-.grid{display:grid;gap:16px}
-.grid-2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-.grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
-.metric{background:var(--c-bg);border-radius:var(--rad);padding:14px 16px}
-.metric .lbl{display:block;font-size:12px;color:var(--c-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.metric .val{font-size:20px;font-weight:600;color:var(--c-primary)}
+.note-box{border-radius:var(--rad); padding:14px 18px; margin:16px 0; display:flex; gap:13px; align-items:flex-start; border:1px solid; font-size:14.5px; line-height:1.55}
+.note-box .ico{flex:0 0 26px; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; color:#fff; margin-top:1px}
+.nb-info{background:var(--lake-soft); border-color:#B9D4E2; color:#1C4257} .nb-info .ico{background:var(--lake)}
+.nb-warn{background:var(--gold-soft); border-color:#E6CE94; color:#7A5713} .nb-warn .ico{background:var(--gold)}
+.nb-good{background:var(--pine-soft); border-color:#BAD2BC; color:var(--pine-deep)} .nb-good .ico{background:var(--pine)}
+.nb-bad{background:var(--terra-soft); border-color:#E3BBA5; color:var(--terra-deep)} .nb-bad .ico{background:var(--terra)}
 
-.box{border-radius:var(--rad);padding:14px 16px;border:1px solid;margin:14px 0;display:flex;gap:12px;align-items:flex-start}
-.box .ico{flex:0 0 22px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff}
-.box.info{background:var(--c-info-bg);border-color:#9EC3E9;color:var(--c-info-text)} .box.info .ico{background:var(--c-info-text)}
-.box.warn{background:var(--c-warn-bg);border-color:var(--c-warn-border);color:var(--c-warn-text)} .box.warn .ico{background:#C28000}
-.box.good{background:var(--c-good-bg);border-color:#9CD8BD;color:var(--c-good-text)} .box.good .ico{background:var(--c-good-text)}
-.box.danger{background:var(--c-danger-bg);border-color:#E9A8A8;color:var(--c-danger-text)} .box.danger .ico{background:var(--c-danger-text)}
+.badge{display:inline-flex; align-items:center; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; padding:4px 10px; border-radius:99px; line-height:1.4}
+.b-must{background:var(--terra-soft); color:var(--terra-deep)}
+.b-opt{background:var(--lake-soft); color:#1C4257}
+.b-day{background:var(--ink); color:var(--surface); letter-spacing:.08em}
+.b-wx{background:var(--pine-soft); color:var(--pine-deep)}
+.b-booked{background:var(--pine); color:#fff; letter-spacing:.04em}
+.b-pending{background:var(--gold); color:#fff; letter-spacing:.04em}
 
-.badge{display:inline-block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:99px;line-height:1.5}
-.b-pflicht{background:#FCEBEB;color:#A32D2D}
-.b-opt{background:#E6F1FB;color:#0C447C}
-.b-reserve{background:#F1EFE8;color:#5F5E5A}
-.b-wetter{background:#E1F5EE;color:#0F6E56}
-.b-tag{background:var(--c-primary);color:#fff;padding:3px 10px}
+.btn{display:inline-flex; align-items:center; gap:7px; padding:9px 16px; border-radius:99px; font-family:var(--sans); font-size:13.5px; font-weight:700; border:1.5px solid var(--line-strong); background:var(--surface); color:var(--ink); cursor:pointer; transition:all .16s; white-space:nowrap}
+.btn:hover{border-color:var(--ink); text-decoration:none; transform:translateY(-1px)}
+.btn-primary{background:var(--terra); color:#fff; border-color:var(--terra)}
+.btn-primary:hover{background:var(--terra-deep); border-color:var(--terra-deep)}
+.btn-row{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
 
-.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:6px;font-size:13px;font-weight:500;border:1px solid var(--c-border-strong);background:#fff;color:var(--c-primary);cursor:pointer;transition:all .15s}
-.btn:hover{background:var(--c-primary);color:#fff;border-color:var(--c-primary);text-decoration:none}
-.btn-primary{background:var(--c-primary);color:#fff;border-color:var(--c-primary)}
-.btn-primary:hover{background:#062a44;border-color:#062a44}
-.btn-accent{background:var(--c-accent);color:#fff;border-color:var(--c-accent)}
-.btn-accent:hover{background:var(--c-accent-2);border-color:var(--c-accent-2)}
-.btn-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-
-table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:var(--rad);overflow:hidden;border:1px solid var(--c-border)}
-th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--c-border);vertical-align:top}
-th{background:var(--c-bg);color:var(--c-primary);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.03em}
+.table-wrap{overflow-x:auto; border-radius:var(--rad-lg); border:1px solid var(--line); box-shadow:var(--shadow-sm)}
+table{width:100%; border-collapse:collapse; font-size:14px; background:var(--surface); min-width:560px}
+th,td{text-align:left; padding:12px 15px; border-bottom:1px solid var(--line); vertical-align:top}
+th{background:var(--surface-warm); font-family:var(--sans); font-weight:700; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-soft)}
 tr:last-child td{border-bottom:0}
-tr:hover td{background:#F9FBFD}
-.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+tbody tr:hover td{background:var(--surface-warm)}
+.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+.row-total td{background:var(--pine-soft); font-weight:800; color:var(--pine-deep); font-size:15px; border-top:2px solid var(--pine)}
+.row-subtotal td{background:var(--surface-warm); font-weight:700; color:var(--ink); font-size:14px}
 
-.day-card{background:#fff;border-radius:var(--rad-lg);box-shadow:var(--shadow);border:1px solid var(--c-border);overflow:hidden;margin-bottom:18px;display:grid;grid-template-columns:90px 1fr;gap:0}
-.day-stripe{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:18px 8px;color:#fff;font-weight:600}
-.day-stripe .dnum{font-size:28px;line-height:1;margin-bottom:6px}
-.day-stripe .dlbl{font-size:11px;text-transform:uppercase;letter-spacing:.05em;opacity:.92}
-.day-body{padding:18px 22px}
-.day-body h3{margin-top:0;color:var(--c-primary);font-size:18px}
-.day-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:13px;color:var(--c-muted);margin-bottom:12px}
-.day-meta span{display:inline-flex;align-items:center;gap:5px;background:var(--c-bg);padding:3px 9px;border-radius:5px}
-.day-body ul{padding-left:18px;margin:8px 0}
-.day-body li{margin-bottom:5px}
-.d1 .day-stripe{background:var(--c-d1)} .d2 .day-stripe{background:var(--c-d2)}
-.d3 .day-stripe{background:var(--c-d3)} .d4 .day-stripe{background:var(--c-d4)}
-.d5 .day-stripe{background:var(--c-d5)} .d6 .day-stripe{background:var(--c-d6)}
-.d7 .day-stripe{background:var(--c-d7)} .d8 .day-stripe{background:var(--c-d8)}
-.d9 .day-stripe{background:var(--c-d9)}
+.timeline{position:relative}
+.timeline::before{content:""; position:absolute; left:31px; top:14px; bottom:14px; width:2px; background:linear-gradient(180deg,var(--line-strong),var(--line)); z-index:0}
+.day{position:relative; display:grid; grid-template-columns:64px 1fr; gap:24px; margin-bottom:30px; z-index:1}
+.day-bullet{position:relative; z-index:2}
+.day-bullet .ring{width:64px; height:64px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; box-shadow:var(--shadow); border:3px solid var(--paper)}
+.day-bullet .ring .n{font-family:var(--serif); font-size:28px; font-weight:700; line-height:1}
+.day-bullet .ring .t{font-size:9px; letter-spacing:.1em; text-transform:uppercase; opacity:.9}
+.day-bullet .date{font-family:var(--hand); font-size:18px; color:var(--ink-soft); text-align:center; margin-top:8px; line-height:1.1}
+.day-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--rad-lg); overflow:hidden; box-shadow:var(--shadow); transition:transform .2s, box-shadow .2s}
+.day-card:hover{transform:translateY(-2px); box-shadow:var(--shadow-lift)}
+.day-stripe{height:5px; width:100%}
+.day-photo{width:100%; height:120px; position:relative; display:flex; align-items:center; justify-content:center; overflow:hidden}
+.day-photo::after{content:""; position:absolute; inset:0; background:linear-gradient(135deg, rgba(255,255,255,.18), rgba(0,0,0,.18))}
+.day-photo span{position:relative; z-index:1; font-family:var(--hand); font-size:34px; color:rgba(255,255,255,.85); text-shadow:0 2px 12px rgba(0,0,0,.3)}
+.day-body{padding:22px 26px 26px}
+.day-title{font-size:27px; margin-bottom:4px; letter-spacing:-.01em}
+.day-route{font-family:var(--hand); font-size:20px; color:var(--terra); margin-bottom:12px}
+.day-meta{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px}
+.chip{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; color:var(--ink-soft); background:var(--surface-warm); border:1px solid var(--line); padding:5px 11px; border-radius:99px}
+.day-prog{margin:0; padding:0; list-style:none}
+.day-prog li{position:relative; padding:7px 0 7px 26px; border-bottom:1px dashed var(--line); font-size:14.5px}
+.day-prog li:last-child{border-bottom:0}
+.day-prog li::before{content:""; position:absolute; left:4px; top:14px; width:8px; height:8px; border-radius:50%; background:var(--terra); box-shadow:0 0 0 3px var(--terra-soft)}
+.day-prog li strong{color:var(--ink)}
+.day-sub{font-family:var(--serif); font-size:18px; font-weight:600; color:var(--pine-deep); margin:18px 0 8px; display:flex; align-items:center; gap:8px}
+.stay{font-size:13.5px; color:var(--ink-soft); margin-top:14px; padding-top:14px; border-top:1px solid var(--line); display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+.stay b{color:var(--ink); font-family:var(--serif); font-size:15px}
 
-#map{height:560px;width:100%;border-radius:var(--rad-lg);box-shadow:var(--shadow);border:1px solid var(--c-border);z-index:1}
-.legend-map{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.legend-map .leg{display:inline-flex;align-items:center;gap:6px;font-size:13px;background:#fff;padding:6px 10px;border:1px solid var(--c-border);border-radius:6px}
-.legend-map .swatch{width:18px;height:4px;border-radius:2px;display:inline-block}
-.map-cats{margin-top:10px;font-size:12.5px;color:var(--c-muted)}
+#map{height:580px; width:100%; border-radius:var(--rad-lg); border:1px solid var(--line-strong); box-shadow:var(--shadow); z-index:1}
+.legend{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px}
+.legend .leg{display:inline-flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; color:var(--ink-soft); background:var(--surface); border:1px solid var(--line); padding:6px 11px; border-radius:99px}
+.legend .sw{width:16px; height:4px; border-radius:2px}
+.map-cats{margin-top:12px; font-size:13px; color:var(--ink-soft); display:flex; flex-wrap:wrap; gap:18px}
+.map-cats .d{display:inline-flex; align-items:center; gap:7px}
+.dot{width:11px; height:11px; border-radius:50%; display:inline-block}
+.leaflet-popup-content-wrapper{border-radius:12px}
+.leaflet-popup-content{font-family:var(--sans); font-size:13px; line-height:1.5; margin:11px 13px}
+.leaflet-popup-content h4{font-family:var(--serif); font-size:16px; margin:0 0 5px; color:var(--ink)}
+.pop-cat{display:inline-block; font-size:10.5px; letter-spacing:.04em; text-transform:uppercase; background:var(--surface-warm); color:var(--ink-soft); padding:2px 7px; border-radius:5px; margin-right:5px}
+.pop-day{display:inline-block; font-size:10.5px; font-weight:700; color:#fff; padding:2px 8px; border-radius:5px; margin-right:5px}
+.pop-meta{font-size:12px; color:var(--ink-soft); margin-top:5px}
 
-.sights-day{background:#fff;border:1px solid var(--c-border);border-radius:var(--rad);padding:16px 18px;margin-bottom:14px}
-.sights-day h4{margin:0 0 10px;color:var(--c-primary);font-size:16px;display:flex;align-items:center;gap:10px}
-.sights-day .col{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
-.sights-day .col h5{margin:0 0 6px;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--c-muted)}
-.sights-day ul{padding-left:18px;margin:0;font-size:14px}
-.sights-day ul li{margin-bottom:3px}
+.sights{background:var(--surface); border:1px solid var(--line); border-radius:var(--rad-lg); padding:22px 24px; margin-bottom:18px; box-shadow:var(--shadow-sm)}
+.sights > h4{font-size:21px; margin:0 0 14px; display:flex; align-items:center; gap:11px}
+.sights-cols{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:20px}
+.sights-cols h5{margin:0 0 8px; font-family:var(--sans); font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); font-weight:800}
+.sights-cols ul{margin:0; padding-left:18px; font-size:14px}
+.sights-cols li{margin-bottom:5px}
 
-.hotel-card{background:#fff;border:1px solid var(--c-border);border-radius:var(--rad-lg);padding:16px 18px;margin-bottom:16px;box-shadow:var(--shadow)}
-.hotel-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.hotel-head .place{font-size:13px;color:var(--c-muted);text-transform:uppercase;letter-spacing:.05em}
-.hotel-head h3{margin:2px 0 0}
-.hotel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:10px}
-.hotel-opt{background:var(--c-bg);border-radius:var(--rad);padding:13px 14px;border:1px solid var(--c-border)}
-.hotel-opt.rec{border-left:4px solid var(--c-accent)}
-.hotel-opt h4{margin:0 0 4px;font-size:15px}
-.hotel-opt .opt-price{font-weight:600;color:var(--c-primary);font-size:15px;margin:4px 0}
-.hotel-opt .opt-meta{font-size:12.5px;color:var(--c-muted);line-height:1.5}
-.dots{color:var(--c-accent);letter-spacing:1px}
+.hotel{background:var(--surface); border:1px solid var(--line); border-radius:var(--rad-lg); padding:22px 24px; margin-bottom:20px; box-shadow:var(--shadow-sm); position:relative}
+.hotel.booked{border-left:5px solid var(--pine)}
+.hotel.pending{border-left:5px solid var(--gold)}
+.hotel-head{display:flex; justify-content:space-between; align-items:flex-start; gap:14px; flex-wrap:wrap; margin-bottom:16px}
+.hotel-head .place{font-family:var(--hand); font-size:18px; color:var(--terra)}
+.hotel-head h3{font-size:26px; margin-top:2px}
+.hotel-grid-info{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; background:var(--surface-warm); border-radius:var(--rad); padding:14px 16px; margin:10px 0 14px}
+.hi-cell .lbl{display:block; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:2px; font-weight:700}
+.hi-cell .val{font-family:var(--serif); font-size:16px; font-weight:600; color:var(--ink)}
+.hi-cell .val.big{font-size:22px; color:var(--pine-deep)}
+.hi-cell .val small{font-family:var(--sans); font-size:12px; font-weight:500; color:var(--ink-soft)}
 
-.budget-table td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.budget-row-total td{background:var(--c-bg);font-weight:700;color:var(--c-primary);font-size:15.5px;border-top:2px solid var(--c-primary);border-bottom:0}
+.tiers{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; margin-bottom:26px}
+.tier{background:var(--surface); border:1px solid var(--line); border-radius:var(--rad-lg); padding:22px; text-align:center; box-shadow:var(--shadow-sm)}
+.tier.hl{border:2px solid var(--terra); box-shadow:var(--shadow)}
+.tier .tname{font-family:var(--hand); font-size:23px; color:var(--ink-soft)}
+.tier.hl .tname{color:var(--terra)}
+.tier .tsum{font-family:var(--serif); font-size:38px; font-weight:700; color:var(--pine-deep); margin:4px 0 8px}
+.tier .tdesc{font-size:13px; color:var(--ink-soft)}
 
-.check-item{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:#fff;border:1px solid var(--c-border);border-radius:var(--rad);margin-bottom:10px}
-.check-item .prio{flex:0 0 32px;width:32px;height:32px;border-radius:50%;background:var(--c-primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
-.check-item.urgent .prio{background:#A32D2D}
-.check-item .body h4{margin:0 0 3px;font-size:15px}
-.check-item .body p{margin:0;font-size:13.5px;color:var(--c-muted)}
-.check-item .when{margin-left:auto;font-size:12px;color:var(--c-muted);background:var(--c-bg);padding:3px 9px;border-radius:5px;flex:0 0 auto}
+.check{display:flex; gap:15px; align-items:flex-start; padding:16px 18px; background:var(--surface); border:1px solid var(--line); border-radius:var(--rad); margin-bottom:11px; box-shadow:var(--shadow-sm)}
+.check .prio{flex:0 0 38px; width:38px; height:38px; border-radius:50%; background:var(--ink); color:var(--surface); display:flex; align-items:center; justify-content:center; font-family:var(--serif); font-weight:700; font-size:17px}
+.check.urgent .prio{background:var(--terra)}
+.check.done .prio{background:var(--pine)}
+.check.done{opacity:.85}
+.check.done .body h4{text-decoration:line-through; color:var(--ink-soft)}
+.check .body h4{font-size:16px; margin:0 0 3px}
+.check .body p{font-size:13.5px; color:var(--ink-soft); margin:0}
+.check .when{margin-left:auto; flex:0 0 auto; font-size:11.5px; font-weight:700; color:var(--ink-soft); background:var(--surface-warm); border:1px solid var(--line); padding:5px 11px; border-radius:99px; white-space:nowrap}
 
-.reserve-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-.res-card{background:#fff;border:1px solid var(--c-border);border-radius:var(--rad);padding:14px 16px}
-.res-card.r-yes{border-top:3px solid var(--c-accent)}
-.res-card.r-no{border-top:3px solid #B6C2D0}
-.res-card.r-opt{border-top:3px solid var(--c-d6)}
-.res-card h4{margin:0 0 6px}
-.res-card .rec{display:inline-block;margin-top:8px;font-size:12px;padding:3px 9px;border-radius:5px;font-weight:600}
-.rec.y{background:var(--c-good-bg);color:var(--c-good-text)}
-.rec.n{background:var(--c-danger-bg);color:var(--c-danger-text)}
-.rec.o{background:var(--c-info-bg);color:var(--c-info-text)}
-.res-card dl{margin:6px 0 0;font-size:13px}
-.res-card dt{font-weight:600;color:var(--c-muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
-.res-card dd{margin:0 0 4px}
+.reserve-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:16px}
+.res{background:var(--surface); border:1px solid var(--line); border-radius:var(--rad); padding:18px 20px; box-shadow:var(--shadow-sm); border-top:4px solid var(--line-strong)}
+.res.yes{border-top-color:var(--pine)}
+.res.no{border-top-color:var(--ink-faint)}
+.res.opt{border-top-color:var(--lake)}
+.res h4{font-size:18px; margin:0 0 8px}
+.res dl{margin:0; font-size:13px}
+.res dt{font-weight:800; color:var(--ink-faint); font-size:11px; letter-spacing:.05em; text-transform:uppercase; margin-top:8px}
+.res dd{margin:1px 0 0}
+.res .verdict{display:inline-block; margin-top:12px; font-size:12px; font-weight:700; padding:4px 11px; border-radius:99px}
+.verdict.y{background:var(--pine-soft); color:var(--pine-deep)}
+.verdict.n{background:var(--terra-soft); color:var(--terra-deep)}
+.verdict.o{background:var(--lake-soft); color:#1C4257}
 
-.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
-.muted{color:var(--c-muted)}
-.note{font-size:12.5px;color:var(--c-muted);margin-top:6px;font-style:italic}
-.small{font-size:13px}
-.center{text-align:center}
+.book-status{background:var(--surface); border:1px solid var(--line); border-radius:var(--rad-lg); padding:24px 26px; box-shadow:var(--shadow); margin-bottom:24px}
+.book-status h3{font-size:22px; margin-bottom:14px; display:flex; align-items:center; gap:10px}
+.book-status .progress-bar{height:8px; background:var(--line); border-radius:99px; overflow:hidden; margin:14px 0 10px}
+.book-status .progress-fill{height:100%; background:linear-gradient(90deg, var(--pine), var(--terra)); border-radius:99px; width:83%}
+.book-status .progress-text{font-size:13px; color:var(--ink-soft)}
 
-.leaflet-popup-content{font-size:13px;line-height:1.5;margin:8px 10px}
-.leaflet-popup-content h4{margin:0 0 4px;font-size:14px;color:var(--c-primary)}
-.leaflet-popup-content .pop-meta{font-size:11.5px;color:var(--c-muted);margin-top:4px}
-.leaflet-popup-content .pop-cat{display:inline-block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;background:var(--c-bg);color:var(--c-primary);padding:2px 6px;border-radius:3px;margin-right:5px}
-.leaflet-popup-content .pop-day{display:inline-block;font-size:10.5px;font-weight:600;color:#fff;padding:2px 7px;border-radius:3px;margin-right:5px}
+footer{background:var(--ink); color:var(--paper); padding:44px 0; text-align:center; position:relative; z-index:1}
+footer .fsig{font-family:var(--hand); font-size:30px; color:#F6D9B8}
+footer .fmeta{font-size:13px; color:rgba(250,243,231,.6); margin-top:8px}
+footer a{color:#F6D9B8}
 
 @media (max-width:720px){
-  h1{font-size:28px} h2{font-size:20px}
-  header.hero{padding:32px 0 24px}
-  .day-card{grid-template-columns:60px 1fr}
-  .day-stripe .dnum{font-size:22px}
+  body{font-size:15px}
+  .sec{padding:48px 0}
+  .wrap{padding:0 18px}
+  .hero{min-height:68vh}
+  .hero-date-stamp{width:90px; height:90px; top:20px; right:20px}
+  .hero-date-stamp .d{font-size:20px}
+  .day{grid-template-columns:48px 1fr; gap:14px}
+  .timeline::before{left:23px}
+  .day-bullet .ring{width:48px; height:48px}
+  .day-bullet .ring .n{font-size:21px}
+  .day-bullet .ring .t{display:none}
+  .day-bullet .date{font-size:15px}
+  .day-body{padding:18px 18px 22px}
   #map{height:440px}
 }
 
 @media print{
-  body{background:#fff;color:#000;font-size:11pt}
-  nav.sticky,#map,.btn,.btn-row{display:none !important}
-  section{break-inside:avoid;page-break-inside:avoid;padding:14pt 0;border-bottom:1px solid #ccc}
-  .day-card,.hotel-card,.sights-day,.check-item{break-inside:avoid;page-break-inside:avoid;box-shadow:none;border:1px solid #ccc}
-  header.hero{background:#fff !important;color:#000 !important;border-bottom:2px solid #000;padding:0 0 12pt}
-  header.hero h1,header.hero .subtitle,header.hero .lead,.kf .lbl,.kf .val{color:#000 !important}
-  .kf{background:#fff;border:1px solid #ccc}
-  a{color:#000;text-decoration:underline}
-  .badge,.box{border:1px solid #999;background:#fff !important;color:#000 !important}
-  h1,h2,h3,h4{color:#000 !important}
-  h2{border-bottom-color:#000}
+  body{background:#fff; color:#000; font-size:11pt}
+  body::before, nav.bar, #map, .btn, .btn-row, .hero-date-stamp{display:none !important}
+  .sec{padding:14pt 0; break-inside:avoid}
+  .hero{min-height:auto; color:#000; background:#fff}
+  .hero::after, .hero::before, .hero-mountains{display:none}
+  .hero h1, .hero-eyebrow, .hero-sub, .hero-sig{color:#000 !important; text-shadow:none}
+  .day-card,.hotel,.sights,.check,.res,.card,.book-status{break-inside:avoid; box-shadow:none; border:1px solid #bbb}
+  a{color:#000; text-decoration:underline}
 }
 </style>
 </head>
 <body>
 
 <header class="hero">
-  <div class="container">
-    <h1>Schweiz-Rundreise 2026</h1>
-    <p class="subtitle">11.09.2026 bis 19.09.2026 · 9 Tage · 8 Übernachtungen · Auto-Rundreise ab Traben-Trarbach</p>
-    <p class="lead">Rundreise von der Mosel über Schaffhausen, Appenzell, Innerschweiz und Wallis zurück über Lötschberg-Verlad ins Berner Oberland. <strong>Tessin und Gotthard bewusst gestrichen</strong> zugunsten von mehr Zeit in den Pflicht-Highlights Lauterbrunnen und Grindelwald. 5 Standortwechsel, alle 10 Pflicht-Highlights drin.</p>
-    <div class="keyfacts">
-      <div class="kf"><span class="lbl">Personen</span><span class="val">2 Erwachsene</span></div>
-      <div class="kf"><span class="lbl">Nächte</span><span class="val">8 / 5 Hotels</span></div>
-      <div class="kf"><span class="lbl">Gesamtkilometer</span><span class="val">ca. 2.000 km</span></div>
-      <div class="kf"><span class="lbl">Budget gesamt</span><span class="val">EUR 3.800–4.300</span></div>
-      <div class="kf"><span class="lbl">Pflicht-Highlights</span><span class="val">10 · alle drin</span></div>
-      <div class="kf"><span class="lbl">Status</span><span class="val">Buchen jetzt!</span></div>
+  <div class="hero-mountains">
+    <svg viewBox="0 0 1200 400" preserveAspectRatio="none">
+      <path d="M0,400 L0,260 L120,180 L240,230 L360,160 L500,210 L640,140 L780,200 L900,150 L1040,210 L1200,170 L1200,400 Z" fill="#1A2530" opacity="0.6"/>
+      <path d="M0,400 L0,310 L100,240 L220,290 L340,220 L480,280 L620,200 L760,260 L880,220 L1020,280 L1200,240 L1200,400 Z" fill="#0F1820" opacity="0.7"/>
+    </svg>
+  </div>
+  <div class="hero-date-stamp"><span class="d">11–19</span><span class="m">Sept · 2026</span></div>
+  <div class="hero-inner">
+    <div class="wrap">
+      <span class="hero-eyebrow">unsere kleine grosse Reise</span>
+      <h1>Schweiz,<br />wir <em>kommen</em>.</h1>
+      <p class="hero-sub">Neun Tage, fünf Bergdörfer, zehn Pflicht-Highlights — von der Mosel über den Rheinfall und den Alpstein bis nach Zermatt, Wengen und Grindelwald. Eine Rundreise nur für uns zwei.</p>
+      <div class="keyfacts">
+        <div class="kf"><span class="lbl">Reisende</span><span class="val">2 Personen</span></div>
+        <div class="kf"><span class="lbl">Tage</span><span class="val">9</span></div>
+        <div class="kf"><span class="lbl">Nächte</span><span class="val">8 · 5 Hotels</span></div>
+        <div class="kf"><span class="lbl">Kilometer</span><span class="val">~2.000</span></div>
+        <div class="kf"><span class="lbl">Budget</span><span class="val">~4.300 €</span></div>
+        <div class="kf"><span class="lbl">Buchung</span><span class="val">4 von 5 ✓</span></div>
+      </div>
+      <p class="hero-sig">Stand Juni 2026 · 4 Hotels gebucht, Appenzell angefragt</p>
     </div>
   </div>
 </header>
 
-<nav class="sticky">
-  <div class="navinner">
-    <a href="#ubersicht">Übersicht</a>
+<nav class="bar">
+  <div class="bar-inner">
+    <a class="bar-brand" href="#start">Schweiz '26</a>
+    <a href="#ueberblick">Überblick</a>
+    <a href="#buchungen">Buchungen</a>
     <a href="#karte">Karte</a>
-    <a href="#tagesplan">Tagesplan</a>
-    <a href="#sehenswuerdigkeiten">Sehenswürdigkeiten</a>
+    <a href="#tagebuch">Tag für Tag</a>
+    <a href="#highlights">Highlights</a>
     <a href="#hotels">Hotels</a>
     <a href="#budget">Budget</a>
     <a href="#checkliste">Checkliste</a>
-    <a href="#risiken">Risiken</a>
+    <a href="#risiken">Wetter</a>
     <a href="#reserve">Reserve</a>
   </div>
 </nav>
 
-<div class="container">
+<span id="start"></span>
 
-<section id="ubersicht">
-  <h2>1 · Übersicht</h2>
-  <div class="grid grid-2">
-    <div class="card">
-      <h3>Route &amp; Logik</h3>
-      <p>Im Uhrzeigersinn von Ost nach West: <strong>Mosel → Rheinfall → Appenzell → Innerschweiz → Wallis → Lötschberg-Verlad → Berner Oberland → Heimreise</strong>. Tessin-Schleife und Gotthard gestrichen – dafür <strong>2 Nächte Wallis und 2 Nächte Berner Oberland</strong> (Lauterbrunnen + Grindelwald), keine 1-Nacht-Hetze mehr im Süden.</p>
-      <p class="note">Alle 10 gelb markierten Pflicht-Ziele sind drin. Tessin (Foroglio, Verzasca, Locarno), Gotthardpass, Säntis, Saxer Lücke, Jungfraujoch und Schilthorn sind im Reservebereich.</p>
+<section class="sec" id="ueberblick">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 1</div>
+      <h2 class="sec-title">Der grosse Bogen</h2>
+      <p class="sec-lead">Im Uhrzeigersinn von Ost nach West — und zum Schluss übers Berner Oberland zurück nach Hause. Kein Hetzen im Süden: Tessin und Gotthard sind bewusst gestrichen, dafür gibt es zwei Nächte im Wallis und zwei in Wengen.</p>
     </div>
-    <div class="card">
-      <h3>Kennzahlen</h3>
-      <div class="grid grid-3" style="gap:10px">
-        <div class="metric"><span class="lbl">Auto km</span><span class="val">~2.000</span></div>
-        <div class="metric"><span class="lbl">An/Rückreise</span><span class="val">~1.400 km</span></div>
-        <div class="metric"><span class="lbl">Hotels</span><span class="val">5 Standorte</span></div>
-        <div class="metric"><span class="lbl">Bergbahnen</span><span class="val">~CHF 800</span></div>
-        <div class="metric"><span class="lbl">Vignette</span><span class="val">CHF 40</span></div>
-        <div class="metric"><span class="lbl">Verlad</span><span class="val">CHF 28</span></div>
+
+    <div class="book-status">
+      <h3><span class="kicker" style="font-size:24px;transform:none">Buchungsstand</span></h3>
+      <div class="progress-bar"><div class="progress-fill"></div></div>
+      <p class="progress-text"><strong>4 von 5 Hotels gebucht</strong> · Hotel Koller (Appenzell) angefragt · Lötschberg-Verlad und Aescher-Reservierung stehen aus</p>
+    </div>
+
+    <div class="grid g2">
+      <div class="card">
+        <span class="kicker">die Idee</span>
+        <h3 style="font-size:24px; margin:6px 0 10px">Route &amp; Logik</h3>
+        <p>Mosel → Rheinfall → Appenzell → Innerschweiz → Wallis → Lötschberg-Verlad → Berner Oberland → Heimreise. Statt der engen Tessin-Schleife gibt es <strong>2 Nächte im autofreien Wengen</strong> — Apartment mit Küche, mehr Ruhe, mehr Zeit für Männlichen, Mürren und First.</p>
+        <p class="muted small">Alle zehn Pflicht-Ziele sind drin. Tessin, Säntis, Saxer Lücke, Jungfraujoch und Schilthorn warten im Reserve-Kapitel.</p>
+      </div>
+      <div class="card">
+        <span class="kicker">in Zahlen</span>
+        <h3 style="font-size:24px; margin:6px 0 10px">Kennzahlen</h3>
+        <div class="grid g3" style="gap:12px">
+          <div class="metric"><span class="lbl">Auto km</span><span class="val">~2.000</span></div>
+          <div class="metric"><span class="lbl">An/Rück</span><span class="val">~1.400</span></div>
+          <div class="metric"><span class="lbl">Hotels</span><span class="val">5 Orte</span></div>
+          <div class="metric"><span class="lbl">Bergbahnen</span><span class="val">~1.000 CHF</span></div>
+          <div class="metric"><span class="lbl">Vignette</span><span class="val">40 CHF</span></div>
+          <div class="metric"><span class="lbl">Verlad</span><span class="val">28 CHF</span></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="box info" style="margin-top:18px">
-    <div class="ico">!</div>
-    <div><strong>Empfohlene Buchung jetzt:</strong> Lauterbrunnen, Grindelwald und Täsch zuerst, dann Appenzell. Engelberg und Innertkirchen können später. Booking-Links pro Hotel in Sektion 5.</div>
-  </div>
-  <div class="box good">
-    <div class="ico">✓</div>
-    <div><strong>Plan-Update:</strong> Tessin (Locarno, Foroglio, Verzasca) gestrichen. Eingespartes Tagesbudget fließt in 2 Nächte Berner Oberland (Lauterbrunnen + Grindelwald). Tag 5 wird schlank: nur Grimsel-Furka-Wallis. Tag 6 bleibt entspannter Zermatt-Tag.</div>
+    <div class="note-box nb-good"><div class="ico">✓</div><div><strong>Hotels weitgehend gebucht.</strong> Engelberg, Innertkirchen, Täsch und Wengen sind fix. Hotel Koller in Appenzell ist angefragt — Antwort steht aus. Wengen ist autofrei: Auto wird in Lauterbrunnen geparkt, dann mit der WAB-Bahn hoch.</div></div>
+    <div class="note-box nb-warn"><div class="ico">!</div><div><strong>Wengen-Buchung ist nicht stornierbar.</strong> Das Chalet Sonnenhof ist ein Apartment mit Küche, kein Frühstück — wir versorgen uns morgens selbst, das spart in Hauptlage 30–40 CHF pro Tag.</div></div>
   </div>
 </section>
 
-<section id="karte">
-  <h2>2 · Karte mit Tagesrouten</h2>
-  <p class="muted small">Interaktive Karte mit allen Pflicht-, Optional- und Reserve-Punkten. Linienfarbe = Tag. Klick auf Marker für Popup mit Kategorie und Reisetag.</p>
-  <div id="map" aria-label="Karte der Reiseroute Schweiz September 2026"></div>
-  <div class="legend-map" id="legendMap"></div>
-  <div class="map-cats">
-    <span class="dot" style="background:#A32D2D"></span>Pflicht
-    <span class="dot" style="background:#0C447C;margin-left:14px"></span>Optional
-    <span class="dot" style="background:#5F5E5A;margin-left:14px"></span>Reserve
+<section class="sec tint" id="buchungen">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 2</div>
+      <h2 class="sec-title">Was schon steht</h2>
+      <p class="sec-lead">Alle Hotels mit Buchungsnummer, Preis und Stornofrist auf einen Blick. Die einzige offene Position ist Appenzell.</p>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Nacht</th><th>Hotel</th><th>Datum</th><th>Buchungs-Nr.</th><th class="num">CHF</th><th class="num">EUR</th><th>Frühst.</th><th>Parkpl.</th><th>Storno</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><b>1+2</b><br><span class="muted small">Fr+Sa</span></td><td><b>Hotel Koller</b><br><span class="muted small">Appenzell</span></td><td>11.–13.9.</td><td><span class="muted small">— angefragt</span></td><td class="num">~420</td><td class="num">~450</td><td>inkl. ?</td><td>?</td><td>?</td><td><span class="badge b-pending">angefragt</span></td></tr>
+          <tr><td><b>3</b><br><span class="muted small">So</span></td><td><b>Hotel Terrace</b><br><span class="muted small">Engelberg · 3*</span></td><td>13.–14.9.</td><td class="tiny">6534.329.360</td><td class="num">160</td><td class="num">175</td><td>✓ inkl.</td><td>5 CHF/N</td><td>bis 10.9.</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
+          <tr><td><b>4</b><br><span class="muted small">Mo</span></td><td><b>Hotel Urweider</b><br><span class="muted small">Innertkirchen · 3*</span></td><td>14.–15.9.</td><td class="tiny">5043.366.090</td><td class="num">208</td><td class="num">227</td><td>✓ inkl.</td><td>✓ kostenlos</td><td>bis 6.9.</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
+          <tr><td><b>5+6</b><br><span class="muted small">Di+Mi</span></td><td><b>Matterhorn Inn</b><br><span class="muted small">Täsch · 3*</span></td><td>15.–17.9.</td><td class="tiny">6289.367.067</td><td class="num">297</td><td class="num">324</td><td><span style="color:var(--terra-deep)">✗</span></td><td>10 CHF/N</td><td>bis 7.9.</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
+          <tr><td><b>7+8</b><br><span class="muted small">Do+Fr</span></td><td><b>Chalet Sonnenhof</b><br><span class="muted small">Wengen · Apartment</span></td><td>17.–19.9.</td><td class="tiny">5567.427.143</td><td class="num">427</td><td class="num">466</td><td><span style="color:var(--terra-deep)">✗ Küche</span></td><td><span style="color:var(--terra-deep)">✗ autofrei</span></td><td><span style="color:var(--terra-deep)"><b>NICHT</b></span></td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
+          <tr class="row-total"><td colspan="4">Hotel-Summe (4 gebucht + 1 geschätzt)</td><td class="num">~1.512</td><td class="num">~1.642</td><td colspan="4"></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note-box nb-info" style="margin-top:18px"><div class="ico">i</div><div><strong>Hotel Koller, Appenzell:</strong> traditionsreiches 3*-Stadthaus in der Hauptgasse, kostenfreier Parkplatz, gutes Restaurant. Antwort auf Anfrage sollte binnen einer Woche kommen. Falls ausgebucht: Hotel Säntis 4* als Backup (CHF 500–600).</div></div>
+    <div class="note-box nb-warn"><div class="ico">!</div><div><strong>Stornofrist-Check (zeitkritisch):</strong> Engelberg bis 10.9., Innertkirchen bis 6.9., Täsch bis 7.9. — alle anderen sind fix. Bei Wetter- oder Krankheits-Sorge spätestens 8.9. entscheiden.</div></div>
   </div>
 </section>
 
-<section id="tagesplan">
-  <h2>3 · Tag-für-Tag-Reiseplan</h2>
-
-  <div class="day-card d1">
-    <div class="day-stripe"><div class="dnum">1</div><div class="dlbl">Fr 11.9.</div></div>
-    <div class="day-body">
-      <h3>Anreise &amp; Rheinfall</h3>
-      <div class="day-meta">
-        <span>Start: Traben-Trarbach 6:00</span>
-        <span>Ziel: Appenzell ~17:00</span>
-        <span>~700 km · 7 h netto</span>
-        <span class="badge b-pflicht">Pflicht: Rheinfall</span>
-      </div>
-      <h4>Tagesprogramm</h4>
-      <ul>
-        <li><strong>Abfahrt 6:00</strong> Traben-Trarbach via Saarbrücken–Karlsruhe–Basel</li>
-        <li><strong>Schweizer Vignette</strong> vorab als E-Vignette über via.admin.ch (CHF 40)</li>
-        <li><strong>Mittag 12:30–14:30 Rheinfall Schaffhausen</strong>: Schloss Laufen, Plattform „Känzeli", optional Bootsfahrt zum Mittelfelsen (CHF 20/Pers., 30 min)</li>
-        <li><strong>Weiterfahrt</strong> via St. Gallen nach Appenzell, ~130 km / 1,5 h</li>
-        <li><strong>Ankunft Appenzell ~16:30</strong>: Spaziergang durch die bemalte Hauptgasse</li>
-        <li><strong>Abendessen</strong> im Hotelrestaurant oder im Ort</li>
-      </ul>
-      <div class="box warn"><div class="ico">!</div><div><strong>Zeitlich realistisch</strong>, aber lange Autoetappe. Frühstart wichtig.</div></div>
-      <p class="small"><strong>Schlechtwetteralternative:</strong> Rheinfall ist auch bei Regen sehenswert. Im Hotel im Säntis-Stube essen.</p>
-      <p class="small"><strong>Übernachtung:</strong> Appenzell · Adler Hotel (siehe Hotelsektion)</p>
+<section class="sec" id="karte">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 3</div>
+      <h2 class="sec-title">Unsere Route auf der Karte</h2>
+      <p class="sec-lead">Jede Linienfarbe ist ein Reisetag. Klick auf einen Punkt für Details — Pflicht, optional oder Reserve. (Zum Zoomen einmal in die Karte klicken.)</p>
     </div>
-  </div>
-
-  <div class="day-card d2">
-    <div class="day-stripe"><div class="dnum">2</div><div class="dlbl">Sa 12.9.</div></div>
-    <div class="day-body">
-      <h3>Alpstein · Ebenalp · Schäfler · Seealpsee</h3>
-      <div class="day-meta">
-        <span>Standort: Appenzell</span>
-        <span>Wanderung 4–5 h · 700 HM Abstieg · T2</span>
-        <span>Auto 15 km</span>
-        <span class="badge b-pflicht">Pflicht: Schäfler &amp; Seealpsee</span>
-      </div>
-      <h4>Tagesprogramm</h4>
-      <ul>
-        <li><strong>Auto Appenzell → Wasserauen Talstation</strong>, 15 min (Parkplatz CHF 8/Tag)</li>
-        <li><strong>Ebenalp-Bergbahn</strong> ab 7:30 (CHF 35 retour, früh starten)</li>
-        <li><strong>Ebenalp 1.640 m</strong> – Aussicht Bodensee, Säntis</li>
-        <li><strong>Wildkirchli + Berggasthaus Aescher-Wildkirchli</strong> (Reservierung: <a href="https://aescher.ch" target="_blank">aescher.ch</a>, T +41 71 799 11 42)</li>
-        <li><strong>Schäfler</strong> ~1 h, schmaler Gratweg, T2. 360°-Panorama</li>
-        <li><strong>Abstieg über Mesmer zum Seealpsee</strong> ~2 h</li>
-        <li><strong>Mittag/Pause am Seealpsee</strong>, Berggasthaus Seealpsee</li>
-        <li><strong>Talweg zurück nach Wasserauen</strong> ~1 h</li>
-      </ul>
-      <p class="small"><span class="badge b-opt">Optional</span> Saxer Lücke statt Seealpsee bei sehr guter Kondition (6–7 h, 1.000 HM, T3)</p>
-      <p class="small"><strong>Schlechtwetteralternative:</strong> Säntis-Schwebebahn ab Schwägalp (CHF 60, auch im Nebel) oder Stiftsbibliothek St. Gallen</p>
-      <p class="small"><strong>Übernachtung:</strong> Appenzell (2. Nacht)</p>
+    <div id="map" aria-label="Karte der Reiseroute Schweiz September 2026"></div>
+    <div class="map-cats">
+      <span class="d"><span class="dot" style="background:#C0653C"></span> Pflicht-Highlight</span>
+      <span class="d"><span class="dot" style="background:#3C6A85"></span> Optional</span>
+      <span class="d"><span class="dot" style="background:#988877"></span> Reserve</span>
     </div>
-  </div>
-
-  <div class="day-card d3">
-    <div class="day-stripe"><div class="dnum">3</div><div class="dlbl">So 13.9.</div></div>
-    <div class="day-body">
-      <h3>Klöntalersee · Stoos/Fronalpstock · Engelberg</h3>
-      <div class="day-meta">
-        <span>Appenzell → Engelberg ~180 km</span>
-        <span>Fahrzeit 3 h netto</span>
-        <span class="badge b-pflicht">Pflicht: Klöntalersee</span>
-      </div>
-      <h4>Tagesprogramm</h4>
-      <ul>
-        <li><strong>Frühstart 8:00</strong> Appenzell → Klöntalersee, ~1,5 h</li>
-        <li><strong>Klöntalersee</strong>: Spaziergang Westufer + Staumauer (45 min). Fotopunkt Glärnisch-Spiegelung morgens</li>
-        <li><strong>Mittag in Schwyz</strong>, dann Talstation Stoosbahn in Schlattli</li>
-        <li><strong>Stoosbahn</strong> (steilste Standseilbahn der Welt, CHF 30 retour)</li>
-        <li><strong>Sessellift Stoos → Fronalpstock</strong> oder optional <strong>Gratwanderung Klingenstock–Fronalpstock</strong> (2,5 h, T2)</li>
-        <li><strong>Weiterfahrt Engelberg</strong> ~70 km, Ankunft ca. 18:30</li>
-        <li>Engelberg Ortszentrum: Klosterkirche</li>
-      </ul>
-      <p class="small"><strong>Schlechtwetteralternative:</strong> Klöntal weglassen, Verkehrshaus Luzern (4 h, CHF 35)</p>
-      <p class="small"><strong>Übernachtung:</strong> Engelberg</p>
-    </div>
-  </div>
-
-  <div class="day-card d4">
-    <div class="day-stripe"><div class="dnum">4</div><div class="dlbl">Mo 14.9.</div></div>
-    <div class="day-body">
-      <h3>Bannalpsee · Sustenpass · Aareschlucht</h3>
-      <div class="day-meta">
-        <span>Engelberg → Innertkirchen ~90 km</span>
-        <span>Fahrzeit 2,5 h netto + Wanderung</span>
-      </div>
-      <h4>Tagesprogramm</h4>
-      <ul>
-        <li><strong>Morgens Wolfenschiessen → Oberrickenbach</strong> mit den Bannalp-Bergbahnen (CHF 40 retour)</li>
-        <li><strong>Bannalpsee-Rundwanderung</strong> ~1,5 h, fast eben, Walenstöcke-Blick; optional Alp Urnerstaffel</li>
-        <li><strong>Mittag</strong> auf der Alp oder im Tal</li>
-        <li><strong>Sustenpass-Fahrt</strong> – Top-3-Passstraße. Stopps: Susten-Passhöhe 2.224 m, Steingletscher-Aussicht, Sustenhornblick</li>
-        <li><strong>Aareschlucht</strong> Innertkirchen–Meiringen (CHF 12, 30 min)</li>
-        <li><strong>Ankunft Innertkirchen ~17:30</strong></li>
-      </ul>
-      <p class="small"><strong>Schlechtwetteralternative:</strong> Bannalp streichen, Aareschlucht ist regenunabhängig</p>
-      <p class="small"><strong>Übernachtung:</strong> Innertkirchen (Hotel Urweider)</p>
-    </div>
-  </div>
-
-  <div class="day-card d5">
-    <div class="day-stripe"><div class="dnum">5</div><div class="dlbl">Di 15.9.</div></div>
-    <div class="day-body">
-      <h3>Grimsel · Furka · Rhonegletscher · Anreise Wallis</h3>
-      <div class="day-meta">
-        <span>Innertkirchen → Täsch ~140 km</span>
-        <span>Fahrzeit 4 h netto + Stopps</span>
-        <span class="badge b-pflicht">Pflicht: Grimsel + Furka</span>
-        <span class="badge b-opt">Tessin entfällt</span>
-      </div>
-      <div class="box good"><div class="ico">✓</div><div><strong>Entspannter Tag.</strong> Kein Tessin, kein Gotthard. Ankunft in Täsch früher Nachmittag, dadurch noch Zeit für Stadtbummel in Zermatt oder einen kurzen Spaziergang am Findelbach.</div></div>
-      <h4>Tagesprogramm</h4>
-      <ul>
-        <li><strong>Frühstart 8:00</strong> Innertkirchen → Aufstieg Grimsel</li>
-        <li><strong>Handeggfallbrücke</strong> (KWO-Hängebrücke 100 m über dem Wasserfall, CHF 16) – 45 min Stopp</li>
-        <li><strong>Grimselpass 2.165 m</strong> – Totensee, Grimsel-Hospiz-Aussicht (~10:30)</li>
-        <li><strong>Furkapass 2.429 m</strong> – Hotel Belvedere (James-Bond-Goldfinger-Straße)</li>
-        <li><strong>Rhonegletscher-Eisgrotte</strong> (CHF 9, 30 min) – am Belvedere</li>
-        <li><strong>Mittag in Realp oder Oberwald</strong></li>
-        <li><strong>Furka-Abstieg → Brig → Visp → Täsch</strong> (Furka–Täsch ~80 km, 2 h)</li>
-        <li><strong>Ankunft Täsch ~16:00</strong>: Auto im Matterhorn Terminal parken (CHF 17/Tag)</li>
-        <li><strong>Optional ab 17:00 Shuttle nach Zermatt</strong>: kurzer Stadtbummel, Bahnhofstraße, Sonnenuntergang Matterhorn</li>
-      </ul>
-      <p class="small"><strong>Schlechtwetteralternative:</strong> Pässe trotzdem fahren (atmosphärisch im Nebel), Belvedere/Eisgrotte streichen, direkt nach Brig durchfahren</p>
-      <p class="small"><strong>Übernachtung:</strong> Täsch (Welcome Hotel Täsch by Täscherhof)</p>
-    </div>
-  </div>
-
-  <div class="day-card d6">
-    <div class="day-stripe"><div class="dnum">6</div><div class="dlbl">Mi 16.9.</div></div>
-    <div class="day-body">
-      <h3>Zermatt · Gornergrat · Matterhorn</h3>
-      <div class="day-meta">
-        <span>Standort: Täsch</span>
-        <span>Bahn/Wandern</span>
-        <span class="badge b-pflicht">Pflicht: Matterhorn-Erlebnis</span>
-      </div>
-      <h4>Tagesprogramm</h4>
-      <ul>
-        <li><strong>Frühstück 7:00 Täsch</strong>, Shuttle 8:00 nach Zermatt</li>
-        <li><strong>Gornergrat-Bahn 8:30</strong> (CHF 132 retour, 3.089 m). Frühe Auffahrt = beste Sicht vor Wolkenbildung</li>
-        <li><strong>Oben 9:30–11:30</strong>: Panorama Matterhorn / Monte Rosa / Dufourspitze 4.634 m / Gornergletscher. Kurze Wanderung Richtung Riffelsee (45 min, Matterhorn-Spiegelung) optional</li>
-        <li><strong>Abfahrt 11:30 → Zermatt 12:30</strong></li>
-        <li><strong>Mittag im Zermatt-Hinterdorf</strong> (Walliser Spezialitäten)</li>
-        <li><strong>Nachmittag: Zermatt-Spaziergang</strong>: Hinterdorf (altes Walliser Dorf, Stadel auf Stelzen), Bahnhofstraße, Kirchplatz mit Bergsteigerfriedhof</li>
-        <li><strong>Optional Klein Matterhorn / Matterhorn Glacier Paradise</strong> (3.883 m, höchster Aussichtspunkt Europas, CHF 130, Eispalast) – nur bei sehr klarer Sicht</li>
-        <li><strong>Abends Zermatt</strong>: Apéro mit Matterhorn-Sicht</li>
-      </ul>
-      <p class="small"><strong>Schlechtwetteralternative:</strong> Matterhorn-Museum (CHF 12), Sherlock-Holmes-Walking-Tour, in Täsch bleiben + Backstage am Gornergrat 360° verschieben</p>
-      <p class="small"><strong>Übernachtung:</strong> Täsch (2. Nacht)</p>
-    </div>
-  </div>
-
-  <div class="day-card d7">
-    <div class="day-stripe"><div class="dnum">7</div><div class="dlbl">Do 17.9.</div></div>
-    <div class="day-body">
-      <h3>5-Seenwanderung · Lötschberg-Verlad · Blausee · Lauterbrunnen</h3>
-      <div class="day-meta">
-        <span>Täsch → Lauterbrunnen ~100 km</span>
-        <span>Wandern 4 h + Auto 3 h</span>
-        <span class="badge b-pflicht">Pflicht: 5-Seen + Blausee</span>
-      </div>
-      <h4>Tagesprogramm</h4>
-      <ul>
-        <li><strong>Frühstück 6:30 Täsch</strong>, Shuttle 7:30 Zermatt, Sunnegga-Bahn 8:00</li>
-        <li><strong>5-Seenwanderung</strong> Sunnegga → Stellisee → Grindjisee → Grünsee → Moosjisee → Leisee (~9 km, 4 h, T1, 200 HM Abstieg)</li>
-        <li><strong>Stellisee 9:00</strong>: Fotostopp – beste Matterhorn-Spiegelung bei Windstille</li>
-        <li><strong>Mittag</strong> Berggasthaus Fluhalp oder Grünsee (12:00)</li>
-        <li><strong>Talfahrt Sunnegga 13:00, Shuttle 13:30 nach Täsch, Auto auschecken 14:00</strong></li>
-        <li><strong>Fahrt nach Goppenstein</strong> (45 min) → BLS Lötschberg-Autoverlad (CHF 28, alle 30 min, 15 min Tunnel)</li>
-        <li><strong>Blausee Naturpark</strong> 15:30 (CHF 10, smaragdfarbener See, 30 min Spaziergang)</li>
-        <li><strong>Weiter nach Lauterbrunnen</strong> via Spiez–Interlaken (~60 km, 1 h)</li>
-        <li><strong>Ankunft Lauterbrunnen ~18:00</strong>: Stäubbachfall (297 m) im Abendlicht – vom Hotel zu Fuß, 20 min</li>
-      </ul>
-      <div class="box warn"><div class="ico">!</div><div><strong>Tag zeitlich enger.</strong> Bei mauem Wetter morgens: 5-Seen verkürzen auf Sunnegga–Stellisee–Sunnegga (1,5 h) → eine Stunde mehr Puffer.</div></div>
-      <p class="small"><strong>Schlechtwetteralternative:</strong> 5-Seen streichen, direkt zum Verlad und Oeschinensee (statt morgen) am Donnerstag-Nachmittag</p>
-      <p class="small"><strong>Übernachtung:</strong> Lauterbrunnen (Hotel Schützen)</p>
-    </div>
-  </div>
-
-  <div class="day-card d8">
-    <div class="day-stripe"><div class="dnum">8</div><div class="dlbl">Fr 18.9.</div></div>
-    <div class="day-body">
-      <h3>Oeschinensee · Mürren · Lauterbrunnental → Grindelwald</h3>
-      <div class="day-meta">
-        <span>Lauterbrunnen → Grindelwald ~60 km mit Stopps</span>
-        <span class="badge b-pflicht">Pflicht: Oeschinensee</span>
-      </div>
-      <h4>Tagesprogramm</h4>
-      <ul>
-        <li><strong>Frühstück 7:00 Lauterbrunnen</strong>, Abfahrt 8:00 Richtung Kandersteg (~50 min)</li>
-        <li><strong>Oeschinensee-Sesselbahn ab Kandersteg</strong> 9:00 (CHF 35 retour, 14 min Auffahrt)</li>
-        <li><strong>Oeschinensee 1.578 m</strong> 9:30–11:30: kurze Wanderung zur Seeebene (15 min) oder kleine Rundwanderung Heuberg (1,5 h, 200 HM). UNESCO-Welterbe Jungfrau-Aletsch. Türkisblau am Fuß der Blümlisalp</li>
-        <li><strong>Talfahrt 12:00, Mittag Kandersteg</strong></li>
-        <li><strong>Rückfahrt nach Lauterbrunnen 13:30</strong>, Trümmelbachfälle besuchen (CHF 14, 1 h, 10 Gletscherwasserfälle im Berg)</li>
-        <li><strong>Mürren-Abstecher</strong> 15:30: Cable Car ab Stechelberg (CHF 17 retour bis Mürren) oder ab Lauterbrunnen-Grütschalp-Mürren (CHF 18 einfach). 1,5–2 h für Spaziergang in Mürren mit Eiger-Mönch-Jungfrau-Blick</li>
-        <li><strong>Hotel-Wechsel Lauterbrunnen → Grindelwald</strong> 18:30 (~25 km via Wilderswil, 35 min)</li>
-        <li><strong>Abendessen Grindelwald</strong> mit Blick auf die Eiger-Nordwand</li>
-      </ul>
-      <div class="box info"><div class="ico">i</div><div><strong>Variante bei sehr klarem Wetter:</strong> Mürren weglassen und stattdessen <strong>Schilthorn / Piz Gloria 2.970 m</strong> (CHF 90 ab Stechelberg, 3 h, Drehrestaurant aus James-Bond-Geheimdienst-Film). Aber dann fällt Trümmelbach aus.</div></div>
-      <p class="small"><strong>Schlechtwetteralternative:</strong> Oeschinensee streichen (Sesselbahn fährt nicht bei Nebel), stattdessen Verkehrshaus Luzern als Tagesausflug oder direkt nach Grindelwald + entspannter Tag im Hotel</p>
-      <p class="small"><strong>Übernachtung:</strong> Grindelwald (Hotel Central Wolter oder Bernerhof)</p>
-    </div>
-  </div>
-
-  <div class="day-card d9">
-    <div class="day-stripe"><div class="dnum">9</div><div class="dlbl">Sa 19.9.</div></div>
-    <div class="day-body">
-      <h3>First · Bachalpsee · Iseltwald · Rückreise</h3>
-      <div class="day-meta">
-        <span>Grindelwald → Traben-Trarbach ~700 km</span>
-        <span>Fahrzeit ~7 h netto</span>
-        <span class="badge b-pflicht">Pflicht: Mürren/Eiger-Sicht</span>
-      </div>
-      <h4>Tagesprogramm</h4>
-      <ul>
-        <li><strong>Frühstück 7:00</strong>, Abfahrt zur First-Bahn 7:45 (Grindelwald-Talstation, 5 min vom Hotel)</li>
-        <li><strong>Gondelbahn Grindelwald-First</strong> 8:00 (CHF 72 retour, Frühaufsteher-Tarif teils günstiger)</li>
-        <li><strong>Wanderung First → Bachalpsee → First</strong> ~2,5 h, T1, 200 HM, kinderleicht. Berühmter Postkartensee mit Schreckhorn-Spiegelung</li>
-        <li><strong>Optional First Cliff Walk</strong> (frei, 15 min, schwindelerregender Stahlsteg in 1 m Wandnähe)</li>
-        <li><strong>Talfahrt 11:30, Mittag Grindelwald</strong> 12:00</li>
-        <li><strong>Abfahrt Heimreise ~13:00</strong></li>
-        <li><strong>Stopp Iseltwald am Brienzersee</strong> 13:30 (Bond-Steg, 20 min) – direkt an der Brünig-Route</li>
-        <li><strong>Rückreise</strong>: Brienz → Luzern → Basel → Karlsruhe → Mosel · Ankunft Traben-Trarbach ca. 21:00</li>
-      </ul>
-      <div class="box warn"><div class="ico">!</div><div><strong>Wetterabhängig:</strong> Bei Schlechtwetter morgens First streichen und früher heimfahren – dann Ankunft schon 18:30. Bachalpsee lohnt sich NUR bei klarer Sicht.</div></div>
-      <p class="small"><strong>Alternative Tagesziele Grindelwald-Region:</strong> Männlichen-Bahn (CHF 60, Panoramaweg zur Kleinen Scheidegg, 1,5 h) statt First, falls First-Bahn überfüllt</p>
-    </div>
+    <div class="legend" id="legend"></div>
   </div>
 </section>
 
-<section id="sehenswuerdigkeiten">
-  <h2>4 · Sehenswürdigkeiten nach Tagen</h2>
-  <p class="muted small">Vollständige Aufschlüsselung aller Stopps – Pflicht, optional, Fotopunkte, Schlechtwetter, Zeitbedarf.</p>
-
-  <div class="sights-day"><h4><span class="dot" style="background:var(--c-d1)"></span>Tag 1 · Anreise &amp; Rheinfall</h4>
-    <div class="col">
-      <div><h5>Pflichtprogramm</h5><ul><li>Rheinfall Schaffhausen (1,5 h, kostenlos, Plattform Känzeli CHF 5)</li><li>Schloss Laufen</li><li>Appenzell Ortskern + bemalte Hauptgasse (45 min)</li></ul></div>
-      <div><h5>Optional</h5><ul><li>Bootsfahrt Mittelfelsen (30 min, CHF 20)</li></ul></div>
-      <div><h5>Fotopunkte</h5><ul><li>Känzeli mit Schloss Laufen</li><li>Hauptgasse Appenzell</li></ul></div>
+<section class="sec tint" id="tagebuch">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 4</div>
+      <h2 class="sec-title">Tag für Tag</h2>
+      <p class="sec-lead">Neun Tage, neun kleine Kapitel. Jeder Tag mit Programm, Schlechtwetter-Plan B und dem gebuchten Hotel für die Nacht.</p>
     </div>
-  </div>
 
-  <div class="sights-day"><h4><span class="dot" style="background:var(--c-d2)"></span>Tag 2 · Alpstein-Klassiker</h4>
-    <div class="col">
-      <div><h5>Pflicht</h5><ul><li>Wasserauen → Ebenalp (CHF 35)</li><li>Wildkirchli + Aescher-Wildkirchli</li><li>Schäfler 1.924 m</li><li>Seealpsee</li><li>Talweg Seealpsee → Wasserauen</li></ul></div>
-      <div><h5>Optional / Reserve</h5><ul><li>Saxer Lücke (T3, 7 h)</li><li>Säntis-Gipfel (CHF 60)</li></ul></div>
-      <div><h5>Fotopunkte</h5><ul><li>Aescher in der Felswand</li><li>Schäfler Säntis-Bodensee</li><li>Seealpsee mit Säntis-Spiegelung</li></ul></div>
-      <div><h5>Schlechtwetter</h5><ul><li>Säntis-Schwebebahn</li><li>Appenzeller Schaukäserei</li><li>Stiftsbibliothek St. Gallen</li></ul></div>
-    </div>
-  </div>
+    <div class="timeline">
 
-  <div class="sights-day"><h4><span class="dot" style="background:var(--c-d3)"></span>Tag 3 · Klöntal · Stoos · Engelberg</h4>
-    <div class="col">
-      <div><h5>Pflicht</h5><ul><li>Klöntalersee (Westufer + Staumauer)</li><li>Stoosbahn (CHF 30)</li><li>Stoos-Gipfelbahn → Fronalpstock</li><li>Engelberg Ortszentrum</li></ul></div>
-      <div><h5>Optional</h5><ul><li>Gratwanderung Klingenstock–Fronalpstock (2,5 h, T2)</li><li>Schwyz Bundesbriefmuseum</li></ul></div>
-      <div><h5>Fotopunkte</h5><ul><li>Glärnisch-Spiegelung Klöntalersee</li><li>Vierwaldstättersee vom Fronalpstock</li></ul></div>
-      <div><h5>Schlechtwetter</h5><ul><li>Verkehrshaus Luzern (CHF 35)</li><li>Engelberger Klosterkirche</li></ul></div>
-    </div>
-  </div>
+      <article class="day">
+        <div class="day-bullet"><div class="ring" style="background:var(--d1)"><span class="n">1</span><span class="t">Fr</span></div><div class="date hand">Fr 11.9.</div></div>
+        <div class="day-card">
+          <div class="day-photo" style="background:linear-gradient(135deg,#C0653C,#9C4A26)"><span>Anreise</span></div>
+          <div class="day-stripe" style="background:var(--d1)"></div>
+          <div class="day-body">
+            <h3 class="day-title">Anreise &amp; Rheinfall</h3>
+            <p class="day-route">Traben-Trarbach → Schaffhausen → Appenzell · ~700 km</p>
+            <div class="day-meta"><span class="chip">Start 6:00 Uhr</span><span class="chip">Ankunft ~16:30</span><span class="chip">7 h netto</span><span class="badge b-must">Pflicht · Rheinfall</span></div>
+            <ul class="day-prog">
+              <li><strong>Abfahrt 6:00</strong> via Saarbrücken – Karlsruhe – Basel</li>
+              <li><strong>E-Vignette</strong> vorab über via.admin.ch (CHF 40)</li>
+              <li><strong>12:30–14:30 Rheinfall:</strong> Schloss Laufen, Plattform „Känzeli", optional Bootsfahrt zum Mittelfelsen (CHF 20)</li>
+              <li><strong>Weiter via St. Gallen</strong> nach Appenzell (~130 km)</li>
+              <li><strong>Ankunft Appenzell:</strong> Spaziergang durch die bemalte Hauptgasse, Abendessen im Ort</li>
+            </ul>
+            <div class="note-box nb-warn"><div class="ico">!</div><div>Lange Autoetappe — Frühstart ist wichtig. Bei Regen ist der Rheinfall trotzdem sehenswert.</div></div>
+            <p class="stay">Übernachtung · <b>Appenzell — Hotel Koller</b> <span class="badge b-pending">angefragt</span> · 1. von 2 Nächten</p>
+          </div>
+        </div>
+      </article>
 
-  <div class="sights-day"><h4><span class="dot" style="background:var(--c-d4)"></span>Tag 4 · Bannalp · Susten · Aare</h4>
-    <div class="col">
-      <div><h5>Pflicht</h5><ul><li>Sustenpass 2.224 m</li><li>Aareschlucht (CHF 12, 30 min)</li></ul></div>
-      <div><h5>Optional</h5><ul><li>Bannalpsee-Wanderung (1,5 h, CHF 40)</li><li>Steingletscher-Aussicht</li><li>Sustenhornblick</li><li>Alp Urnerstaffel</li></ul></div>
-      <div><h5>Fotopunkte</h5><ul><li>Bannalpsee mit Walenstöcken</li><li>Sustenpass-Kehren</li></ul></div>
-      <div><h5>Schlechtwetter</h5><ul><li>Aareschlucht regenunabhängig</li><li>Sherlock-Holmes-Museum Meiringen</li></ul></div>
-    </div>
-  </div>
+      <article class="day">
+        <div class="day-bullet"><div class="ring" style="background:var(--d2)"><span class="n">2</span><span class="t">Sa</span></div><div class="date hand">Sa 12.9.</div></div>
+        <div class="day-card">
+          <div class="day-photo" style="background:linear-gradient(135deg,#9C4A26,#7E5F88)"><span>Alpstein</span></div>
+          <div class="day-stripe" style="background:var(--d2)"></div>
+          <div class="day-body">
+            <h3 class="day-title">Alpstein · Ebenalp · Schäfler · Seealpsee</h3>
+            <p class="day-route">Rund um Appenzell · Wanderung 4–5 h · T2</p>
+            <div class="day-meta"><span class="chip">Wandern 4–5 h</span><span class="chip">700 HM Abstieg</span><span class="chip">Auto 15 km</span><span class="badge b-must">Pflicht · Schäfler &amp; Seealpsee</span></div>
+            <ul class="day-prog">
+              <li><strong>Auto → Wasserauen</strong> (15 min, Parkplatz CHF 8/Tag)</li>
+              <li><strong>Ebenalp-Bergbahn ab 7:30</strong> (CHF 35 retour) — Aussicht Bodensee &amp; Säntis</li>
+              <li><strong>Wildkirchli &amp; Aescher</strong> — Berggasthaus in der Felswand (reservieren: T +41 71 799 11 42)</li>
+              <li><strong>Schäfler</strong> ~1 h Gratweg, T2 — 360°-Panorama</li>
+              <li><strong>Abstieg zum Seealpsee</strong> ~2 h, Pause am Berggasthaus</li>
+              <li><strong>Talweg zurück</strong> nach Wasserauen ~1 h</li>
+            </ul>
+            <p class="small"><span class="badge b-opt">Optional</span> Saxer Lücke statt Seealpsee bei guter Kondition (6–7 h, T3)</p>
+            <div class="note-box nb-good"><div class="ico">☂</div><div><strong>Plan B bei Nebel:</strong> Säntis-Schwebebahn ab Schwägalp (fährt auch im Nebel) oder die Stiftsbibliothek St. Gallen.</div></div>
+            <p class="stay">Übernachtung · <b>Appenzell — Hotel Koller</b> <span class="badge b-pending">angefragt</span> · 2. Nacht</p>
+          </div>
+        </div>
+      </article>
 
-  <div class="sights-day"><h4><span class="dot" style="background:var(--c-d5)"></span>Tag 5 · Grimsel · Furka · Wallis</h4>
-    <div class="col">
-      <div><h5>Pflicht</h5><ul><li>Grimselpass 2.165 m + Totensee</li><li>Furkapass 2.429 m + Hotel Belvedere</li><li>Rhonegletscher (Foto)</li></ul></div>
-      <div><h5>Optional</h5><ul><li>Handeggfallbrücke (CHF 16)</li><li>Rhonegletscher-Eisgrotte (CHF 9)</li><li>Grimsel-Hospiz-Aussicht</li><li>Realp, Oberwald Stopps</li><li>Stadtbummel Brig</li></ul></div>
-      <div><h5>Fotopunkte</h5><ul><li>Furka-Belvedere mit Rhonegletscher</li><li>Grimsel-Stauseen</li><li>Handeggfall</li></ul></div>
-      <div><h5>Schlechtwetter</h5><ul><li>Pässe trotzdem fahren (Atmosphäre)</li><li>Stadtbummel Brig (Stockalperschloss)</li></ul></div>
-    </div>
-  </div>
+      <article class="day">
+        <div class="day-bullet"><div class="ring" style="background:var(--d3)"><span class="n">3</span><span class="t">So</span></div><div class="date hand">So 13.9.</div></div>
+        <div class="day-card">
+          <div class="day-photo" style="background:linear-gradient(135deg,#7E5F88,#4F5C84)"><span>Klöntal · Stoos</span></div>
+          <div class="day-stripe" style="background:var(--d3)"></div>
+          <div class="day-body">
+            <h3 class="day-title">Klöntalersee · Stoos/Fronalpstock · Engelberg</h3>
+            <p class="day-route">Appenzell → Engelberg · ~180 km · 3 h netto</p>
+            <div class="day-meta"><span class="chip">Auto 180 km</span><span class="chip">Stoosbahn 110% Gefälle</span><span class="badge b-must">Pflicht · Klöntalersee</span></div>
+            <ul class="day-prog">
+              <li><strong>Frühstart 8:00</strong> Appenzell → Klöntalersee, ~1,5 h</li>
+              <li><strong>Klöntalersee:</strong> Westufer + Staumauer (45 min), Glärnisch-Spiegelung</li>
+              <li><strong>Mittag in Schwyz</strong>, dann Talstation Stoosbahn in Schlattli</li>
+              <li><strong>Stoosbahn</strong> — steilste Standseilbahn der Welt (CHF 30)</li>
+              <li><strong>Sessellift Stoos → Fronalpstock</strong> oder optional Gratwanderung Klingenstock–Fronalpstock (2,5 h, T2)</li>
+              <li><strong>Weiterfahrt nach Engelberg</strong> ~70 km · Ankunft ~18:30</li>
+            </ul>
+            <p class="stay">Übernachtung · <b>Engelberg — Hotel Terrace 3*</b> <span class="badge b-booked">gebucht ✓</span> · CHF 160 · Frühstück inkl., Parkplatz CHF 5</p>
+          </div>
+        </div>
+      </article>
 
-  <div class="sights-day"><h4><span class="dot" style="background:var(--c-d6)"></span>Tag 6 · Zermatt · Gornergrat · Matterhorn</h4>
-    <div class="col">
-      <div><h5>Pflicht</h5><ul><li>Matterhorn Terminal Täsch (Parken)</li><li>Shuttle Täsch → Zermatt (CHF 16.40)</li><li>Gornergrat-Bahn 3.089 m (CHF 132)</li><li>Matterhornblick + Monte-Rosa-Massiv + Dufourspitze</li><li>Zermatt-Hinterdorf</li></ul></div>
-      <div><h5>Optional</h5><ul><li>Klein Matterhorn / Glacier Paradise 3.883 m (CHF 130)</li><li>Riffelsee-Abstecher (Matterhorn-Spiegelung)</li><li>Matterhorn-Museum (CHF 12)</li><li>Friedhof der Bergsteiger</li></ul></div>
-      <div><h5>Fotopunkte</h5><ul><li>Matterhorn vom Gornergrat</li><li>Riffelsee Spiegelung</li><li>Hinterdorf Stadel auf Stelzen</li></ul></div>
-      <div><h5>Schlechtwetter</h5><ul><li>Matterhorn-Museum</li><li>Gornergrat auf Tag 7 verschieben</li></ul></div>
-    </div>
-  </div>
+      <article class="day">
+        <div class="day-bullet"><div class="ring" style="background:var(--d4)"><span class="n">4</span><span class="t">Mo</span></div><div class="date hand">Mo 14.9.</div></div>
+        <div class="day-card">
+          <div class="day-photo" style="background:linear-gradient(135deg,#4F5C84,#4A6650)"><span>Susten · Aare</span></div>
+          <div class="day-stripe" style="background:var(--d4)"></div>
+          <div class="day-body">
+            <h3 class="day-title">Bannalpsee · Sustenpass · Aareschlucht</h3>
+            <p class="day-route">Engelberg → Innertkirchen · ~90 km · 2,5 h netto</p>
+            <div class="day-meta"><span class="chip">Auto 90 km</span><span class="chip">Sustenpass 2.224 m</span></div>
+            <ul class="day-prog">
+              <li><strong>Morgens Bannalp-Bergbahnen</strong> (Wolfenschiessen → Oberrickenbach → Bannalp, CHF 40 retour)</li>
+              <li><strong>Bannalpsee-Rundwanderung</strong> ~1,5 h, Blick auf die Walenstöcke</li>
+              <li><strong>Sustenpass-Fahrt:</strong> Susten-Passhöhe, Steingletscher-Aussicht, Sustenhornblick</li>
+              <li><strong>Aareschlucht</strong> Innertkirchen–Meiringen (CHF 12, 30 min)</li>
+              <li><strong>Ankunft Innertkirchen ~17:30</strong></li>
+            </ul>
+            <div class="note-box nb-good"><div class="ico">☂</div><div><strong>Plan B bei Regen:</strong> Bannalp streichen, Aareschlucht ist regenunabhängig.</div></div>
+            <p class="stay">Übernachtung · <b>Innertkirchen — Hotel Urweider 3*</b> <span class="badge b-booked">gebucht ✓</span> · CHF 208 · Frühstück inkl., Parkplatz frei, DZ mit Balkon</p>
+          </div>
+        </div>
+      </article>
 
-  <div class="sights-day"><h4><span class="dot" style="background:var(--c-d7)"></span>Tag 7 · 5-Seenwanderung · Lötschberg · Blausee · Lauterbrunnen</h4>
-    <div class="col">
-      <div><h5>Pflicht</h5><ul><li>Sunnegga-Bahn (CHF 25)</li><li>Stellisee mit Matterhorn-Spiegelung</li><li>Grindjisee · Grünsee · Moosjisee · Leisee</li><li>Lötschberg-Autoverlad (CHF 28)</li><li>Blausee (CHF 10)</li><li>Staubbachfall Lauterbrunnen</li></ul></div>
-      <div><h5>Optional</h5><ul><li>Fluhalp-Mittag</li><li>Berghotel Grünsee</li><li>Forellenessen Blausee</li><li>Spätspaziergang Lauterbrunnental</li></ul></div>
-      <div><h5>Fotopunkte</h5><ul><li>Stellisee mit Matterhorn (windstill!)</li><li>Blausee smaragdgrün</li><li>Staubbachfall im Abendlicht</li></ul></div>
-      <div><h5>Schlechtwetter</h5><ul><li>5-Seen verkürzen oder weglassen</li><li>Direkt nach Lauterbrunnen + Trümmelbachfälle (überdacht, CHF 14)</li></ul></div>
-    </div>
-  </div>
+      <article class="day">
+        <div class="day-bullet"><div class="ring" style="background:var(--d5)"><span class="n">5</span><span class="t">Di</span></div><div class="date hand">Di 15.9.</div></div>
+        <div class="day-card">
+          <div class="day-photo" style="background:linear-gradient(135deg,#4A6650,#3C6A85)"><span>Grimsel · Furka</span></div>
+          <div class="day-stripe" style="background:var(--d5)"></div>
+          <div class="day-body">
+            <h3 class="day-title">Grimsel · Furka · Rhonegletscher · Wallis</h3>
+            <p class="day-route">Innertkirchen → Täsch · ~140 km · 4 h + Stopps</p>
+            <div class="day-meta"><span class="chip">Auto 140 km</span><span class="chip">Furka 2.429 m</span><span class="badge b-must">Pflicht · Grimsel + Furka</span></div>
+            <div class="note-box nb-good"><div class="ico">✓</div><div><strong>Entspannter Tag.</strong> Kein Tessin, kein Gotthard. Ankunft Täsch früher Nachmittag — noch Zeit für Stadtbummel in Zermatt oder Sonnenuntergang am Matterhorn.</div></div>
+            <ul class="day-prog">
+              <li><strong>Frühstart 8:00</strong> Innertkirchen → Grimsel</li>
+              <li><strong>Handeggfallbrücke</strong> (KWO-Hängebrücke, CHF 16) — 45 min Stopp</li>
+              <li><strong>Grimselpass 2.165 m</strong> — Totensee, Grimsel-Hospiz-Aussicht (~10:30)</li>
+              <li><strong>Furkapass 2.429 m</strong> — Hotel Belvedere, James-Bond-Straße</li>
+              <li><strong>Rhonegletscher-Eisgrotte</strong> (CHF 9, 30 min)</li>
+              <li><strong>Mittag in Realp oder Oberwald</strong></li>
+              <li><strong>Furka-Abstieg → Brig → Visp → Täsch</strong> (~80 km, 2 h)</li>
+              <li><strong>Ankunft Täsch ~16:00:</strong> Auto im Hotel-Parkplatz (CHF 10/Tag) abstellen</li>
+              <li><strong>Optional 17:00 Shuttle nach Zermatt:</strong> Bahnhofstraße, Matterhorn-Stimmung</li>
+            </ul>
+            <p class="stay">Übernachtung · <b>Täsch — Hotel Matterhorn Inn</b> <span class="badge b-booked">gebucht ✓</span> · 1. von 2 Nächten · CHF 297 ges. · Parkplatz CHF 10/N · ⚠️ kein Frühstück inkl.</p>
+          </div>
+        </div>
+      </article>
 
-  <div class="sights-day"><h4><span class="dot" style="background:var(--c-d8)"></span>Tag 8 · Oeschinensee · Mürren · Grindelwald</h4>
-    <div class="col">
-      <div><h5>Pflicht</h5><ul><li>Oeschinensee-Sesselbahn ab Kandersteg (CHF 35)</li><li>Oeschinensee + Blümlisalp-Blick</li><li>Lauterbrunnental + Stäubbach</li><li>Mürren oder Trümmelbachfälle</li></ul></div>
-      <div><h5>Optional</h5><ul><li>Rundwanderung Oeschinensee (3 h, T2)</li><li>Trümmelbachfälle (CHF 14)</li><li>Schilthorn / Piz Gloria 2.970 m (CHF 90, 3 h)</li><li>Cable Car ab Stechelberg</li></ul></div>
-      <div><h5>Fotopunkte</h5><ul><li>Oeschinensee mit Blümlisalp-Wand</li><li>Lauterbrunnental Panorama von Mürren</li><li>Trümmelbach-Wasserkavernen</li></ul></div>
-      <div><h5>Schlechtwetter</h5><ul><li>Sesselbahn Oeschi fährt nicht bei Nebel → stattdessen Trümmelbach (überdacht)</li><li>Entspannter Tag in Grindelwald-Hotel</li></ul></div>
-    </div>
-  </div>
+      <article class="day">
+        <div class="day-bullet"><div class="ring" style="background:var(--d6)"><span class="n">6</span><span class="t">Mi</span></div><div class="date hand">Mi 16.9.</div></div>
+        <div class="day-card">
+          <div class="day-photo" style="background:linear-gradient(135deg,#3C6A85,#2E6E72)"><span>Gornergrat</span></div>
+          <div class="day-stripe" style="background:var(--d6)"></div>
+          <div class="day-body">
+            <h3 class="day-title">Zermatt · Gornergrat · Matterhorn</h3>
+            <p class="day-route">Standort Täsch · Bahn nach Zermatt · Gornergrat-Bahn</p>
+            <div class="day-meta"><span class="chip">Bahn 12 min</span><span class="chip">Gornergrat 3.089 m</span><span class="badge b-must">Pflicht · Matterhorn</span></div>
+            <ul class="day-prog">
+              <li><strong>Frühstück 7:00 Täsch</strong> (im Hotel-Restaurant zubuchen ca. CHF 18/Pers. oder Bäcker am Bahnhof)</li>
+              <li><strong>Shuttle 8:00 nach Zermatt</strong> (CHF 16.40 retour)</li>
+              <li><strong>Gornergrat-Bahn 8:30</strong> (CHF 132 retour) — frühe Auffahrt = beste Sicht</li>
+              <li><strong>Oben 9:30–11:30:</strong> Matterhorn, Monte Rosa, Dufourspitze 4.634 m, Gornergletscher · optional Wanderung zum Riffelsee (45 min)</li>
+              <li><strong>Mittag im Zermatt-Hinterdorf</strong> (Walliser Spezialitäten)</li>
+              <li><strong>Nachmittag Zermatt-Hinterdorf</strong> (Stadel auf Stelzen), Bahnhofstraße, Kirchplatz mit Bergsteigerfriedhof</li>
+              <li><strong>Optional Klein Matterhorn / Glacier Paradise</strong> 3.883 m (CHF 130, Eispalast) — nur bei sehr klarer Sicht</li>
+            </ul>
+            <p class="stay">Übernachtung · <b>Täsch — Hotel Matterhorn Inn</b> <span class="badge b-booked">gebucht ✓</span> · 2. Nacht</p>
+          </div>
+        </div>
+      </article>
 
-  <div class="sights-day"><h4><span class="dot" style="background:var(--c-d9)"></span>Tag 9 · First · Bachalpsee · Rückreise</h4>
-    <div class="col">
-      <div><h5>Pflicht</h5><ul><li>First-Bahn Grindelwald (CHF 72)</li><li>Bachalpsee-Wanderung (2,5 h, T1)</li></ul></div>
-      <div><h5>Optional</h5><ul><li>First Cliff Walk (frei, 15 min)</li><li>Männlichen-Bahn + Panoramaweg Kleine Scheidegg</li><li>Iseltwald Bond-Steg</li><li>Brienzersee-Aussicht von der Brünigstraße</li></ul></div>
-      <div><h5>Fotopunkte</h5><ul><li>Bachalpsee mit Schreckhorn</li><li>Eiger-Nordwand vom First-Sessellift</li><li>Bond-Steg Iseltwald</li></ul></div>
-      <div><h5>Schlechtwetter</h5><ul><li>First streichen → früher abreisen</li><li>Brienz Holzschnitzerei-Stopp</li></ul></div>
+      <article class="day">
+        <div class="day-bullet"><div class="ring" style="background:var(--d7)"><span class="n">7</span><span class="t">Do</span></div><div class="date hand">Do 17.9.</div></div>
+        <div class="day-card">
+          <div class="day-photo" style="background:linear-gradient(135deg,#2E6E72,#B25975)"><span>5-Seen · Lötschberg · Wengen</span></div>
+          <div class="day-stripe" style="background:var(--d7)"></div>
+          <div class="day-body">
+            <h3 class="day-title">5-Seenwanderung · Lötschberg-Verlad · Wengen</h3>
+            <p class="day-route">Täsch → Wengen · ~100 km + WAB-Bahn</p>
+            <div class="day-meta"><span class="chip">Wandern 4 h</span><span class="chip">Auto 3 h</span><span class="badge b-must">Pflicht · 5-Seen + Blausee</span></div>
+            <ul class="day-prog">
+              <li><strong>Frühstück 6:30 Täsch</strong> (Bäcker am Bahnhof) · Shuttle 7:30 Zermatt</li>
+              <li><strong>Sunnegga-Bahn 8:00</strong> (CHF 25 retour)</li>
+              <li><strong>5-Seenwanderung:</strong> Sunnegga → Stellisee → Grindjisee → Grünsee → Moosjisee → Leisee (~9 km, 4 h, T1)</li>
+              <li><strong>Stellisee 9:00:</strong> Matterhorn-Spiegelung bei Windstille</li>
+              <li><strong>Mittag</strong> Fluhalp oder Grünsee (12:00)</li>
+              <li><strong>Talfahrt 13:00, Auto in Täsch auschecken 14:00</strong></li>
+              <li><strong>Fahrt nach Goppenstein</strong> (45 min) → BLS Lötschberg-Autoverlad (CHF 28, 15 min Tunnel)</li>
+              <li><strong>Blausee-Stopp</strong> 15:30 (CHF 10, 30 min Spaziergang)</li>
+              <li><strong>Fahrt nach Lauterbrunnen</strong> ~17:00 — <strong>Auto im Parkhaus Mätten parken</strong> (CHF 14/Tag, 2 Tage = CHF 28)</li>
+              <li><strong>WAB-Bahn Lauterbrunnen → Wengen</strong> (CHF 16 retour, 30 min) · Ankunft Wengen ~17:45</li>
+              <li><strong>Chalet Sonnenhof beziehen</strong> (5 min Fußweg vom Bahnhof Wengen)</li>
+              <li><strong>Abendeinkauf im Coop Wengen</strong> für Frühstück + Abendessen (Apartment mit Küche, spart 40 CHF/Tag)</li>
+            </ul>
+            <div class="note-box nb-warn"><div class="ico">!</div><div><strong>Tag eng:</strong> Falls Wetter schlecht — 5-Seen verkürzen auf Sunnegga–Stellisee zurück (1,5 h). Falls Wetter top — voll auskosten.</div></div>
+            <p class="stay">Übernachtung · <b>Wengen — Chalet Sonnenhof</b> <span class="badge b-booked">gebucht ✓</span> · 1. von 2 Nächten · CHF 427 ges. · Apartment mit Küche, kein Frühstück, kein Parkplatz (autofrei)</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="day">
+        <div class="day-bullet"><div class="ring" style="background:var(--d8)"><span class="n">8</span><span class="t">Fr</span></div><div class="date hand">Fr 18.9.</div></div>
+        <div class="day-card">
+          <div class="day-photo" style="background:linear-gradient(135deg,#B25975,#7C6F5C)"><span>Oeschi · Männlichen</span></div>
+          <div class="day-stripe" style="background:var(--d8)"></div>
+          <div class="day-body">
+            <h3 class="day-title">Oeschinensee &amp; Männlichen–Kleine Scheidegg</h3>
+            <p class="day-route">Tagesausflüge ab Wengen · Bahn + Auto + Wandern</p>
+            <div class="day-meta"><span class="chip">Auto 100 km</span><span class="chip">Wandern 2 h leicht</span><span class="badge b-must">Pflicht · Oeschinensee</span></div>
+            <div class="note-box nb-info"><div class="ico">i</div><div><strong>Logistik:</strong> Vormittag Auto-Trip ab Wengen → Lauterbrunnen → Kandersteg. Nachmittag direkt von Wengen aus mit der Männlichen-Bahn — kein Auto nötig.</div></div>
+            <ul class="day-prog">
+              <li><strong>Frühstück 7:00</strong> im Apartment (Selbstversorgung)</li>
+              <li><strong>Bahn 7:30 Wengen → Lauterbrunnen</strong>, Auto raus aus dem Parkhaus</li>
+              <li><strong>Fahrt nach Kandersteg</strong> (~50 min)</li>
+              <li><strong>Oeschinensee-Sesselbahn ab Kandersteg</strong> 9:00 (CHF 35 retour, 14 min Auffahrt)</li>
+              <li><strong>Oeschinensee 1.578 m</strong> 9:30–11:30: Spaziergang zur Seeebene + Heuberg-Schleife (1,5 h, 200 HM, T1). UNESCO Jungfrau-Aletsch · Blümlisalp-Wand</li>
+              <li><strong>Talfahrt 12:00, Mittag Kandersteg</strong> oder Spiez (Restaurant „Belvédère" am See)</li>
+              <li><strong>Rück nach Lauterbrunnen ~14:30</strong>, Auto wieder ins Parkhaus</li>
+              <li><strong>Bahn Lauterbrunnen → Wengen 15:00</strong></li>
+              <li><strong>Nachmittag: Männlichen-Bahn ab Wengen</strong> (CHF 38 retour, 5 min vom Apartment, 8 min Auffahrt)</li>
+              <li><strong>Panoramaweg Männlichen → Kleine Scheidegg</strong> (1,5 h, T1) — einer der schönsten Aussichtswege der Schweiz, Eiger-Nordwand-Blick</li>
+              <li><strong>Bahn Kleine Scheidegg → Wengen</strong> (12 min)</li>
+              <li><strong>Abendessen im Apartment</strong> (oder Restaurant Hirschen Wengen)</li>
+            </ul>
+            <div class="note-box nb-good"><div class="ico">☂</div><div><strong>Plan B bei Regen:</strong> Oeschi-Sesselbahn fährt nicht bei Sturm → Trümmelbachfälle (überdacht, CHF 14) + entspannter Tag in Wengen mit Schweizer Wirtshausabend.</div></div>
+            <p class="stay">Übernachtung · <b>Wengen — Chalet Sonnenhof</b> <span class="badge b-booked">gebucht ✓</span> · 2. Nacht</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="day">
+        <div class="day-bullet"><div class="ring" style="background:var(--d9)"><span class="n">9</span><span class="t">Sa</span></div><div class="date hand">Sa 19.9.</div></div>
+        <div class="day-card">
+          <div class="day-photo" style="background:linear-gradient(135deg,#7C6F5C,#988877)"><span>First · Rückreise</span></div>
+          <div class="day-stripe" style="background:var(--d9)"></div>
+          <div class="day-body">
+            <h3 class="day-title">First · Bachalpsee · Iseltwald · Rückreise</h3>
+            <p class="day-route">Wengen → Grindelwald → Traben-Trarbach · ~750 km</p>
+            <div class="day-meta"><span class="chip">Wandern 2,5 h</span><span class="chip">Auto 7 h</span><span class="badge b-must">Pflicht · Berner Oberland</span></div>
+            <ul class="day-prog">
+              <li><strong>Frühstück 6:30</strong> im Apartment, Koffer packen, Check-out</li>
+              <li><strong>WAB-Bahn 7:30</strong> Wengen → Lauterbrunnen, Auto aus dem Parkhaus</li>
+              <li><strong>Fahrt nach Grindelwald-Grund</strong> 8:30 (~25 km, 35 min)</li>
+              <li><strong>Gondelbahn Grindelwald-First</strong> 9:00 (CHF 72 retour, Frühaufsteher-Tarif prüfen)</li>
+              <li><strong>Wanderung First → Bachalpsee → First</strong> ~2,5 h, T1, 200 HM</li>
+              <li><strong>Optional First Cliff Walk</strong> (frei, 15 min, Stahlsteg in der Wand)</li>
+              <li><strong>Talfahrt 12:00, Mittag Grindelwald-Grund</strong></li>
+              <li><strong>Abfahrt Heimreise ~13:00</strong></li>
+              <li><strong>Stopp Iseltwald</strong> 13:30 (Bond-Steg, 20 min) — direkt an der Brünig-Route</li>
+              <li><strong>Rückreise:</strong> Brünig → Luzern → Basel → Karlsruhe → Mosel · Ankunft ~21:00</li>
+            </ul>
+            <div class="note-box nb-warn"><div class="ico">!</div><div><strong>Bei Schlechtwetter:</strong> First streichen, früher abfahren — Ankunft schon 18:30. Bachalpsee lohnt nur bei klarer Sicht.</div></div>
+            <p class="stay">Heimkommen · <b>Traben-Trarbach</b> ♥</p>
+          </div>
+        </div>
+      </article>
+
     </div>
   </div>
 </section>
 
-<section id="hotels">
-  <h2>5 · Hotelübersicht &amp; Buchung</h2>
-  <p class="muted small">Preise nicht live verifiziert. Realistische Spannen für Mittelklasse-DZ inkl. Frühstück, Anfang/Mitte September 2026. Vor Buchung tagesgenau prüfen.</p>
+<section class="sec" id="highlights">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 5</div>
+      <h2 class="sec-title">Highlights nach Tagen</h2>
+      <p class="sec-lead">Pflicht, optional, Fotopunkte und Schlechtwetter-Backup für jeden Tag.</p>
+    </div>
 
-  <div class="box good"><div class="ico">✓</div><div><strong>Empfohlene Buchungsreihenfolge:</strong> 1. Lauterbrunnen · 2. Grindelwald · 3. Täsch · 4. Appenzell · 5. Engelberg · 6. Innertkirchen. Lauterbrunnen, Grindelwald und Täsch sollten in den nächsten 2 Wochen gebucht werden.</div></div>
-
-  <div class="hotel-card">
-    <div class="hotel-head"><div><div class="place">Übernachtung 1+2 · 11.–13.9.2026 (Fr+Sa) · 2 Nächte</div><h3>Appenzell</h3></div><span class="badge b-tag">Tag 1+2</span></div>
-    <div class="hotel-grid">
-      <div class="hotel-opt rec">
-        <h4>Adler Hotel Appenzell <span class="dots">★★★</span></h4>
-        <!-- Gut bewertetes Traditionshaus im Herzen von Appenzell. Doppelzimmer inkl. Frühstück sind für unsere Reisedaten (11.–13. 9. 2026) verfügbar.  -->
-        <div class="opt-price">CHF 450–500 ges. (2 Nächte)</div>
-        <div class="opt-meta">Zentral in der bemalten Hauptgasse gelegen · F + P inkl. · Storno 24 h ✓.<br>
-          <em>Doppelzimmer mit Frühstück ab etwa CHF 230 pro Nacht – ideale Basis für Stadtbummel und Alpstein‑Touren.</em></div>
-        <div class="btn-row">
-          <a class="btn btn-accent" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Adler+Hotel+Appenzell&checkin=2026-09-11&checkout=2026-09-13&group_adults=2&group_children=0&no_rooms=1">Booking öffnen</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://www.adlerhotel.ch/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Hotel Säntis <span class="dots">★★★★</span></h4>
-        <div class="opt-price">CHF 500–600 ges.</div>
-        <div class="opt-meta">Landsgemeindeplatz, traditionsreich · F inkl. · P CHF 15/Tag · Storno 48 h.<br>
-          <em>Komfortvoller, klassischer Stil.</em></div>
-        <div class="btn-row">
-          <a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+S%C3%A4ntis+Appenzell&checkin=2026-09-11&checkout=2026-09-13&group_adults=2&group_children=0&no_rooms=1">Booking</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://www.saentis-appenzell.ch/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Hotel Hof Weissbad <span class="dots">★★★★ Sup.</span></h4>
-        <div class="opt-price">CHF 760+ ges.</div>
-        <div class="opt-meta">3 km außerhalb, Wellness, Halbpension empfohlen.<br>
-          <em>Nur wenn Budget egal und Spa gewünscht.</em></div>
+    <div class="sights"><h4><span class="dot" style="background:var(--d1)"></span>Tag 1 · Anreise &amp; Rheinfall</h4>
+      <div class="sights-cols">
+        <div><h5>Pflicht</h5><ul><li>Rheinfall Schaffhausen (1,5 h)</li><li>Schloss Laufen + Plattform Känzeli</li><li>Appenzell Hauptgasse</li></ul></div>
+        <div><h5>Optional</h5><ul><li>Bootsfahrt Mittelfelsen (CHF 20)</li></ul></div>
+        <div><h5>Fotopunkte</h5><ul><li>Känzeli mit Schloss Laufen</li><li>Bemalte Häuser Hauptgasse</li></ul></div>
       </div>
     </div>
-  </div>
 
-  <div class="hotel-card">
-    <div class="hotel-head"><div><div class="place">Übernachtung 3 · 13.–14.9.2026 (So) · 1 Nacht</div><h3>Engelberg</h3></div><span class="badge b-tag">Tag 3</span></div>
-    <div class="hotel-grid">
-      <div class="hotel-opt rec">
-        <h4>Hotel Engelberg „mein Trail Hotel" <span class="dots">★★★</span></h4>
-        <div class="opt-price">CHF 190–230 (~EUR 200–245)</div>
-        <div class="opt-meta">Mitten im Dorf seit 1854 · F + P + Storno 24 h ✓ · 5 min Titlis-Bahn.<br>
-          <em>Beste Lage + persönlich geführt.</em></div>
-        <div class="btn-row">
-          <a class="btn btn-accent" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+Engelberg+Trail+Hotel&checkin=2026-09-13&checkout=2026-09-14&group_adults=2&group_children=0&no_rooms=1">Booking öffnen</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://hotel-engelberg.ch/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Hotel Terrace <span class="dots">★★★</span></h4>
-        <div class="opt-price">CHF 170–210</div>
-        <div class="opt-meta">Anhöhe über Engelberg, Bergpanorama · F + P inkl.<br>
-          <em>Wirtschaftlich, etwas außerhalb.</em></div>
-        <div class="btn-row">
-          <a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+Terrace+Engelberg&checkin=2026-09-13&checkout=2026-09-14&group_adults=2&group_children=0&no_rooms=1">Booking</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://www.hotelterrace.ch/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>H+ Hotel &amp; Spa Engelberg <span class="dots">★★★★</span></h4>
-        <div class="opt-price">CHF 260–310</div>
-        <div class="opt-meta">Modern, Spa/Pool/Sauna · F inkl. · Tiefgarage kostenpflichtig.<br>
-          <em>Komfortoption mit Wellness.</em></div>
-        <div class="btn-row"><a class="btn" target="_blank" rel="noopener" href="https://www.h-hotels.com/en/hplus/hotels/hplus-hotel-engelberg">Hotelwebsite</a></div>
+    <div class="sights"><h4><span class="dot" style="background:var(--d2)"></span>Tag 2 · Alpstein-Klassiker</h4>
+      <div class="sights-cols">
+        <div><h5>Pflicht</h5><ul><li>Ebenalp-Bahn (CHF 35)</li><li>Wildkirchli + Aescher</li><li>Schäfler 1.924 m</li><li>Seealpsee + Talweg</li></ul></div>
+        <div><h5>Optional / Reserve</h5><ul><li>Saxer Lücke (T3, 7 h)</li><li>Säntis-Gipfel (CHF 60)</li></ul></div>
+        <div><h5>Fotopunkte</h5><ul><li>Aescher in der Felswand</li><li>Säntis vom Schäfler</li><li>Seealpsee mit Spiegelung</li></ul></div>
+        <div><h5>Schlechtwetter</h5><ul><li>Säntis-Schwebebahn</li><li>Stiftsbibliothek St. Gallen</li><li>Appenzeller Schaukäserei</li></ul></div>
       </div>
     </div>
-  </div>
 
-  <div class="hotel-card">
-    <div class="hotel-head"><div><div class="place">Übernachtung 4 · 14.–15.9.2026 (Mo) · 1 Nacht</div><h3>Innertkirchen / Meiringen</h3></div><span class="badge b-tag">Tag 4</span></div>
-    <div class="hotel-grid">
-      <div class="hotel-opt rec">
-        <h4>Hotel Restaurant Urweider <span class="dots">★★★</span></h4>
-        <div class="opt-price">CHF 170–200 (~EUR 180–215)</div>
-        <div class="opt-meta">Innertkirchen, nahe Aareschlucht · F + P + Storno 24 h ✓ · gutes Restaurant.<br>
-          <em>Logistisch perfekt für Tag 5 (Grimsel-Start direkt vor der Tür).</em></div>
-        <div class="btn-row">
-          <a class="btn btn-accent" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+Urweider+Innertkirchen&checkin=2026-09-14&checkout=2026-09-15&group_adults=2&group_children=0&no_rooms=1">Booking öffnen</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://www.urweider.ch/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Hotel Hof und Post <span class="dots">★★★</span></h4>
-        <div class="opt-price">CHF 190–230</div>
-        <div class="opt-meta">Traditionelles Gasthaus im Zentrum von Innertkirchen · F + P inkl. · Storno 24 h ✓.<br>
-          <em>Günstige Alternative mit urigem Charme, ideal für Wanderer und Biker.</em></div>
-        <div class="btn-row">
-          <a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+Hof+und+Post+Innertkirchen&checkin=2026-09-14&checkout=2026-09-15&group_adults=2&group_children=0&no_rooms=1">Booking</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://hotel-hof-post.ch/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Parkhotel du Sauvage <span class="dots">★★★ Sup.</span></h4>
-        <div class="opt-price">CHF 200–240 (Meiringen)</div>
-        <div class="opt-meta">Belle-Epoque-Haus · F + P inkl.<br>
-          <em>Komfortvoll, historischer Charme.</em></div>
-        <div class="btn-row"><a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Parkhotel+du+Sauvage+Meiringen&checkin=2026-09-14&checkout=2026-09-15&group_adults=2&group_children=0&no_rooms=1">Booking</a></div>
+    <div class="sights"><h4><span class="dot" style="background:var(--d3)"></span>Tag 3 · Klöntal · Stoos · Engelberg</h4>
+      <div class="sights-cols">
+        <div><h5>Pflicht</h5><ul><li>Klöntalersee (Westufer)</li><li>Stoosbahn (CHF 30)</li><li>Fronalpstock-Sessellift</li></ul></div>
+        <div><h5>Optional</h5><ul><li>Klingenstock–Fronalpstock-Grat (2,5 h)</li><li>Schwyz Bundesbriefmuseum</li></ul></div>
+        <div><h5>Fotopunkte</h5><ul><li>Glärnisch-Spiegelung morgens</li><li>Vierwaldstättersee vom Fronalpstock</li></ul></div>
       </div>
     </div>
-  </div>
 
-  <div class="hotel-card">
-    <div class="hotel-head"><div><div class="place">Übernachtung 5+6 · 15.–17.9.2026 (Di+Mi) · 2 Nächte</div><h3>Täsch <span class="muted small" style="font-weight:400">(empfohlen statt Zermatt)</span></h3></div><span class="badge b-tag">Tag 5+6</span></div>
-    <div class="hotel-grid">
-      <div class="hotel-opt rec">
-        <h4>Welcome Hotel Täsch by Täscherhof <span class="dots">★★★</span></h4>
-        <!-- Updated after checking external booking sites in June 2026: Trip.com lists the Welcome Hotel Täsch by Täscherhof from US$142 (~CHF 130) per night【716294282629946†L49-L53】.  
-             Converting to Swiss francs gives an estimated price range of CHF 125–150 per night or CHF 250–300 for a two‑night stay. -->
-        <div class="opt-price">CHF 280–320 ges. (~EUR 300–340) · 140–160/Nacht</div>
-        <div class="opt-meta">Direkt am Bahnhof, Shuttle Zermatt im selben Gebäude · F + Garage CHF 15 + Storno 24 h ✓ · Sauna.<br>
-          <em>Beste Lage. Spart CHF 100+/Nacht gegenüber Zermatt.</em></div>
-        <div class="btn-row">
-          <a class="btn btn-accent" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Welcome+Hotel+T%C3%A4sch+T%C3%A4scherhof&checkin=2026-09-15&checkout=2026-09-17&group_adults=2&group_children=0&no_rooms=1">Booking öffnen</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://www.taescherhof.ch/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Hotel Täscherhof (Stammhaus) <span class="dots">★★★</span></h4>
-        <div class="opt-price">CHF 360–440 ges.</div>
-        <div class="opt-meta">Traditioneller, Bahnhofsnähe · F + P CHF 12.<br>
-          <em>Etwas günstiger, gleicher Eigentümer.</em></div>
-        <div class="btn-row"><a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+T%C3%A4scherhof&checkin=2026-09-15&checkout=2026-09-17&group_adults=2&group_children=0&no_rooms=1">Booking</a></div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Matterhorn Inn Täsch <span class="dots">★★★</span></h4>
-        <div class="opt-price">CHF 350–420 ges.</div>
-        <div class="opt-meta">Günstigste solide Option · F + P inkl.<br>
-          <em>Sparvariante mit ausreichender Qualität.</em></div>
-        <div class="btn-row"><a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Matterhorn+Inn+T%C3%A4sch&checkin=2026-09-15&checkout=2026-09-17&group_adults=2&group_children=0&no_rooms=1">Booking</a></div>
+    <div class="sights"><h4><span class="dot" style="background:var(--d4)"></span>Tag 4 · Bannalp · Susten · Aare</h4>
+      <div class="sights-cols">
+        <div><h5>Pflicht</h5><ul><li>Sustenpass 2.224 m (Fahrt)</li><li>Aareschlucht (CHF 12)</li></ul></div>
+        <div><h5>Optional</h5><ul><li>Bannalpsee (CHF 40, 1,5 h)</li><li>Steingletscher-Aussicht</li><li>Sustenhornblick</li></ul></div>
+        <div><h5>Fotopunkte</h5><ul><li>Bannalpsee mit Walenstöcken</li><li>Sustenpass-Kehren</li></ul></div>
       </div>
     </div>
-    <div class="box info" style="margin-top:12px"><div class="ico">i</div><div><strong>Falls dennoch Zermatt:</strong> Hotel Continental Zermatt 3* CHF 520–620 ges., zentral aber teuer. Auto muss in Täsch parken (Zermatt autofrei).</div></div>
-  </div>
 
-  <div class="hotel-card">
-    <div class="hotel-head"><div><div class="place">Übernachtung 7 · 17.–18.9.2026 (Do) · 1 Nacht</div><h3>Lauterbrunnen</h3></div><span class="badge b-tag">Tag 7</span></div>
-    <div class="hotel-grid">
-      <div class="hotel-opt rec">
-        <h4>Hotel Schützen Lauterbrunnen <span class="dots">★★★</span></h4>
-        <!-- Economy‑Doppelzimmer mit eigenem Bad und Frühstück verfügbar für den 17.–18. September 2026 laut Booking.com. -->
-        <div class="opt-price">CHF 230–260</div>
-        <div class="opt-meta">Zentral im Dorf, familiengeführt · F + P inkl. · Storno 48 h ✓.<br>
-          <em>Economy‑Doppelzimmer oder Zweibettzimmer mit eigenem Bad und Frühstück ab ca. CHF 250/Nacht.</em></div>
-        <div class="btn-row">
-          <a class="btn btn-accent" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+Sch%C3%BCtzen+Lauterbrunnen&checkin=2026-09-17&checkout=2026-09-18&group_adults=2&group_children=0&no_rooms=1">Booking öffnen</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://hotelschuetzen.com/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Hotel Staubbach <span class="dots">★★★</span></h4>
-        <div class="opt-price">CHF 150–200</div>
-        <div class="opt-meta">Direkter Blick auf den Staubbachfall · F + P inkl. · Storno 24 h ✓.<br>
-          <em>Dachgeschoss‑ und Budgetzimmer mit Gemeinschaftsbad – günstigste Option.</em></div>
-        <div class="btn-row">
-          <a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+Staubbach+Lauterbrunnen&checkin=2026-09-17&checkout=2026-09-18&group_adults=2&group_children=0&no_rooms=1">Booking</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://www.staubbach.com/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Hotel Silberhorn <span class="dots">★★★ Sup.</span></h4>
-        <div class="opt-price">CHF 260–320</div>
-        <div class="opt-meta">Erhöhte Lage, Panorama‑Restaurant · F + P inkl.<br>
-          <em>Komfortable Alternative mit schöner Aussicht.</em></div>
-        <div class="btn-row"><a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+Silberhorn+Lauterbrunnen&checkin=2026-09-17&checkout=2026-09-18&group_adults=2&group_children=0&no_rooms=1">Booking</a></div>
+    <div class="sights"><h4><span class="dot" style="background:var(--d5)"></span>Tag 5 · Grimsel · Furka · Wallis</h4>
+      <div class="sights-cols">
+        <div><h5>Pflicht</h5><ul><li>Grimselpass 2.165 m + Totensee</li><li>Furkapass 2.429 m + Belvedere</li><li>Rhonegletscher (Foto)</li></ul></div>
+        <div><h5>Optional</h5><ul><li>Handeggfallbrücke (CHF 16)</li><li>Eisgrotte (CHF 9)</li><li>Stadtbummel Brig</li></ul></div>
+        <div><h5>Fotopunkte</h5><ul><li>Furka-Belvedere mit Rhonegletscher</li><li>Grimsel-Stauseen</li></ul></div>
       </div>
     </div>
-  </div>
 
-  <div class="hotel-card">
-    <div class="hotel-head"><div><div class="place">Übernachtung 8 · 18.–19.9.2026 (Fr) · 1 Nacht</div><h3>Grindelwald</h3></div><span class="badge b-tag">Tag 8</span></div>
-    <div class="hotel-grid">
-      <div class="hotel-opt rec">
-        <h4>Hotel Central Wolter – Grindelwald <span class="dots">★★★</span></h4>
-        <!-- Studios und Doppelzimmer mit Kochnische oder Balkon laut Booking.com verfügbar für den 18.–19. 9. 2026; Frühstück inklusive. -->
-        <div class="opt-price">CHF 270–300</div>
-        <div class="opt-meta">Mitten im Dorf, 3 min zur First‑Bahn · F + P inkl. · Storno 24 h ✓.<br>
-          <em>Geräumige Studios oder Doppelzimmer ab etwa CHF 280 pro Nacht inklusive Frühstück.</em></div>
-        <div class="btn-row">
-          <a class="btn btn-accent" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Central+Wolter+Grindelwald&checkin=2026-09-18&checkout=2026-09-19&group_adults=2&group_children=0&no_rooms=1">Booking öffnen</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://www.central-wolter.ch/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Hotel Bernerhof Grindelwald <span class="dots">★★★</span></h4>
-        <div class="opt-price">CHF 200–240</div>
-        <div class="opt-meta">Zentrale Lage, Blick zum Eiger · F + P inkl. · Storno 24 h ✓.<br>
-          <em>Solide Mittelklasse mit bestem Preis‑Leistungs‑Verhältnis.</em></div>
-        <div class="btn-row">
-          <a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+Bernerhof+Grindelwald&checkin=2026-09-18&checkout=2026-09-19&group_adults=2&group_children=0&no_rooms=1">Booking</a>
-          <a class="btn" target="_blank" rel="noopener" href="https://www.bernerhof-grindelwald.ch/">Hotelwebsite</a>
-        </div>
-      </div>
-      <div class="hotel-opt">
-        <h4>Hotel Kreuz & Post Grindelwald <span class="dots">★★★ Sup.</span></h4>
-        <div class="opt-price">CHF 220–280</div>
-        <div class="opt-meta">Traditionshaus mit Sauna und Restaurant · F + P inkl. · Storno 48 h.<br>
-          <em>Komfortable Option in bester Lage.</em></div>
-        <div class="btn-row"><a class="btn" target="_blank" rel="noopener" href="https://www.booking.com/searchresults.html?ss=Hotel+Kreuz+Post+Grindelwald&checkin=2026-09-18&checkout=2026-09-19&group_adults=2&group_children=0&no_rooms=1">Booking</a></div>
+    <div class="sights"><h4><span class="dot" style="background:var(--d6)"></span>Tag 6 · Zermatt · Gornergrat</h4>
+      <div class="sights-cols">
+        <div><h5>Pflicht</h5><ul><li>Shuttle Täsch → Zermatt</li><li>Gornergrat-Bahn (CHF 132)</li><li>Zermatt-Hinterdorf</li></ul></div>
+        <div><h5>Optional</h5><ul><li>Klein Matterhorn (CHF 130)</li><li>Riffelsee-Abstecher</li><li>Matterhorn-Museum (CHF 12)</li></ul></div>
+        <div><h5>Fotopunkte</h5><ul><li>Matterhorn vom Gornergrat</li><li>Riffelsee-Spiegelung</li></ul></div>
       </div>
     </div>
-  </div>
 
-  <h3 style="margin-top:24px">Hotel-Bewertungs-Tabelle</h3>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr><th>Datum</th><th>Ort</th><th>Empfehlung</th><th>Alternative</th><th>Preis Empf.</th><th>Storno / F / P</th><th>Bewertung</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>11.–13.9.</td><td>Appenzell</td><td>Adler Hotel 3*</td><td>Hotel Säntis 4*</td><td>CHF 450–500</td><td>24 – 48 h · ja · ja</td><td>★★★★☆</td></tr>
-        <tr><td>13.–14.9.</td><td>Engelberg</td><td>Hotel Engelberg</td><td>Hotel Terrace</td><td>CHF 190–230</td><td>24–48 h · ja · ja</td><td>★★★★☆</td></tr>
-        <tr><td>14.–15.9.</td><td>Innertkirchen</td><td>Hotel Urweider</td><td>Hotel Hof und Post</td><td>CHF 190–230</td><td>24 h · ja · ja</td><td>★★★★☆</td></tr>
-        <tr><td>15.–17.9.</td><td>Täsch</td><td>Welcome Hotel Täsch</td><td>Matterhorn Inn</td><td>CHF 280–320</td><td>24 h · ja · CHF 15</td><td>★★★★★</td></tr>
-        <tr><td>17.–18.9.</td><td>Lauterbrunnen</td><td>Hotel Schützen</td><td>Hotel Staubbach</td><td>CHF 230–260</td><td>24–48 h · ja · ja</td><td>★★★★★</td></tr>
-        <tr><td>18.–19.9.</td><td>Grindelwald</td><td>Hotel Central Wolter 3*</td><td>Hotel Bernerhof</td><td>CHF 270–300</td><td>24 h · ja · ja</td><td>★★★★★</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="box good" style="margin-top:14px"><div class="ico">✓</div><div><strong>Hotel-vs-Airbnb-Empfehlung:</strong> klar <em>Hotels</em>. Bei 8 Nächten in 5 Orten und 4× nur 1 Nacht machen Airbnb-Reinigungsgebühren CHF 60–120 pro Buchung die Reise um 240–480 CHF teurer. Außerdem fehlen Frühstück, Parkplatz und flexible Stornierung.</div></div>
-</section>
-
-<section id="budget">
-  <h2>6 · Budgetübersicht (2 Personen, 9 Tage)</h2>
-  <p class="muted small">Realistische Spannen. Live-Preise sind die Hotelkosten – alle anderen Werte sind Schätzungen mit Marktkenntnis Schweiz 2026.</p>
-
-  <div class="grid grid-3" style="margin:14px 0 22px">
-    <div class="card center"><h4 style="color:var(--c-muted);font-weight:500;margin:0">Wirtschaftlich</h4><div style="font-size:28px;font-weight:700;color:var(--c-primary);margin:6px 0">~EUR 3.500</div><div class="small muted">Minimale Bergbahnen, Mittagessen aus Rucksack</div></div>
-    <div class="card center" style="border:2px solid var(--c-accent)"><h4 style="color:var(--c-accent-2);font-weight:500;margin:0">Empfohlen</h4><div style="font-size:28px;font-weight:700;color:var(--c-primary);margin:6px 0">~EUR 4.000</div><div class="small muted">Alle Bergbahnen, ausgewogen</div></div>
-    <div class="card center"><h4 style="color:var(--c-muted);font-weight:500;margin:0">Komfort</h4><div style="font-size:28px;font-weight:700;color:var(--c-primary);margin:6px 0">~EUR 4.600</div><div class="small muted">4*-Aufpreis, Glacier Paradise + Halbpension überall</div></div>
-  </div>
-
-  <div class="table-wrap">
-    <table class="budget-table">
-      <thead><tr><th>Position</th><th>Schätzung / Verifizierung</th><th class="num">CHF</th><th class="num">EUR ca.</th></tr></thead>
-      <tbody>
-        <tr><td>Hotels 8 Nächte DZ inkl. Frühstück</td><td>Verifizierte Spanne, nicht live</td><td class="num">1.580–1.920</td><td class="num">1.670–2.030</td></tr>
-        <tr><td>Bergbahnen + Eintritte (Gornergrat, Sunnegga, Ebenalp, Stoos, Bannalp, Oeschi, First, Mürren)</td><td>Listenpreise verifiziert</td><td class="num">750–850</td><td class="num">790–900</td></tr>
-        <tr><td>Lötschberg-Autoverlad</td><td>Verifiziert</td><td class="num">28</td><td class="num">30</td></tr>
-        <tr><td>Schweizer Vignette 2026</td><td>Verifiziert</td><td class="num">40</td><td class="num">42</td></tr>
-        <tr><td>Sprit + Maut Anreise/Rückreise DE</td><td>Schätzung 1.400 km · ~7,5 L/100 km</td><td class="num">–</td><td class="num">230–280</td></tr>
-        <tr><td>Sprit Schweiz (~600 km)</td><td>Schätzung CHF 1,95/L</td><td class="num">90–110</td><td class="num">95–120</td></tr>
-        <tr><td>Restaurant Mittag/Abend (ca. 65 €/Pers./Tag × 9)</td><td>Schätzung</td><td class="num">–</td><td class="num">1.000–1.200</td></tr>
-        <tr><td>Aareschlucht, Blausee, Trümmelbach, Eintritte</td><td>Listenpreise</td><td class="num">60–90</td><td class="num">65–95</td></tr>
-        <tr><td>Parken (Wasserauen, Matterhorn Terminal)</td><td>Schätzung</td><td class="num">70–100</td><td class="num">75–110</td></tr>
-        <tr><td>Reserve / unvorhergesehen</td><td>~5 % auf Tagesbudget</td><td class="num">180</td><td class="num">190</td></tr>
-        <tr class="budget-row-total"><td>Gesamt empfohlen</td><td>Mittelwert</td><td class="num">~3.750</td><td class="num">~4.000</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="box info" style="margin-top:14px"><div class="ico">i</div><div><strong>Sparpotenzial:</strong> Halbpension in Bergregionen (–10 %), Mittagessen aus dem Rucksack auf Wandertagen (–EUR 200), Klein Matterhorn streichen (–CHF 260 für 2), Halbtax-Karte ab 4 Bergbahnen lohnend (Touristen CHF 185 für 1 Monat). Tessin-Streichung gegenüber Erstversion spart ~EUR 50 Sprit.</div></div>
-</section>
-
-<section id="checkliste">
-  <h2>7 · Buchungs-Checkliste</h2>
-  <p class="muted small">Priorisierte Reihenfolge. Top 4 sollten innerhalb der nächsten 2–4 Wochen erledigt sein.</p>
-
-  <div class="check-item urgent"><div class="prio">1</div><div class="body"><h4>Lauterbrunnen buchen (17.–18.9.)</h4><p>Pflicht‑Standort, Hauptsaison – empfehlenswert ist das Hotel Schützen (Economy‑Zimmer mit Frühstück). Das Hotel Staubbach steht als günstige Budget‑Option bereit.</p></div><span class="when">Diese Woche</span></div>
-
-  <div class="check-item urgent"><div class="prio">2</div><div class="body"><h4>Grindelwald buchen (18.–19.9.)</h4><p>Freitag‑Wochenendnacht in Hauptsaison. Unsere Empfehlung: Hotel Central Wolter (3*) oder alternativ Hotel Bernerhof. Früh buchen sichert Zimmer mit Eigerblick.</p></div><span class="when">Diese Woche</span></div>
-
-  <div class="check-item urgent"><div class="prio">3</div><div class="body"><h4>Täsch buchen (15.–17.9.)</h4><p>Welcome Hotel Täsch / Täscherhof – Tor zum autofreien Zermatt, hohe Nachfrage. Täsch CHF 100+/Nacht günstiger als Zermatt bei gleicher Erreichbarkeit (12 min Zug).</p></div><span class="when">Diese Woche</span></div>
-
-  <div class="check-item urgent"><div class="prio">4</div><div class="body"><h4>Appenzell buchen (11.–13.9.)</h4><p>Wochenende (Fr+Sa), Einheimische und Schweizer Touristen buchen. Unsere Empfehlung ist das <strong>Adler Hotel Appenzell</strong> (traditionsreiches Stadthotel mit Frühstück). Als Alternative bietet sich das <strong>Hotel Säntis</strong> an.</p></div><span class="when">Innerhalb 2 Wochen</span></div>
-
-  <div class="check-item"><div class="prio">5</div><div class="body"><h4>Engelberg buchen (13.–14.9.)</h4><p>Sonntagnacht, weniger kritisch.</p></div><span class="when">Innerhalb 4 Wochen</span></div>
-
-  <div class="check-item"><div class="prio">6</div><div class="body"><h4>Innertkirchen buchen (14.–15.9.)</h4><p>Werktagsnacht, meist verfügbar.</p></div><span class="when">Bis Juli 2026</span></div>
-
-  <div class="check-item"><div class="prio">7</div><div class="body"><h4>Lötschberg-Autoverlad</h4><p>Reservierung empfohlen für Do 17.9. nachmittags ab Goppenstein, online über <a href="https://www.bls.ch/de/fahren/autoverlad/loetschberg" target="_blank">bls.ch/autoverlad</a>. Spart Wartezeit.</p></div><span class="when">3–5 Tage vorher</span></div>
-
-  <div class="check-item"><div class="prio">8</div><div class="body"><h4>Aescher-Wildkirchli reservieren</h4><p>Berggasthaus im Fels, sehr stark frequentiert. Mittag für 12:00/12:30 reservieren. <strong>T +41 71 799 11 42</strong> oder <a href="https://aescher.ch" target="_blank">aescher.ch</a>.</p></div><span class="when">1–2 Monate vorher</span></div>
-
-  <div class="check-item"><div class="prio">9</div><div class="body"><h4>Schweizer Vignette 2026</h4><p>CHF 40 als E-Vignette über <a href="https://via.admin.ch" target="_blank">via.admin.ch</a> – kennzeichengebunden, kein Kleber. Sofort kaufbar.</p></div><span class="when">Vor Abreise</span></div>
-
-  <div class="check-item"><div class="prio">10</div><div class="body"><h4>Wetter- und Bergbahn-Check 3–5 Tage vorher</h4><p><a href="https://www.meteoschweiz.admin.ch" target="_blank">meteoschweiz.admin.ch</a> für Bergwetter. Gornergrat, First-Bahn nur bei klarer Sicht buchen.</p></div><span class="when">3–5 Tage vorher</span></div>
-
-  <div class="check-item"><div class="prio">11</div><div class="body"><h4>Parkplätze prüfen</h4><p>Matterhorn Terminal Täsch (kein Voraus-Reserve nötig, immer Plätze), Wasserauen-Talstation (kostenpflichtig), Hotel-Parkplätze bestätigen.</p></div><span class="when">1–2 Wochen vorher</span></div>
-
-  <div class="check-item"><div class="prio">12</div><div class="body"><h4>Halbtax-Karte prüfen</h4><p>Ab 4 Bergbahnen + Gornergrat lohnt sich Touristen-Halbtax (CHF 185 für 1 Monat). Im aktuellen Plan grenzwertig wirtschaftlich.</p></div><span class="when">Vor Abreise</span></div>
-
-  <div class="check-item"><div class="prio">13</div><div class="body"><h4>Reiseversicherung / Stornobedingungen</h4><p>Bei Buchung „kostenfreie Stornierung" wählen. Reise-Rücktrittsversicherung bei Vorerkrankungen sinnvoll.</p></div><span class="when">Bei Buchung</span></div>
-</section>
-
-<section id="risiken">
-  <h2>8 · Risiken &amp; Optimierung</h2>
-
-  <div class="grid grid-2">
-    <div class="card">
-      <h3>Hauptrisiken</h3>
-      <ul>
-        <li><strong>Wetterabhängigkeit Bergbahnen:</strong> Gornergrat, Glacier Paradise, First-Bahn sind bei Bewölkung sinnlos teuer. Tagesentscheidung treffen.</li>
-        <li><strong>Pässe (Susten/Grimsel/Furka) Anfang September:</strong> alle befahrbar, aber Wettersturz möglich (Schnee oberhalb 2.500 m). Notfall: Lötschberg-Verlad statt Furka.</li>
-        <li><strong>Tag 7 zeitlich enger:</strong> 5-Seen + Verlad + Blausee + Lauterbrunnen. Bei mauem Wetter morgens: 5-Seen verkürzen.</li>
-        <li><strong>Tag 8 Oeschinensee-Bahn:</strong> fährt nicht bei Nebel/Sturm. Alternative: direkt zu Trümmelbach + Mürren.</li>
-        <li><strong>Lötschberg-Verlad Do 17.9. nachmittags:</strong> Reservierung 24 h vorher sichert Slot.</li>
-        <li><strong>Lauterbrunnen + Grindelwald + Täsch:</strong> sofort buchen, sonst nicht mehr verfügbar.</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>Optimierungs-Empfehlungen</h3>
-      <ul>
-        <li><strong>Halbpension</strong> in Bergregionen (Engelberg, Täsch, Lauterbrunnen, Grindelwald) reduziert Abendessenkosten 20–30 %.</li>
-        <li><strong>Mittagessen aus dem Rucksack</strong> auf Wandertagen 2/7/8/9: spart EUR 200+.</li>
-        <li><strong>Parken in Täsch:</strong> Matterhorn Terminal ist gedeckt, immer frei, CHF 17/Tag.</li>
-        <li><strong>Reservierung Aescher</strong> unbedingt vorab.</li>
-        <li><strong>First-Bahn früh morgens:</strong> spart Wartezeit, beste Sicht vor Wolken.</li>
-        <li><strong>Wetter-Switch zwischen Tag 6 und 7:</strong> Wenn Mi schlecht, Gornergrat auf Do verlegen und 5-Seen auf Mi.</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="box info"><div class="ico">i</div><div><strong>Wenn das Wetter schlecht ist:</strong> Aareschlucht, Trümmelbachfälle, Blausee, Säntis-Schwebebahn (fährt im Nebel), Matterhorn-Museum, Verkehrshaus Luzern, Stiftsbibliothek St. Gallen, Stockalperschloss Brig.</div></div>
-  <div class="box warn"><div class="ico">€</div><div><strong>Wenn Budget gespart werden soll:</strong> Halbpension überall, Klein Matterhorn streichen (–CHF 260), 3* statt 4* in Appenzell, Mittagessen aus Rucksack auf 4 Wandertagen, Hotel Bernerhof in Grindelwald statt Central Wolter (–CHF 30/Nacht).</div></div>
-</section>
-
-<section id="reserve">
-  <h2>9 · Reserve / Was nur bei Verlängerung sinnvoll ist</h2>
-  <p class="muted small">Ziele aus der Wunschliste, die im 9-Tage-Plan nicht reinpassen. Bewertet nach Zeitbedarf, Kosten und Sinnhaftigkeit.</p>
-
-  <div class="reserve-grid">
-
-    <div class="res-card r-no">
-      <h4>Tessin · Locarno · Foroglio · Verzasca</h4>
-      <dl>
-        <dt>Zeit</dt><dd>Mindestens 1 Übernachtung Locarno + 1 voller Tagesabschnitt für Bavona/Verzasca</dd>
-        <dt>Kosten</dt><dd>Hotel ~CHF 170 + Sprit Tessin-Schleife CHF 80</dd>
-        <dt>Bester Einbautag</dt><dd>Mit Bavona-Tagesausflug nur sinnvoll bei 10–11 Tagen Reise</dd>
-        <dt>Bewertung</dt><dd>Schöne Region, aber Tagesetappe mit Grimsel/Furka/Tessin/Locarno war im Erstplan zu eng. Streichung war richtig.</dd>
-      </dl>
-      <span class="rec n">Streichen / nur bei Verlängerung</span>
+    <div class="sights"><h4><span class="dot" style="background:var(--d7)"></span>Tag 7 · 5-Seen · Lötschberg · Wengen</h4>
+      <div class="sights-cols">
+        <div><h5>Pflicht</h5><ul><li>Sunnegga-Bahn (CHF 25)</li><li>5 Seen mit Matterhorn</li><li>Lötschberg-Verlad (CHF 28)</li><li>Blausee (CHF 10)</li></ul></div>
+        <div><h5>Optional</h5><ul><li>Fluhalp-Mittag</li><li>Forellenessen Blausee</li><li>Spaziergang Lauterbrunnental</li></ul></div>
+        <div><h5>Fotopunkte</h5><ul><li>Stellisee mit Matterhorn</li><li>Blausee smaragdgrün</li></ul></div>
+      </div>
     </div>
 
-    <div class="res-card r-no">
-      <h4>Gotthardpass + Tremola-Strasse</h4>
-      <dl>
-        <dt>Zeit</dt><dd>+2 h Zusatz auf Tag 5</dd>
-        <dt>Kosten</dt><dd>Sprit ~CHF 30</dd>
-        <dt>Bester Einbautag</dt><dd>Nur wenn Tessin auch drin</dd>
-        <dt>Bewertung</dt><dd>Lohnt sich nur in Kombination mit Tessin. Mit Grimsel+Furka allein ist die Pässe-Quote schon hoch.</dd>
-      </dl>
-      <span class="rec n">Streichen</span>
+    <div class="sights"><h4><span class="dot" style="background:var(--d8)"></span>Tag 8 · Oeschi · Männlichen · Kleine Scheidegg</h4>
+      <div class="sights-cols">
+        <div><h5>Pflicht</h5><ul><li>Oeschinensee-Sesselbahn (CHF 35)</li><li>Oeschinensee + Blümlisalp</li><li>Männlichenbahn (CHF 38)</li><li>Panoramaweg Männlichen–Kleine Scheidegg</li></ul></div>
+        <div><h5>Optional</h5><ul><li>Trümmelbachfälle (CHF 14)</li><li>Mürren-Abstecher</li><li>Schilthorn / Piz Gloria (CHF 90)</li></ul></div>
+        <div><h5>Fotopunkte</h5><ul><li>Oeschinensee mit Blümlisalp-Wand</li><li>Eiger-Nordwand vom Männlichen</li></ul></div>
+      </div>
     </div>
 
-    <div class="res-card r-no">
-      <h4>Jungfraujoch · Top of Europe</h4>
-      <dl>
-        <dt>Zeit</dt><dd>Halbtagesausflug 5–6 h</dd>
-        <dt>Kosten</dt><dd>CHF 235/Pers. = CHF 470 für 2</dd>
-        <dt>Bester Einbautag</dt><dd>Eigener Tag, frühestens Tag 10</dd>
-        <dt>Bewertung</dt><dd>Sehr teuer, nur bei klarer Sicht lohnend. Kein Slot im 9-Tage-Plan.</dd>
-      </dl>
-      <span class="rec n">Streichen / nur bei Verlängerung</span>
+    <div class="sights"><h4><span class="dot" style="background:var(--d9)"></span>Tag 9 · First · Bachalpsee · Rückreise</h4>
+      <div class="sights-cols">
+        <div><h5>Pflicht</h5><ul><li>First-Bahn Grindelwald (CHF 72)</li><li>Bachalpsee-Wanderung (2,5 h)</li></ul></div>
+        <div><h5>Optional</h5><ul><li>First Cliff Walk (frei)</li><li>Iseltwald Bond-Steg</li></ul></div>
+        <div><h5>Fotopunkte</h5><ul><li>Bachalpsee mit Schreckhorn</li><li>Eiger vom First-Sessellift</li><li>Bond-Steg Iseltwald</li></ul></div>
+      </div>
     </div>
 
-    <div class="res-card r-yes">
-      <h4>Grindelwald-First &amp; Bachalpsee</h4>
-      <dl>
-        <dt>Zeit</dt><dd>3–4 h (im Plan: Tag 9 morgens)</dd>
-        <dt>Kosten</dt><dd>First-Bahn CHF 72/Pers.</dd>
-        <dt>Bester Einbautag</dt><dd>Tag 9 morgens (im Plan integriert)</dd>
-        <dt>Bewertung</dt><dd>Im Plan drin! Bachalpsee mit Schreckhorn-Spiegelung ist eines der besten Berner-Oberland-Highlights.</dd>
-      </dl>
-      <span class="rec y">Im Plan drin ✓</span>
-    </div>
-
-    <div class="res-card r-opt">
-      <h4>Kleine Scheidegg</h4>
-      <dl>
-        <dt>Zeit</dt><dd>3–4 h ab Grindelwald</dd>
-        <dt>Kosten</dt><dd>CHF 65 retour Grindelwald–Kleine Scheidegg</dd>
-        <dt>Bester Einbautag</dt><dd>Tag 9 statt First (wenn First überfüllt)</dd>
-        <dt>Bewertung</dt><dd>Eiger-Nordwand-Blick spektakulär. Männlichen-Variante (Bahn ab Grindelwald-Grund) + Panoramaweg zu Kleine Scheidegg ist Top-Halbtag.</dd>
-      </dl>
-      <span class="rec o">Tag 9 Alternative zu First</span>
-    </div>
-
-    <div class="res-card r-yes">
-      <h4>Männlichen</h4>
-      <dl>
-        <dt>Zeit</dt><dd>1,5 h Panoramaweg zur Kleinen Scheidegg</dd>
-        <dt>Kosten</dt><dd>Männlichenbahn CHF 64 retour</dd>
-        <dt>Bester Einbautag</dt><dd>Tag 9 morgens (Alternative First)</dd>
-        <dt>Bewertung</dt><dd>Sehr lohnend bei klarem Wetter, mehr Eiger-Blick als First.</dd>
-      </dl>
-      <span class="rec o">Tag 9 Alternative</span>
-    </div>
-
-    <div class="res-card r-opt">
-      <h4>Wengen</h4>
-      <dl>
-        <dt>Zeit</dt><dd>2 h ab Lauterbrunnen</dd>
-        <dt>Kosten</dt><dd>CHF 14 retour</dd>
-        <dt>Bester Einbautag</dt><dd>Tag 8 statt Mürren (Mürren ist landschaftlich beeindruckender)</dd>
-        <dt>Bewertung</dt><dd>Nettes Dorf, aber Mürren wins.</dd>
-      </dl>
-      <span class="rec o">Mürren-Alternative</span>
-    </div>
-
-    <div class="res-card r-opt">
-      <h4>Mürren · Schilthorn · Piz Gloria</h4>
-      <dl>
-        <dt>Zeit</dt><dd>Mürren 2 h · Schilthorn ab Mürren +2,5 h</dd>
-        <dt>Kosten</dt><dd>Mürren CHF 18 · Schilthorn ges. CHF 90</dd>
-        <dt>Bester Einbautag</dt><dd>Mürren im Plan Tag 8 · Schilthorn nur als Alternative</dd>
-        <dt>Bewertung</dt><dd>Mürren ist drin als Tag-8-Option. Schilthorn (Drehrestaurant Piz Gloria, James Bond) lohnt sich, aber dann fällt Trümmelbach aus.</dd>
-      </dl>
-      <span class="rec o">Mürren im Plan · Schilthorn Tag-8-Alternative</span>
-    </div>
-
-    <div class="res-card r-opt">
-      <h4>Saxer Lücke</h4>
-      <dl>
-        <dt>Zeit</dt><dd>6–7 h, 1.000 HM, T3</dd>
-        <dt>Kosten</dt><dd>Nur Ebenalp-Bahn CHF 35</dd>
-        <dt>Bester Einbautag</dt><dd>Tag 2 statt Schäfler-Seealpsee</dd>
-        <dt>Bewertung</dt><dd>Anspruchsvoll, lohnt nur bei sehr guter Kondition.</dd>
-      </dl>
-      <span class="rec o">Tag 2 als Alternative</span>
-    </div>
-
-    <div class="res-card r-yes">
-      <h4>Säntis-Gipfel</h4>
-      <dl>
-        <dt>Zeit</dt><dd>2,5 h ab Appenzell</dd>
-        <dt>Kosten</dt><dd>CHF 60 retour Schwebebahn</dd>
-        <dt>Bester Einbautag</dt><dd>Tag 2 nachmittags oder als Schlechtwetter-Variante</dd>
-        <dt>Bewertung</dt><dd>Höchster Punkt der Ostschweiz, fährt auch bei Nebel.</dd>
-      </dl>
-      <span class="rec y">Schlechtwetter-Option Tag 2</span>
-    </div>
-
-    <div class="res-card r-no">
-      <h4>Walenstadt / Seerenbachfälle</h4>
-      <dl>
-        <dt>Zeit</dt><dd>3 h Stopp am Walensee</dd>
-        <dt>Kosten</dt><dd>Frei</dd>
-        <dt>Bester Einbautag</dt><dd>Tag 3 statt Klöntal – aber 60 km Umweg</dd>
-        <dt>Bewertung</dt><dd>Klöntal ist effizienter, Seerenbachfälle abseits der Route.</dd>
-      </dl>
-      <span class="rec n">Streichen</span>
-    </div>
-
-    <div class="res-card r-yes">
-      <h4>Iseltwald · Brienzersee</h4>
-      <dl>
-        <dt>Zeit</dt><dd>20 min Stopp am Rückweg</dd>
-        <dt>Kosten</dt><dd>Frei (Parkplatz CHF 5)</dd>
-        <dt>Bester Einbautag</dt><dd>Tag 9 auf dem Heimweg, direkt an der Brünig-Route</dd>
-        <dt>Bewertung</dt><dd>Bond-Steg-Stopp, im Plan vorgesehen.</dd>
-      </dl>
-      <span class="rec y">Im Plan drin ✓</span>
-    </div>
   </div>
 </section>
 
-</div>
+<section class="sec tint" id="hotels">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 6</div>
+      <h2 class="sec-title">Wo wir schlafen</h2>
+      <p class="sec-lead">Detail-Karten zu allen Hotels mit Adresse, Telefonnummer, Buchungsnummer und PIN für den Check-in. Alle Daten aus den Booking.com-Bestätigungen.</p>
+    </div>
 
-<footer style="background:var(--c-primary);color:#fff;padding:24px 0;text-align:center;font-size:13px">
-  <div class="container">
-    Schweiz-Rundreise 2026 · Stand Juni 2026 · Erstellt als private Reiseübersicht ·
-    <a href="#ubersicht" style="color:#fff;text-decoration:underline">↑ Nach oben</a>
+    <div class="hotel pending">
+      <div class="hotel-head"><div><span class="place hand">Nacht 1+2 · Appenzell</span><h3>Hotel Koller</h3></div><span class="badge b-pending">angefragt</span></div>
+      <div class="hotel-grid-info">
+        <div class="hi-cell"><span class="lbl">Anreise</span><span class="val">Fr 11.9.</span></div>
+        <div class="hi-cell"><span class="lbl">Abreise</span><span class="val">So 13.9.</span></div>
+        <div class="hi-cell"><span class="lbl">Nächte</span><span class="val">2</span></div>
+        <div class="hi-cell"><span class="lbl">Preis ges. (geschätzt)</span><span class="val big">~CHF 420 <small>(~€450)</small></span></div>
+        <div class="hi-cell"><span class="lbl">Status</span><span class="val">Anfrage offen</span></div>
+      </div>
+      <p class="small"><strong>Hotel Koller</strong> · Hauptgasse, Appenzell · Traditionsreiches 3*-Stadthaus, kostenfreier Parkplatz, gutes Restaurant. Antwort steht aus.</p>
+      <p class="small muted"><em>Backup falls ausgebucht:</em> Hotel Säntis 4* am Landsgemeindeplatz (CHF 500–600 ges.) oder Hotel Appenzell (CHF 440–520 ges.)</p>
+    </div>
+
+    <div class="hotel booked">
+      <div class="hotel-head"><div><span class="place hand">Nacht 3 · Engelberg</span><h3>Hotel Terrace</h3></div><span class="badge b-booked">gebucht ✓</span></div>
+      <div class="hotel-grid-info">
+        <div class="hi-cell"><span class="lbl">Anreise</span><span class="val">So 13.9. · 16:00–22:00</span></div>
+        <div class="hi-cell"><span class="lbl">Abreise</span><span class="val">Mo 14.9. · 06:30–11:00</span></div>
+        <div class="hi-cell"><span class="lbl">Buchungs-Nr.</span><span class="val">6534.329.360</span></div>
+        <div class="hi-cell"><span class="lbl">PIN-Code</span><span class="val">3292</span></div>
+        <div class="hi-cell"><span class="lbl">Preis ges.</span><span class="val big">CHF 160 <small>(€175)</small></span></div>
+        <div class="hi-cell"><span class="lbl">Frühstück</span><span class="val">✓ inkl.</span></div>
+        <div class="hi-cell"><span class="lbl">Parkplatz</span><span class="val">CHF 5/Nacht</span></div>
+        <div class="hi-cell"><span class="lbl">Storno</span><span class="val">bis 10.9. frei</span></div>
+      </div>
+      <p class="small"><strong>Terracestrasse 33, 6390 Engelberg</strong> · T +41 41 639 66 00 · GPS N 46° 49.378, E 8° 24.063 · Standard-Zweibettzimmer, eigenes Bad mit Dusche, Flachbild-TV. WLAN kostenfrei.</p>
+    </div>
+
+    <div class="hotel booked">
+      <div class="hotel-head"><div><span class="place hand">Nacht 4 · Innertkirchen</span><h3>Hotel Restaurant Urweider</h3></div><span class="badge b-booked">gebucht ✓</span></div>
+      <div class="hotel-grid-info">
+        <div class="hi-cell"><span class="lbl">Anreise</span><span class="val">Mo 14.9. · 16:00–21:00</span></div>
+        <div class="hi-cell"><span class="lbl">Abreise</span><span class="val">Di 15.9. · 07:00–10:00</span></div>
+        <div class="hi-cell"><span class="lbl">Buchungs-Nr.</span><span class="val">5043.366.090</span></div>
+        <div class="hi-cell"><span class="lbl">PIN-Code</span><span class="val">0926</span></div>
+        <div class="hi-cell"><span class="lbl">Preis ges.</span><span class="val big">CHF 208 <small>(€227)</small></span></div>
+        <div class="hi-cell"><span class="lbl">Frühstück</span><span class="val">✓ inkl.</span></div>
+        <div class="hi-cell"><span class="lbl">Parkplatz</span><span class="val">✓ kostenfrei</span></div>
+        <div class="hi-cell"><span class="lbl">Storno</span><span class="val">bis 6.9. frei</span></div>
+      </div>
+      <p class="small"><strong>Dorfstrasse 11, 3862 Innertkirchen</strong> · T +41 33 971 38 88 · GPS N 46° 42.330, E 8° 13.566 · <em>Doppelzimmer mit Balkon</em>, Bergblick, Holzboden. Logistisch perfekt für den Grimsel-Start am nächsten Tag.</p>
+    </div>
+
+    <div class="hotel booked">
+      <div class="hotel-head"><div><span class="place hand">Nacht 5+6 · Täsch</span><h3>Hotel Matterhorn Inn</h3></div><span class="badge b-booked">gebucht ✓</span></div>
+      <div class="hotel-grid-info">
+        <div class="hi-cell"><span class="lbl">Anreise</span><span class="val">Di 15.9. · 15:00–23:30</span></div>
+        <div class="hi-cell"><span class="lbl">Abreise</span><span class="val">Do 17.9. · 07:00–11:00</span></div>
+        <div class="hi-cell"><span class="lbl">Buchungs-Nr.</span><span class="val">6289.367.067</span></div>
+        <div class="hi-cell"><span class="lbl">PIN-Code</span><span class="val">7940</span></div>
+        <div class="hi-cell"><span class="lbl">Preis ges. (2 N.)</span><span class="val big">CHF 297 <small>(€324)</small></span></div>
+        <div class="hi-cell"><span class="lbl">Frühstück</span><span class="val">✗ nicht inkl.</span></div>
+        <div class="hi-cell"><span class="lbl">Parkplatz</span><span class="val">CHF 10/Nacht</span></div>
+        <div class="hi-cell"><span class="lbl">Storno</span><span class="val">bis 7.9. frei</span></div>
+      </div>
+      <p class="small"><strong>Kantonsstrasse 171, 3929 Täsch</strong> · T +41 27 966 26 44 · GPS N 46° 4.024, E 7° 46.553 · Doppelzimmer, Berg-/Gartenblick, allergikerfreundlich. <strong>Wichtig:</strong> Zermatt nur per Shuttlezug erreichbar. Frühstück optional zubuchen oder am Bahnhof beim Bäcker holen.</p>
+    </div>
+
+    <div class="hotel booked">
+      <div class="hotel-head"><div><span class="place hand">Nacht 7+8 · Wengen</span><h3>Chalet Sonnenhof Wengen</h3></div><span class="badge b-booked">gebucht ✓</span></div>
+      <div class="hotel-grid-info">
+        <div class="hi-cell"><span class="lbl">Anreise</span><span class="val">Do 17.9. · 15:00–23:00</span></div>
+        <div class="hi-cell"><span class="lbl">Abreise</span><span class="val">Sa 19.9. · 06:00–10:00</span></div>
+        <div class="hi-cell"><span class="lbl">Buchungs-Nr.</span><span class="val">5567.427.143</span></div>
+        <div class="hi-cell"><span class="lbl">PIN-Code</span><span class="val">1376</span></div>
+        <div class="hi-cell"><span class="lbl">Preis ges. (2 N.)</span><span class="val big">CHF 427 <small>(€466)</small></span></div>
+        <div class="hi-cell"><span class="lbl">Frühstück</span><span class="val">✗ Apartment mit Küche</span></div>
+        <div class="hi-cell"><span class="lbl">Parkplatz</span><span class="val">✗ Wengen autofrei</span></div>
+        <div class="hi-cell"><span class="lbl">Storno</span><span class="val" style="color:var(--terra-deep)"><b>NICHT möglich</b></span></div>
+      </div>
+      <p class="small"><strong>Hausenegg 1202e, 3823 Wengen</strong> · T +41 76 204 58 11 · GPS N 46° 35.774, E 7° 55.433 · Apartment mit 1 Schlafzimmer, Terrasse, Bergblick, Küche mit Backofen + Herdplatte + Toaster, eigenes Bad mit Dusche, Schlafsofa.</p>
+      <div class="note-box nb-warn" style="margin-top:10px"><div class="ico">!</div><div><strong>Wichtig zur Anreise:</strong> Auto in <strong>Lauterbrunnen Parkhaus Mätten</strong> abstellen (CHF 14/Tag, gedeckt), dann mit der WAB-Bahn nach Wengen (CHF 16 retour/Pers., 30 min). Vom Bahnhof Wengen sind es 5 min Fußweg bis zum Chalet. <strong>Coop Wengen</strong> für Frühstück und Abendessen einkaufen.</div></div>
+    </div>
+
+  </div>
+</section>
+
+<section class="sec" id="budget">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 7</div>
+      <h2 class="sec-title">Was es kostet</h2>
+      <p class="sec-lead">Realistische Kostenaufstellung. Hotels und Verlad sind verifizierte Werte aus den Buchungen, Bergbahnen Listenpreise, alles andere Schätzungen.</p>
+    </div>
+
+    <div class="tiers">
+      <div class="tier"><div class="tname">wirtschaftlich</div><div class="tsum">~€ 3.700</div><div class="tdesc">Selbstversorgung in Wengen, weniger Bergbahnen, Mittag aus Rucksack</div></div>
+      <div class="tier hl"><div class="tname">unser Plan</div><div class="tsum">~€ 4.300</div><div class="tdesc">Alle Pflicht-Bergbahnen, Halbpension teilw., Apartment-Küche</div></div>
+      <div class="tier"><div class="tname">komfortabel</div><div class="tsum">~€ 5.000</div><div class="tdesc">Klein Matterhorn + Schilthorn + alle Restaurants</div></div>
+    </div>
+
+    <h3 style="font-size:24px; margin:30px 0 14px"><span class="kicker">Gesamt</span> Kosten für 2 Personen</h3>
+    <div class="table-wrap">
+      <table class="budget-table">
+        <thead><tr><th>Position</th><th>Quelle</th><th class="num">CHF</th><th class="num">EUR ca.</th></tr></thead>
+        <tbody>
+          <tr><td>Hotel Koller Appenzell (Schätzung)</td><td>angefragt</td><td class="num">420</td><td class="num">450</td></tr>
+          <tr><td>Hotel Terrace Engelberg</td><td>gebucht ✓</td><td class="num">160</td><td class="num">175</td></tr>
+          <tr><td>Hotel Urweider Innertkirchen</td><td>gebucht ✓</td><td class="num">208</td><td class="num">227</td></tr>
+          <tr><td>Hotel Matterhorn Inn Täsch</td><td>gebucht ✓</td><td class="num">297</td><td class="num">324</td></tr>
+          <tr><td>Chalet Sonnenhof Wengen</td><td>gebucht ✓</td><td class="num">427</td><td class="num">466</td></tr>
+          <tr class="row-subtotal"><td>Hotels gesamt (4 fix + 1 geschätzt)</td><td></td><td class="num">1.512</td><td class="num">1.642</td></tr>
+
+          <tr><td>Bergbahnen Tag 2: Ebenalp</td><td>CHF 35 × 2</td><td class="num">70</td><td class="num">76</td></tr>
+          <tr><td>Bergbahnen Tag 3: Stoosbahn + Fronalpstock</td><td>CHF 50 × 2</td><td class="num">100</td><td class="num">109</td></tr>
+          <tr><td>Bergbahnen Tag 4: Bannalp + Aareschlucht</td><td>CHF 52 × 2</td><td class="num">104</td><td class="num">113</td></tr>
+          <tr><td>Tag 5: Handeggbrücke + Eisgrotte</td><td>CHF 25 × 2</td><td class="num">50</td><td class="num">54</td></tr>
+          <tr><td>Tag 6: Gornergrat</td><td>CHF 132 × 2</td><td class="num">264</td><td class="num">287</td></tr>
+          <tr><td>Tag 7: Sunnegga + Shuttle + Blausee</td><td>CHF 60 × 2</td><td class="num">120</td><td class="num">130</td></tr>
+          <tr><td>Tag 8: Oeschinensee + Männlichen</td><td>CHF 73 × 2</td><td class="num">146</td><td class="num">159</td></tr>
+          <tr><td>Tag 9: First-Bahn</td><td>CHF 72 × 2</td><td class="num">144</td><td class="num">157</td></tr>
+          <tr class="row-subtotal"><td>Bergbahnen + Eintritte gesamt</td><td></td><td class="num">998</td><td class="num">1.085</td></tr>
+
+          <tr><td>Lötschberg-Autoverlad</td><td>verifiziert</td><td class="num">28</td><td class="num">30</td></tr>
+          <tr><td>Schweizer E-Vignette 2026</td><td>verifiziert</td><td class="num">40</td><td class="num">42</td></tr>
+          <tr><td>Parken Lauterbrunnen 2 Tage</td><td>CHF 14 × 2</td><td class="num">28</td><td class="num">30</td></tr>
+          <tr><td>Parken Wasserauen + Sonstige</td><td>Schätzung</td><td class="num">35</td><td class="num">38</td></tr>
+          <tr class="row-subtotal"><td>Mobilität + Parken</td><td></td><td class="num">131</td><td class="num">140</td></tr>
+
+          <tr><td>Sprit Deutschland (Anreise + Rück)</td><td>1.400 km · 7,5 L/100 km</td><td class="num">—</td><td class="num">240</td></tr>
+          <tr><td>Sprit Schweiz (~600 km)</td><td>CHF 1,95/L</td><td class="num">100</td><td class="num">110</td></tr>
+          <tr class="row-subtotal"><td>Sprit gesamt</td><td></td><td class="num">~320</td><td class="num">350</td></tr>
+
+          <tr><td>Restaurants Mittag + Abend (Tag 1–6)</td><td>~€60/Pers./Tag × 6 × 2</td><td class="num">—</td><td class="num">720</td></tr>
+          <tr><td>Verpflegung Wengen (Apartment, selbst kochen)</td><td>2 Tage Coop</td><td class="num">110</td><td class="num">120</td></tr>
+          <tr><td>Mittagessen unterwegs Tag 7–9</td><td>~€40/Pers./Tag × 3 × 2</td><td class="num">—</td><td class="num">240</td></tr>
+          <tr class="row-subtotal"><td>Verpflegung gesamt</td><td></td><td class="num">—</td><td class="num">1.080</td></tr>
+
+          <tr><td>Reserve für Unvorhergesehenes</td><td>~5 %</td><td class="num">—</td><td class="num">200</td></tr>
+
+          <tr class="row-total"><td>Gesamt für 2 Personen</td><td></td><td class="num">~3.620</td><td class="num">~4.300</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:24px; margin:36px 0 14px"><span class="kicker">Pro Person</span> Aufstellung pro Kopf</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Kategorie</th><th class="num">CHF/Person</th><th class="num">EUR/Person</th><th>Anteil</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Hotels</strong> (5 Unterkünfte · ½ Anteil)</td><td class="num">756</td><td class="num">821</td><td>19 %</td></tr>
+          <tr><td><strong>Bergbahnen + Eintritte</strong> (Pflicht-Highlights)</td><td class="num">499</td><td class="num">543</td><td>13 %</td></tr>
+          <tr><td><strong>Verpflegung</strong> (Restaurant + Apartment-Küche)</td><td class="num">~500</td><td class="num">540</td><td>13 %</td></tr>
+          <tr><td><strong>Sprit + Maut</strong> (½ Anteil)</td><td class="num">~160</td><td class="num">175</td><td>4 %</td></tr>
+          <tr><td><strong>Vignette + Verlad + Parken</strong> (½ Anteil)</td><td class="num">80</td><td class="num">85</td><td>2 %</td></tr>
+          <tr><td><strong>Reserve</strong> (½ Anteil)</td><td class="num">90</td><td class="num">100</td><td>2 %</td></tr>
+          <tr class="row-total"><td>Gesamt pro Person</td><td class="num">~2.085</td><td class="num">~2.150</td><td>100 %</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:22px; margin:30px 0 14px"><span class="kicker">Pro Tag</span> Tageskosten für 2 Personen</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Tag</th><th>Hauptkosten</th><th class="num">CHF</th><th class="num">EUR</th></tr></thead>
+        <tbody>
+          <tr><td>1 · Anreise</td><td>Sprit DE + Vignette + Hotel Koller anteilig</td><td class="num">~290</td><td class="num">320</td></tr>
+          <tr><td>2 · Alpstein</td><td>Ebenalp + Restaurant + Hotel Koller anteilig</td><td class="num">~340</td><td class="num">370</td></tr>
+          <tr><td>3 · Stoos · Engelberg</td><td>Stoosbahn + Hotel Terrace + Restaurants</td><td class="num">~390</td><td class="num">425</td></tr>
+          <tr><td>4 · Susten · Aare</td><td>Bannalp + Aareschlucht + Hotel Urweider</td><td class="num">~370</td><td class="num">400</td></tr>
+          <tr><td>5 · Pässe · Wallis</td><td>Handeggbrücke + Eisgrotte + Hotel Täsch (1/2)</td><td class="num">~340</td><td class="num">370</td></tr>
+          <tr><td>6 · Gornergrat</td><td>Gornergrat-Bahn + Restaurants + Hotel Täsch (1/2)</td><td class="num">~490</td><td class="num">530</td></tr>
+          <tr><td>7 · 5-Seen · Wengen</td><td>Sunnegga + Verlad + Blausee + Coop + Apartment (1/2)</td><td class="num">~400</td><td class="num">435</td></tr>
+          <tr><td>8 · Oeschi · Männlichen</td><td>Oeschi-Bahn + Männlichen + Apartment (1/2)</td><td class="num">~370</td><td class="num">400</td></tr>
+          <tr><td>9 · First · Heimreise</td><td>First-Bahn + Sprit DE Rück + Restaurants</td><td class="num">~370</td><td class="num">400</td></tr>
+          <tr class="row-total"><td>Summe</td><td>9 Tage</td><td class="num">~3.360</td><td class="num">~3.650</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted center" style="margin-top:8px">Die Tageskosten enthalten anteilig die Hotel-Übernachtungen. Reserve-Posten (~€200) und Vignette-Hälfte sind nicht aufgeteilt.</p>
+
+    <div class="note-box nb-info" style="margin-top:18px"><div class="ico">i</div><div><strong>Sparpotenzial:</strong> Selbstversorgung in Wengen ist schon eingerechnet (spart €80–100). Halbtax-Karte (CHF 185 für 1 Monat) lohnt sich für Touristen nur, wenn Bergbahnen + Gornergrat zusammen über CHF 400/Pers. liegen — bei uns mit knapp CHF 500/Pers. drin, aber Aufwand vs. Ersparnis ist grenzwertig. Klein Matterhorn streichen spart CHF 260 für uns beide.</div></div>
+    <div class="note-box nb-warn"><div class="ico">€</div><div><strong>Wenn Budget knapp:</strong> Mittagessen aus Rucksack auf 4 Wandertagen (−€100), Halbpension in Hotels mit Frühstück (Engelberg, Innertkirchen) bringt 20 % Rabatt, Bannalpsee streichen (−CHF 80), Klein Matterhorn streichen (−CHF 260).</div></div>
+  </div>
+</section>
+
+<section class="sec tint" id="checkliste">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 8</div>
+      <h2 class="sec-title">Was noch zu tun ist</h2>
+      <p class="sec-lead">Priorisiert nach Dringlichkeit. Erledigte Punkte sind durchgestrichen.</p>
+    </div>
+
+    <div class="check done"><div class="prio">✓</div><div class="body"><h4>Engelberg buchen (13.–14.9.)</h4><p>Hotel Terrace 3* · Buchungsnummer 6534.329.360</p></div><span class="when">erledigt</span></div>
+    <div class="check done"><div class="prio">✓</div><div class="body"><h4>Innertkirchen buchen (14.–15.9.)</h4><p>Hotel Urweider 3* · Buchungsnummer 5043.366.090</p></div><span class="when">erledigt</span></div>
+    <div class="check done"><div class="prio">✓</div><div class="body"><h4>Täsch buchen (15.–17.9.)</h4><p>Hotel Matterhorn Inn · Buchungsnummer 6289.367.067</p></div><span class="when">erledigt</span></div>
+    <div class="check done"><div class="prio">✓</div><div class="body"><h4>Wengen buchen (17.–19.9.)</h4><p>Chalet Sonnenhof Apartment · Buchungsnummer 5567.427.143 · nicht stornierbar!</p></div><span class="when">erledigt</span></div>
+
+    <div class="check urgent"><div class="prio">1</div><div class="body"><h4>Antwort Hotel Koller Appenzell abwarten</h4><p>Falls keine Antwort bis 25.6.: Backup Hotel Säntis 4* oder Hotel Appenzell direkt buchen. Wochenend-Nächte sind knapp.</p></div><span class="when">bis 25.6.</span></div>
+
+    <div class="check"><div class="prio">2</div><div class="body"><h4>Lötschberg-Autoverlad reservieren</h4><p>Für Do 17.9. nachmittags ab Goppenstein, online über <a href="https://www.bls.ch/de/fahren/autoverlad/loetschberg" target="_blank">bls.ch/autoverlad</a>. Spart Wartezeit am Verlad-Bahnhof.</p></div><span class="when">3–5 Tage vorher</span></div>
+
+    <div class="check"><div class="prio">3</div><div class="body"><h4>Aescher-Wildkirchli reservieren</h4><p>Berggasthaus im Fels, sehr stark frequentiert. Mittag 12:00/12:30 reservieren. <strong>T +41 71 799 11 42</strong> oder <a href="https://aescher.ch" target="_blank">aescher.ch</a>.</p></div><span class="when">1–2 Monate vorher</span></div>
+
+    <div class="check"><div class="prio">4</div><div class="body"><h4>Schweizer E-Vignette 2026 kaufen</h4><p>CHF 40 über <a href="https://via.admin.ch" target="_blank">via.admin.ch</a> — kennzeichengebunden, kein Kleber. Sofort kaufbar.</p></div><span class="when">vor Abreise</span></div>
+
+    <div class="check"><div class="prio">5</div><div class="body"><h4>Parkhaus Mätten Lauterbrunnen prüfen</h4><p>Für 2 Tage (17.–19.9.) ca. CHF 28 ges. Reservierung nicht möglich, aber im September meistens Plätze frei. Adresse: Mättweg 1, 3822 Lauterbrunnen.</p></div><span class="when">vor Abreise</span></div>
+
+    <div class="check"><div class="prio">6</div><div class="body"><h4>Wetter- und Bergbahn-Check</h4><p><a href="https://www.meteoschweiz.admin.ch" target="_blank">meteoschweiz.admin.ch</a> für Bergwetter. Gornergrat (Tag 6) und First-Bahn (Tag 9) nur bei klarer Sicht buchen.</p></div><span class="when">3–5 Tage vorher</span></div>
+
+    <div class="check"><div class="prio">7</div><div class="body"><h4>WAB-Bahn-Tickets Lauterbrunnen ↔ Wengen</h4><p>Pendelbahn fährt alle 30 min, CHF 16 retour/Pers. Keine Reservierung nötig, vor Ort kaufen. Tag 8 zusätzlich Männlichenbahn (CHF 38).</p></div><span class="when">vor Ort</span></div>
+
+    <div class="check"><div class="prio">8</div><div class="body"><h4>Frühstück Täsch entscheiden</h4><p>Hotel Matterhorn Inn ohne Frühstück. Option 1: Im Hotel ca. CHF 18/Pers. zubuchen. Option 2: Bäcker Bahnhof Täsch (günstiger). Option 3: Frühstück in Zermatt nach Shuttle.</p></div><span class="when">vor Ort</span></div>
+
+    <div class="check"><div class="prio">9</div><div class="body"><h4>Coop Wengen — Einkaufsplanung</h4><p>Für 2 Tage Selbstversorgung im Apartment. Coop ist gegenüber dem Bahnhof Wengen, geöffnet 8–19 Uhr (Sa bis 17). Budget ca. CHF 110 für 2 Personen.</p></div><span class="when">am 17.9.</span></div>
+
+    <div class="check"><div class="prio">10</div><div class="body"><h4>Reiseversicherung prüfen</h4><p>Wengen ist nicht mehr stornierbar (CHF 427 Risiko). Reise-Rücktrittsversicherung lohnt bei Vorerkrankungen, ca. 5 % der Buchungssumme.</p></div><span class="when">jetzt</span></div>
+
+  </div>
+</section>
+
+<section class="sec" id="risiken">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 9</div>
+      <h2 class="sec-title">Wetter &amp; Risiken</h2>
+      <p class="sec-lead">Was kann schiefgehen — und was tun wir dann.</p>
+    </div>
+    <div class="grid g2">
+      <div class="card">
+        <span class="kicker">Risiken</span>
+        <h3 style="font-size:24px; margin:6px 0 10px">Was uns ausbremsen könnte</h3>
+        <ul>
+          <li><strong>Wetterabhängigkeit Bergbahnen:</strong> Gornergrat (Tag 6) und First-Bahn (Tag 9) sind bei Bewölkung sinnlos teuer. Tagesentscheidung.</li>
+          <li><strong>Pässe Anfang September:</strong> Grimsel/Furka grundsätzlich befahrbar, aber Wettersturz möglich. Notfall: Lötschberg-Verlad statt Furka.</li>
+          <li><strong>Tag 7 zeitlich eng:</strong> 5-Seen + Verlad + Blausee + Wengen-Anreise. Falls Wetter mau: 5-Seen verkürzen.</li>
+          <li><strong>Oeschi-Sesselbahn fährt nicht bei Sturm</strong> (Tag 8 vormittags) → dann Trümmelbachfälle.</li>
+          <li><strong>Wengen-Apartment nicht stornierbar:</strong> CHF 427 Risiko. Bei akuter Krankheit prüfen ob Reiseversicherung greift.</li>
+          <li><strong>Lötschberg-Verlad Do nachmittags:</strong> Reservierung 24 h vorher sichert den Slot.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="kicker">Optimierung</span>
+        <h3 style="font-size:24px; margin:6px 0 10px">Was wir besser machen</h3>
+        <ul>
+          <li><strong>Selbstversorgung in Wengen:</strong> Apartment-Küche nutzen, spart ~CHF 80 pro Tag gegenüber Restaurant.</li>
+          <li><strong>Mittagessen aus dem Rucksack</strong> auf Wandertagen 2/7/8/9: spart €100.</li>
+          <li><strong>Frühe Bergbahnen</strong>: Gornergrat 8:30 und First 9:00 sichern beste Sicht und weniger Andrang.</li>
+          <li><strong>Reservierung Aescher</strong> unbedingt vorab.</li>
+          <li><strong>Auto-Parken in Lauterbrunnen:</strong> Parkhaus Mätten ist gedeckt, kein Risiko durch Wetter.</li>
+          <li><strong>Wetter-Switch Tag 6/7:</strong> Wenn Mi schlecht, Gornergrat auf Do verlegen, 5-Seen auf Mi.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note-box nb-info"><div class="ico">☂</div><div><strong>Wenn das Wetter schlecht ist:</strong> Aareschlucht (Tag 4), Trümmelbachfälle (Tag 8 ersatzweise), Blausee, Säntis-Schwebebahn (fährt im Nebel), Matterhorn-Museum, Verkehrshaus Luzern, Stiftsbibliothek St. Gallen, Stockalperschloss Brig.</div></div>
+    <div class="note-box nb-warn"><div class="ico">€</div><div><strong>Wenn Budget gespart werden soll:</strong> Klein Matterhorn streichen (−CHF 260), Bannalpsee streichen (−CHF 80), Mittagessen aus Rucksack auf 4 Wandertagen (−€100), Halbpension in Hotels mit Frühstück (Engelberg, Innertkirchen) bringt 20 % Rabatt.</div></div>
+  </div>
+</section>
+
+<section class="sec tint" id="reserve">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="sec-num">Kapitel 10</div>
+      <h2 class="sec-title">Reserve · Was nur bei Verlängerung sinnvoll ist</h2>
+      <p class="sec-lead">Ziele, die wir aus Zeitgründen nicht reinbekommen. Bewertet nach Zeit, Kosten und Sinnhaftigkeit.</p>
+    </div>
+
+    <div class="reserve-grid">
+
+      <div class="res no">
+        <h4>Tessin · Locarno · Foroglio · Verzasca</h4>
+        <dl>
+          <dt>Zeit</dt><dd>Mindestens 1 ÜN Locarno + 1 Tagesabschnitt Bavona/Verzasca</dd>
+          <dt>Kosten</dt><dd>Hotel ~CHF 170 + Sprit Tessin-Schleife CHF 80</dd>
+          <dt>Einbau</dt><dd>Nur bei 10–11 Tagen Reise sinnvoll</dd>
+          <dt>Bewertung</dt><dd>Schöne Region, aber Tag mit Grimsel+Furka+Tessin war zu eng. Streichung war richtig.</dd>
+        </dl>
+        <span class="verdict n">Streichen / nur bei Verlängerung</span>
+      </div>
+
+      <div class="res no">
+        <h4>Gotthardpass + Tremola</h4>
+        <dl>
+          <dt>Zeit</dt><dd>+2 h auf Tag 5</dd>
+          <dt>Kosten</dt><dd>CHF 30 Sprit</dd>
+          <dt>Bewertung</dt><dd>Lohnt nur in Kombination mit Tessin.</dd>
+        </dl>
+        <span class="verdict n">Streichen</span>
+      </div>
+
+      <div class="res no">
+        <h4>Jungfraujoch · Top of Europe</h4>
+        <dl>
+          <dt>Zeit</dt><dd>Halbtagesausflug 5–6 h</dd>
+          <dt>Kosten</dt><dd>CHF 235/Pers. = CHF 470 für 2</dd>
+          <dt>Einbau</dt><dd>Eigener Tag, frühestens Tag 10</dd>
+          <dt>Bewertung</dt><dd>Sehr teuer, nur bei klarer Sicht lohnend.</dd>
+        </dl>
+        <span class="verdict n">Streichen / nur bei Verlängerung</span>
+      </div>
+
+      <div class="res yes">
+        <h4>Grindelwald-First &amp; Bachalpsee</h4>
+        <dl>
+          <dt>Zeit</dt><dd>3–4 h (im Plan: Tag 9 morgens)</dd>
+          <dt>Kosten</dt><dd>First-Bahn CHF 72/Pers.</dd>
+          <dt>Einbau</dt><dd>Tag 9 morgens · im Plan integriert</dd>
+          <dt>Bewertung</dt><dd>Bachalpsee mit Schreckhorn ist eines der besten Berner-Oberland-Highlights.</dd>
+        </dl>
+        <span class="verdict y">Im Plan drin ✓</span>
+      </div>
+
+      <div class="res yes">
+        <h4>Männlichen &amp; Kleine Scheidegg</h4>
+        <dl>
+          <dt>Zeit</dt><dd>2,5 h ab Wengen direkt</dd>
+          <dt>Kosten</dt><dd>Männlichenbahn CHF 38 retour ab Wengen</dd>
+          <dt>Einbau</dt><dd>Tag 8 nachmittags · im Plan integriert</dd>
+          <dt>Bewertung</dt><dd>Panoramaweg ist Klassiker mit Eiger-Nordwand-Blick.</dd>
+        </dl>
+        <span class="verdict y">Im Plan drin ✓</span>
+      </div>
+
+      <div class="res opt">
+        <h4>Schilthorn · Piz Gloria</h4>
+        <dl>
+          <dt>Zeit</dt><dd>3 h ab Wengen via Lauterbrunnen-Stechelberg</dd>
+          <dt>Kosten</dt><dd>CHF 89 retour ab Stechelberg</dd>
+          <dt>Einbau</dt><dd>Tag 8 statt Männlichen (Entweder-Oder)</dd>
+          <dt>Bewertung</dt><dd>Drehrestaurant Piz Gloria (James Bond) ist ikonisch. Männlichen-Weg ist landschaftlich besser.</dd>
+        </dl>
+        <span class="verdict o">Tag-8-Alternative</span>
+      </div>
+
+      <div class="res opt">
+        <h4>Mürren</h4>
+        <dl>
+          <dt>Zeit</dt><dd>1–2 h Spaziergang</dd>
+          <dt>Kosten</dt><dd>CHF 18 retour ab Lauterbrunnen</dd>
+          <dt>Einbau</dt><dd>Tag 8 als Zwischenstopp</dd>
+          <dt>Bewertung</dt><dd>Autofreies Dorf mit Eiger-Mönch-Jungfrau-Blick. Gut mit Schilthorn kombinierbar.</dd>
+        </dl>
+        <span class="verdict o">Optional</span>
+      </div>
+
+      <div class="res opt">
+        <h4>Saxer Lücke</h4>
+        <dl>
+          <dt>Zeit</dt><dd>6–7 h, 1.000 HM, T3</dd>
+          <dt>Kosten</dt><dd>Nur Ebenalp-Bahn CHF 35</dd>
+          <dt>Einbau</dt><dd>Tag 2 statt Schäfler-Seealpsee</dd>
+          <dt>Bewertung</dt><dd>Anspruchsvoll, nur bei sehr guter Kondition.</dd>
+        </dl>
+        <span class="verdict o">Tag-2-Alternative</span>
+      </div>
+
+      <div class="res yes">
+        <h4>Säntis-Gipfel</h4>
+        <dl>
+          <dt>Zeit</dt><dd>2,5 h ab Appenzell</dd>
+          <dt>Kosten</dt><dd>CHF 60 retour Schwebebahn</dd>
+          <dt>Einbau</dt><dd>Tag 2 nachmittags oder Schlechtwetter</dd>
+          <dt>Bewertung</dt><dd>Höchster Punkt der Ostschweiz, fährt auch bei Nebel.</dd>
+        </dl>
+        <span class="verdict y">Schlechtwetter-Option Tag 2</span>
+      </div>
+
+      <div class="res no">
+        <h4>Walenstadt · Seerenbachfälle</h4>
+        <dl>
+          <dt>Zeit</dt><dd>3 h Stopp am Walensee</dd>
+          <dt>Kosten</dt><dd>Frei</dd>
+          <dt>Einbau</dt><dd>Tag 3 statt Klöntal — aber 60 km Umweg</dd>
+          <dt>Bewertung</dt><dd>Klöntal ist effizienter, Seerenbachfälle abseits.</dd>
+        </dl>
+        <span class="verdict n">Streichen</span>
+      </div>
+
+      <div class="res yes">
+        <h4>Iseltwald · Brienzersee</h4>
+        <dl>
+          <dt>Zeit</dt><dd>20 min Stopp am Rückweg</dd>
+          <dt>Kosten</dt><dd>Frei (Parken CHF 5)</dd>
+          <dt>Einbau</dt><dd>Tag 9 auf dem Heimweg · im Plan</dd>
+          <dt>Bewertung</dt><dd>Bond-Steg-Stopp, lohnt sich.</dd>
+        </dl>
+        <span class="verdict y">Im Plan drin ✓</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p class="fsig">Schweiz '26 ♥</p>
+    <p class="fmeta">Reiseplan · 11.–19. September 2026 · Erstellt Juni 2026<br>
+    <a href="#start">↑ Nach oben</a></p>
   </div>
 </footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-  crossorigin=""></script>
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 const dayColors = {
-  1:'#D85A30', 2:'#993C1D', 3:'#6D5DC4', 4:'#3C3489',
-  5:'#1D9E75', 6:'#185FA5', 7:'#0C447C', 8:'#D4537E', 9:'#5F5E5A'
+  1:'#C0653C', 2:'#9C4A26', 3:'#7E5F88', 4:'#4F5C84',
+  5:'#4A6650', 6:'#3C6A85', 7:'#2E6E72', 8:'#B25975', 9:'#7C6F5C'
 };
 const dayLabels = {
   1:'Tag 1 · Anreise/Rheinfall', 2:'Tag 2 · Alpstein',
   3:'Tag 3 · Klöntal/Stoos', 4:'Tag 4 · Susten/Aare',
   5:'Tag 5 · Grimsel/Furka', 6:'Tag 6 · Gornergrat',
-  7:'Tag 7 · 5-Seen/Lötschberg', 8:'Tag 8 · Oeschi/Mürren/Grindelwald', 9:'Tag 9 · First/Heimreise'
+  7:'Tag 7 · 5-Seen/Lötschberg', 8:'Tag 8 · Oeschi/Männlichen', 9:'Tag 9 · First/Heimreise'
 };
 
 const map = L.map('map', { scrollWheelZoom: false }).setView([46.6, 8.4], 8);
@@ -1075,40 +1130,40 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 const pts = [
   ['Traben-Trarbach', 49.9519, 7.1201, 1, 'Start', 'pflicht', 'Startpunkt der Rundreise.'],
-  ['Rheinfall Schaffhausen', 47.6783, 8.6157, 1, 'Wasserfall', 'pflicht', 'Größter Wasserfall Europas. Mittagsstopp Tag 1.'],
-  ['Schloss Laufen', 47.6775, 8.6147, 1, 'Aussichtspunkt', 'pflicht', 'Aussichtsplattform direkt am Rheinfall.'],
-  ['Appenzell', 47.3308, 9.4096, 1, 'Hotelstandort', 'pflicht', 'Adler Hotel Appenzell. 2 Nächte.'],
-  ['Wasserauen Talstation', 47.2780, 9.4307, 2, 'Bergbahn', 'pflicht', 'Talstation Ebenalp-Bergbahn. Parkplatz CHF 8.'],
+  ['Rheinfall Schaffhausen', 47.6783, 8.6157, 1, 'Wasserfall', 'pflicht', 'Größter Wasserfall Europas.'],
+  ['Schloss Laufen', 47.6775, 8.6147, 1, 'Aussichtspunkt', 'pflicht', 'Aussichtsplattform am Rheinfall.'],
+  ['Appenzell · Hotel Koller', 47.3308, 9.4096, 1, 'Hotel', 'pflicht', 'Hotel Koller angefragt. 2 Nächte.'],
+  ['Wasserauen Talstation', 47.2780, 9.4307, 2, 'Bergbahn', 'pflicht', 'Talstation Ebenalp-Bahn. Parkplatz CHF 8.'],
   ['Ebenalp 1640m', 47.2799, 9.4080, 2, 'Aussichtspunkt', 'pflicht', 'Bergstation. Aussicht Bodensee/Säntis.'],
   ['Wildkirchli', 47.2829, 9.4060, 2, 'Sehenswürdigkeit', 'pflicht', 'Höhlenkapelle.'],
-  ['Aescher-Wildkirchli', 47.2818, 9.4081, 2, 'Restaurant', 'pflicht', 'Berggasthaus in der Felswand. Reservierung!'],
+  ['Aescher-Wildkirchli', 47.2818, 9.4081, 2, 'Restaurant', 'pflicht', 'Berggasthaus in der Felswand.'],
   ['Schäfler 1924m', 47.2658, 9.3905, 2, 'Wanderung', 'pflicht', 'Spektakulärer Gipfel.'],
   ['Seealpsee', 47.2710, 9.4070, 2, 'See', 'pflicht', 'Bergsee mit Säntis-Spiegelung.'],
   ['Klöntalersee', 47.0260, 8.9510, 3, 'See', 'pflicht', 'Stausee. Glärnisch-Spiegelung.'],
   ['Stoosbahn Schlattli', 46.9909, 8.7068, 3, 'Bergbahn', 'pflicht', 'Steilste Standseilbahn der Welt.'],
   ['Stoos', 46.9678, 8.6797, 3, 'Aussichtspunkt', 'pflicht', 'Autofreies Bergdorf.'],
-  ['Fronalpstock', 46.9580, 8.6720, 3, 'Aussichtspunkt', 'pflicht', 'Aussicht Vierwaldstättersee, 1922m.'],
-  ['Engelberg', 46.8214, 8.4014, 3, 'Hotelstandort', 'pflicht', 'Hotel Engelberg. 1 Nacht.'],
+  ['Fronalpstock', 46.9580, 8.6720, 3, 'Aussichtspunkt', 'pflicht', 'Aussicht Vierwaldstättersee.'],
+  ['Engelberg · Hotel Terrace', 46.8214, 8.4014, 3, 'Hotel', 'pflicht', 'Hotel Terrace 3* GEBUCHT · CHF 160.'],
   ['Wolfenschiessen', 46.9059, 8.4035, 4, 'Durchfahrt', 'optional', 'Talstation Bannalp.'],
   ['Oberrickenbach', 46.8924, 8.4505, 4, 'Bergbahn', 'optional', 'Mittelstation Bannalp.'],
   ['Bannalpsee', 46.8675, 8.4710, 4, 'See', 'optional', 'Bergsee mit Walenstöcke-Blick.'],
   ['Sustenpass 2224m', 46.7283, 8.4480, 4, 'Passstraße', 'pflicht', 'Top-3-Passstraße der Schweiz.'],
   ['Steingletscher-Aussicht', 46.7152, 8.4258, 4, 'Aussichtspunkt', 'optional', 'Sustenpass Westseite.'],
   ['Aareschlucht', 46.7177, 8.1996, 4, 'Schlucht', 'pflicht', 'Spektakuläre Klamm. CHF 12.'],
-  ['Innertkirchen', 46.7065, 8.2295, 4, 'Hotelstandort', 'pflicht', 'Hotel Urweider. 1 Nacht.'],
-  ['Meiringen', 46.7269, 8.1843, 4, 'Hotelstandort', 'optional', 'Alternative.'],
+  ['Innertkirchen · Hotel Urweider', 46.7065, 8.2295, 4, 'Hotel', 'pflicht', 'Hotel Urweider 3* GEBUCHT · CHF 208.'],
+  ['Meiringen', 46.7269, 8.1843, 4, 'Durchfahrt', 'optional', 'Alternative.'],
   ['Handeggfallbrücke', 46.6193, 8.3040, 5, 'Wasserfall', 'optional', 'KWO-Hängebrücke. CHF 16.'],
   ['Grimselpass 2165m', 46.5611, 8.3343, 5, 'Passstraße', 'pflicht', 'Pflichtroute.'],
   ['Totensee', 46.5616, 8.3274, 5, 'See', 'optional', 'Bergsee am Grimselpass.'],
   ['Grimsel Hospiz', 46.5734, 8.3334, 5, 'Aussichtspunkt', 'optional', 'Historisches Hospiz.'],
   ['Furkapass 2429m', 46.5722, 8.4147, 5, 'Passstraße', 'pflicht', 'James-Bond-Goldfinger-Straße.'],
-  ['Hotel Belvedere Furka', 46.5724, 8.3997, 5, 'Sehenswürdigkeit', 'optional', 'Berühmtes Hotel an der Kehre.'],
+  ['Hotel Belvedere Furka', 46.5724, 8.3997, 5, 'Sehenswürdigkeit', 'optional', 'Berühmtes Hotel.'],
   ['Rhonegletscher', 46.5728, 8.3978, 5, 'Sehenswürdigkeit', 'optional', 'Eisgrotte CHF 9.'],
   ['Realp', 46.6212, 8.5023, 5, 'Durchfahrt', 'optional', 'Dorf nach Furka.'],
   ['Brig', 46.3186, 7.9888, 5, 'Durchfahrt', 'optional', 'Wallis-Hauptort.'],
   ['Visp', 46.2937, 7.8814, 5, 'Durchfahrt', 'optional', 'Knotenpunkt Mattertal.'],
-  ['Täsch', 46.0680, 7.7791, 5, 'Hotelstandort', 'pflicht', 'Welcome Hotel Täsch by Täscherhof. 2 Nächte.'],
-  ['Matterhorn Terminal Täsch', 46.0686, 7.7796, 5, 'Parkplatz', 'pflicht', 'Auto parken CHF 17/Tag.'],
+  ['Täsch · Matterhorn Inn', 46.0680, 7.7791, 5, 'Hotel', 'pflicht', 'Hotel Matterhorn Inn GEBUCHT · CHF 297 · 2 N.'],
+  ['Matterhorn Terminal Täsch', 46.0686, 7.7796, 5, 'Parkplatz', 'optional', 'Großparkplatz.'],
   ['Zermatt', 46.0207, 7.7491, 6, 'Sehenswürdigkeit', 'pflicht', 'Autofreies Bergdorf, Matterhorn.'],
   ['Gornergrat 3089m', 45.9837, 7.7849, 6, 'Aussichtspunkt', 'pflicht', 'Bergbahn höchste Europa. CHF 132.'],
   ['Riffelsee', 45.9911, 7.7681, 6, 'See', 'optional', 'Matterhorn-Spiegelung Abstecher.'],
@@ -1121,43 +1176,34 @@ const pts = [
   ['Goppenstein', 46.3965, 7.7596, 7, 'Bahnhof', 'pflicht', 'Lötschberg-Autoverlad. CHF 28.'],
   ['Kandersteg', 46.4949, 7.6716, 7, 'Durchfahrt', 'pflicht', 'Talstation Oeschinensee-Bahn.'],
   ['Blausee', 46.5236, 7.6918, 7, 'See', 'pflicht', 'Smaragd-Naturpark. CHF 10.'],
-  ['Lauterbrunnen', 46.5942, 7.9080, 7, 'Hotelstandort', 'pflicht', 'Hotel Schützen. 1 Nacht.'],
-  ['Staubbachfall', 46.5896, 7.9082, 7, 'Wasserfall', 'pflicht', '297m Wasserfall.'],
+  ['Lauterbrunnen Parkhaus Mätten', 46.5942, 7.9080, 7, 'Parkplatz', 'pflicht', 'Auto 2 Nächte parken. CHF 14/Tag.'],
+  ['Wengen · Chalet Sonnenhof', 46.5963, 7.9241, 7, 'Hotel', 'pflicht', 'Apartment GEBUCHT · CHF 427 · 2 N. autofrei!'],
   ['Oeschinensee', 46.5004, 7.7299, 8, 'See', 'pflicht', 'UNESCO. Blümlisalp.'],
-  ['Trümmelbachfälle', 46.5717, 7.9059, 8, 'Wasserfall', 'optional', '10 Gletscherwasserfälle im Berg. CHF 14.'],
-  ['Grütschalp', 46.5879, 7.8829, 8, 'Bergbahn', 'optional', 'Zwischenstation Mürren-Bahn.'],
-  ['Mürren', 46.5587, 7.8921, 8, 'Aussichtspunkt', 'pflicht', 'Autofreies Dorf. Eiger/Mönch/Jungfrau.'],
-  ['Grindelwald', 46.6243, 8.0410, 8, 'Hotelstandort', 'pflicht', 'Hotel Central Wolter. 1 Nacht.'],
+  ['Männlichen', 46.6080, 7.9377, 8, 'Aussichtspunkt', 'pflicht', 'Bergbahn ab Wengen. CHF 38.'],
+  ['Kleine Scheidegg', 46.5849, 7.9619, 8, 'Aussichtspunkt', 'pflicht', 'Eiger-Nordwand-Blick.'],
+  ['Trümmelbachfälle', 46.5717, 7.9059, 8, 'Wasserfall', 'optional', '10 Gletscherwasserfälle. CHF 14.'],
+  ['Mürren', 46.5587, 7.8921, 8, 'Aussichtspunkt', 'optional', 'Autofreies Dorf.'],
+  ['Grindelwald-Grund', 46.6243, 8.0410, 9, 'Durchfahrt', 'pflicht', 'Talstation First-Bahn.'],
   ['First-Bahn', 46.6606, 8.0540, 9, 'Bergbahn', 'pflicht', 'Gondelbahn ab Grindelwald. CHF 72.'],
-  ['Bachalpsee', 46.6661, 8.0245, 9, 'See', 'pflicht', 'Postkartenmotiv. T1 Wanderung.'],
+  ['Bachalpsee', 46.6661, 8.0245, 9, 'See', 'pflicht', 'Postkartenmotiv. T1.'],
   ['Iseltwald', 46.6895, 7.9023, 9, 'Sehenswürdigkeit', 'optional', 'Bond-Steg am Brienzersee.'],
   ['Brienzersee', 46.7236, 7.9583, 9, 'See', 'optional', 'An der Rückreiseroute.'],
 
-  // Reserve
   ['Saxer Lücke (Reserve)', 47.2429, 9.3962, 0, 'Wanderung', 'reserve', 'Tag-2-Alternative T3.'],
   ['Säntis-Gipfel (Reserve)', 47.2491, 9.3439, 0, 'Aussichtspunkt', 'reserve', 'Schlechtwetter-Tag-2.'],
   ['Seerenbachfälle (Reserve)', 47.1331, 9.1689, 0, 'Wasserfall', 'reserve', 'Walenstadt – Umweg.'],
-  ['Andermatt (Reserve)', 46.6383, 8.5944, 0, 'Durchfahrt', 'reserve', 'Tag-5-Alternative mit Gotthard.'],
+  ['Andermatt (Reserve)', 46.6383, 8.5944, 0, 'Durchfahrt', 'reserve', 'Tag-5-Alt. mit Gotthard.'],
   ['Gotthardpass (Reserve)', 46.5547, 8.5640, 0, 'Passstraße', 'reserve', 'Tag-5-Alternative.'],
-  ['Tremola (Reserve)', 46.5350, 8.5660, 0, 'Passstraße', 'reserve', 'Alte Pflasterstraße Gotthard.'],
-  ['Airolo (Reserve)', 46.5278, 8.6128, 0, 'Durchfahrt', 'reserve', 'Eingang Tessin.'],
   ['Lavertezzo (Reserve)', 46.2606, 8.8336, 0, 'Sehenswürdigkeit', 'reserve', 'Verzascatal.'],
   ['Ponte dei Salti (Reserve)', 46.2604, 8.8347, 0, 'Sehenswürdigkeit', 'reserve', 'Römische Bogenbrücke.'],
   ['Foroglio (Reserve)', 46.3937, 8.6308, 0, 'Sehenswürdigkeit', 'reserve', 'Tessiner Steinhäuser.'],
-  ['Wasserfall La Froda (Reserve)', 46.3954, 8.6307, 0, 'Wasserfall', 'reserve', 'Bavonatal.'],
   ['Locarno (Reserve)', 46.1712, 8.7990, 0, 'Hotelstandort', 'reserve', 'Bei Verlängerung.'],
-  ['Lago Maggiore (Reserve)', 46.1672, 8.7975, 0, 'See', 'reserve', 'Tessiner Großsee.'],
-  ['Domodossola I (Reserve)', 46.1156, 8.2913, 0, 'Durchfahrt', 'reserve', 'Italien-Stopp Simplon-Variante.'],
-  ['Simplonpass (Reserve)', 46.2495, 8.0339, 0, 'Passstraße', 'reserve', 'Italien-Variante.'],
-  ['Jungfraujoch (Reserve)', 46.5474, 7.9851, 0, 'Aussichtspunkt', 'reserve', 'CHF 235/Pers. Nur Verlängerung.'],
-  ['Kleine Scheidegg (Reserve)', 46.5849, 7.9619, 0, 'Aussichtspunkt', 'reserve', 'Eiger-Nordwand. Tag-9-Alt.'],
-  ['Wengen (Reserve)', 46.6068, 7.9216, 0, 'Hotelstandort', 'reserve', 'Mürren-Alternative.'],
-  ['Schilthorn (Reserve)', 46.5582, 7.8341, 0, 'Aussichtspunkt', 'reserve', 'Piz Gloria 2970m. CHF 90.'],
-  ['Männlichen (Reserve)', 46.6080, 7.9377, 0, 'Aussichtspunkt', 'reserve', 'Panoramaweg Tag-9-Alt.']
+  ['Jungfraujoch (Reserve)', 46.5474, 7.9851, 0, 'Aussichtspunkt', 'reserve', 'CHF 235/Pers. Verlängerung.'],
+  ['Schilthorn (Reserve)', 46.5582, 7.8341, 0, 'Aussichtspunkt', 'reserve', 'Piz Gloria 2970m.']
 ];
 
 function markerOpts(status){
-  const colors = { pflicht:'#A32D2D', optional:'#0C447C', reserve:'#5F5E5A' };
+  const colors = { pflicht:'#C0653C', optional:'#3C6A85', reserve:'#988877' };
   return { radius: status==='pflicht'?7:5, fillColor: colors[status]||'#444',
            color:'#fff', weight:1.5, opacity:1, fillOpacity:0.95 };
 }
@@ -1167,7 +1213,7 @@ pts.forEach(p => {
   const m = L.circleMarker([lat,lon], markerOpts(status)).addTo(map);
   const dayBadge = day>0
     ? `<span class="pop-day" style="background:${dayColors[day]}">Tag ${day}</span>`
-    : `<span class="pop-day" style="background:#5F5E5A">Reserve</span>`;
+    : `<span class="pop-day" style="background:#988877">Reserve</span>`;
   const html = `<h4>${name}</h4>
     <div>${dayBadge}<span class="pop-cat">${cat}</span></div>
     <div class="pop-meta">${info}</div>
@@ -1176,15 +1222,15 @@ pts.forEach(p => {
 });
 
 const routes = {
-  1: ['Rheinfall Schaffhausen','Appenzell'],
-  2: ['Appenzell','Wasserauen Talstation','Ebenalp 1640m','Schäfler 1924m','Seealpsee','Wasserauen Talstation','Appenzell'],
-  3: ['Appenzell','Klöntalersee','Stoosbahn Schlattli','Stoos','Fronalpstock','Engelberg'],
-  4: ['Engelberg','Wolfenschiessen','Oberrickenbach','Bannalpsee','Wolfenschiessen','Sustenpass 2224m','Steingletscher-Aussicht','Aareschlucht','Innertkirchen'],
-  5: ['Innertkirchen','Handeggfallbrücke','Grimselpass 2165m','Furkapass 2429m','Rhonegletscher','Realp','Brig','Visp','Täsch'],
-  6: ['Täsch','Zermatt','Gornergrat 3089m','Zermatt','Täsch'],
-  7: ['Täsch','Zermatt','Sunnegga','Stellisee','Grindjisee','Grünsee','Moosjisee','Leisee','Zermatt','Täsch','Goppenstein','Kandersteg','Blausee','Lauterbrunnen'],
-  8: ['Lauterbrunnen','Kandersteg','Oeschinensee','Kandersteg','Lauterbrunnen','Trümmelbachfälle','Mürren','Lauterbrunnen','Grindelwald'],
-  9: ['Grindelwald','First-Bahn','Bachalpsee','First-Bahn','Grindelwald','Iseltwald','Brienzersee']
+  1: ['Rheinfall Schaffhausen','Appenzell · Hotel Koller'],
+  2: ['Appenzell · Hotel Koller','Wasserauen Talstation','Ebenalp 1640m','Schäfler 1924m','Seealpsee','Wasserauen Talstation','Appenzell · Hotel Koller'],
+  3: ['Appenzell · Hotel Koller','Klöntalersee','Stoosbahn Schlattli','Stoos','Fronalpstock','Engelberg · Hotel Terrace'],
+  4: ['Engelberg · Hotel Terrace','Wolfenschiessen','Oberrickenbach','Bannalpsee','Wolfenschiessen','Sustenpass 2224m','Steingletscher-Aussicht','Aareschlucht','Innertkirchen · Hotel Urweider'],
+  5: ['Innertkirchen · Hotel Urweider','Handeggfallbrücke','Grimselpass 2165m','Furkapass 2429m','Rhonegletscher','Realp','Brig','Visp','Täsch · Matterhorn Inn'],
+  6: ['Täsch · Matterhorn Inn','Zermatt','Gornergrat 3089m','Zermatt','Täsch · Matterhorn Inn'],
+  7: ['Täsch · Matterhorn Inn','Zermatt','Sunnegga','Stellisee','Grindjisee','Grünsee','Moosjisee','Leisee','Zermatt','Täsch · Matterhorn Inn','Goppenstein','Kandersteg','Blausee','Lauterbrunnen Parkhaus Mätten','Wengen · Chalet Sonnenhof'],
+  8: ['Wengen · Chalet Sonnenhof','Lauterbrunnen Parkhaus Mätten','Kandersteg','Oeschinensee','Kandersteg','Lauterbrunnen Parkhaus Mätten','Wengen · Chalet Sonnenhof','Männlichen','Kleine Scheidegg','Wengen · Chalet Sonnenhof'],
+  9: ['Wengen · Chalet Sonnenhof','Lauterbrunnen Parkhaus Mätten','Grindelwald-Grund','First-Bahn','Bachalpsee','First-Bahn','Grindelwald-Grund','Iseltwald','Brienzersee']
 };
 const lookup = {};
 pts.forEach(p => { lookup[p[0]] = [p[1], p[2]]; });
@@ -1196,18 +1242,16 @@ Object.entries(routes).forEach(([d, names]) => {
   }).addTo(map);
 });
 
-// Heimreise nach Norden andeuten
-L.polyline([[46.78, 8.0],[47.7, 7.5]], { color:'#5F5E5A', weight:3, opacity:0.5, dashArray:'8,6'}).addTo(map);
+L.polyline([[46.78, 8.0],[47.7, 7.5]], { color:'#7C6F5C', weight:3, opacity:0.5, dashArray:'8,6'}).addTo(map);
 
 map.fitBounds([[45.9, 7.5],[47.7, 9.6]], {padding:[10,10]});
-
 map.on('click', () => map.scrollWheelZoom.enable());
 
-const lm = document.getElementById('legendMap');
+const lm = document.getElementById('legend');
 Object.entries(dayLabels).forEach(([d,label]) => {
   const el = document.createElement('div');
   el.className = 'leg';
-  el.innerHTML = `<span class="swatch" style="background:${dayColors[d]}"></span> ${label}`;
+  el.innerHTML = `<span class="sw" style="background:${dayColors[d]}"></span> ${label}`;
   lm.appendChild(el);
 });
 </script>
