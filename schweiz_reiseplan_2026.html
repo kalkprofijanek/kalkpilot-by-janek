@@ -239,9 +239,79 @@ footer a{color:#F6D9B8}
   #map{height:440px}
 }
 
+/* ========== PDF & Bild-Modal ========== */
+.btn-pdf{display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:99px;
+  font-family:var(--sans); font-size:11.5px; font-weight:700; border:1.5px solid var(--terra);
+  background:var(--terra-soft); color:var(--terra-deep); cursor:pointer; transition:all .16s;
+  white-space:nowrap; margin-top:4px}
+.btn-pdf:hover{background:var(--terra); color:#fff}
+.btn-pdf::before{content:"📄"; font-size:11px}
+.btn-img{display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:99px;
+  font-family:var(--sans); font-size:12px; font-weight:700; border:1.5px solid var(--lake);
+  background:var(--lake-soft); color:#1C4257; cursor:pointer; transition:all .16s; white-space:nowrap}
+.btn-img:hover{background:var(--lake); color:#fff}
+
+.modal{position:fixed; inset:0; z-index:9999; display:none; align-items:center; justify-content:center;
+  background:rgba(20,12,5,.78); backdrop-filter:blur(6px); padding:20px}
+.modal.show{display:flex}
+.modal-box{background:var(--surface); border-radius:var(--rad-lg); max-width:1000px; width:100%;
+  max-height:92vh; display:flex; flex-direction:column; box-shadow:0 20px 80px rgba(0,0,0,.5); overflow:hidden}
+.modal-head{display:flex; align-items:center; justify-content:space-between; padding:14px 22px;
+  border-bottom:1px solid var(--line); background:var(--surface-warm)}
+.modal-head h3{font-size:20px; margin:0; color:var(--ink)}
+.modal-head .modal-sub{font-size:12px; color:var(--ink-soft); margin-top:2px}
+.modal-close{background:transparent; border:0; font-size:24px; cursor:pointer; padding:4px 10px;
+  border-radius:99px; color:var(--ink-soft); line-height:1}
+.modal-close:hover{background:var(--terra-soft); color:var(--terra-deep)}
+.modal-body{flex:1 1 auto; overflow:auto; position:relative; background:#222}
+.modal-body iframe{width:100%; height:100%; min-height:60vh; border:0; background:#fff}
+.modal-foot{padding:10px 22px; border-top:1px solid var(--line); background:var(--surface-warm); font-size:12.5px; color:var(--ink-soft); display:flex; gap:14px; flex-wrap:wrap; align-items:center; justify-content:space-between}
+.modal-foot a{color:var(--terra-deep); font-weight:600}
+
+/* Galerie für Bilder */
+.gal-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; padding:18px}
+.gal-thumb{position:relative; aspect-ratio:4/3; border-radius:var(--rad); overflow:hidden; cursor:pointer;
+  background:var(--surface-warm); border:2px solid transparent; transition:all .16s}
+.gal-thumb:hover{border-color:var(--terra); transform:translateY(-2px); box-shadow:var(--shadow)}
+.gal-thumb img{width:100%; height:100%; object-fit:cover; display:block}
+.gal-thumb .gal-cap{position:absolute; left:0; right:0; bottom:0; padding:6px 10px;
+  background:linear-gradient(to top, rgba(0,0,0,.78), transparent);
+  color:#fff; font-size:12px; font-weight:600}
+.gal-thumb.selected{border-color:var(--pine)}
+.gal-thumb.selected::after{content:"✓"; position:absolute; top:8px; right:8px; width:24px; height:24px;
+  border-radius:50%; background:var(--pine); color:#fff; display:flex; align-items:center; justify-content:center;
+  font-weight:700; box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.gal-empty{padding:40px; text-align:center; color:var(--ink-soft); font-style:italic}
+.gal-hint{padding:14px 22px; background:var(--lake-soft); color:#1C4257; font-size:13px; border-bottom:1px solid #B9D4E2}
+
+/* Sehenswürdigkeiten klickbar mit kleinem Foto-Icon */
+.sights-cols li{cursor:pointer; padding:3px 4px; border-radius:5px; transition:background .15s; position:relative; padding-right:24px}
+.sights-cols li:hover{background:var(--terra-soft); color:var(--terra-deep)}
+.sights-cols li::after{content:"🔍"; position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  font-size:11px; opacity:.35; transition:opacity .15s}
+.sights-cols li:hover::after{opacity:1}
+
+/* Sight-Modal (kleiner als die anderen) */
+.sight-modal-box{max-width:680px}
+.sight-img-wrap{position:relative; min-height:300px; display:flex; align-items:center; justify-content:center; background:var(--surface-warm); padding:18px}
+.sight-img-wrap img{max-width:100%; max-height:55vh; border-radius:var(--rad); box-shadow:var(--shadow); object-fit:contain}
+.sight-img-loading{font-style:italic; color:var(--ink-soft)}
+.sight-info{padding:14px 22px; font-size:13.5px; color:var(--ink-soft); line-height:1.5; border-top:1px solid var(--line); background:var(--paper)}
+.sight-info strong{color:var(--ink)}
+.sight-actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+
+/* Bildvorschau in day-photo */
+.day-photo.has-img{background-size:cover; background-position:center}
+.day-photo.has-img span{background:rgba(0,0,0,.5); padding:4px 14px; border-radius:99px; backdrop-filter:blur(4px)}
+.day-photo .photo-pick{position:absolute; bottom:8px; right:8px; z-index:2; background:rgba(255,252,245,.92);
+  color:var(--ink); padding:4px 11px; border-radius:99px; font-size:11.5px; font-weight:700;
+  cursor:pointer; border:1px solid var(--line-strong); display:none}
+.day-photo:hover .photo-pick{display:inline-flex; align-items:center; gap:4px}
+.day-photo .photo-pick:hover{background:#fff; border-color:var(--ink)}
+
 @media print{
   body{background:#fff; color:#000; font-size:11pt}
-  body::before, nav.bar, #map, .btn, .btn-row, .hero-date-stamp{display:none !important}
+  body::before, nav.bar, #map, .btn, .btn-row, .hero-date-stamp, .btn-pdf, .btn-img, .modal{display:none !important}
   .sec{padding:14pt 0; break-inside:avoid}
   .hero{min-height:auto; color:#000; background:#fff}
   .hero::after, .hero::before, .hero-mountains{display:none}
@@ -271,10 +341,10 @@ footer a{color:#F6D9B8}
         <div class="kf"><span class="lbl">Tage</span><span class="val">9</span></div>
         <div class="kf"><span class="lbl">Nächte</span><span class="val">8 · 5 Hotels</span></div>
         <div class="kf"><span class="lbl">Kilometer</span><span class="val">~2.000</span></div>
-        <div class="kf"><span class="lbl">Budget</span><span class="val">~4.300 €</span></div>
-        <div class="kf"><span class="lbl">Buchung</span><span class="val">4 von 5 ✓</span></div>
+        <div class="kf"><span class="lbl">Budget</span><span class="val">~4.150 €</span></div>
+        <div class="kf"><span class="lbl">Buchung</span><span class="val">5 von 5 ✓</span></div>
       </div>
-      <p class="hero-sig">Stand Juni 2026 · 4 Hotels gebucht, Appenzell angefragt</p>
+      <p class="hero-sig">Stand Juni 2026 · alle Hotels gebucht ♥</p>
     </div>
   </div>
 </header>
@@ -307,8 +377,8 @@ footer a{color:#F6D9B8}
 
     <div class="book-status">
       <h3><span class="kicker" style="font-size:24px;transform:none">Buchungsstand</span></h3>
-      <div class="progress-bar"><div class="progress-fill"></div></div>
-      <p class="progress-text"><strong>4 von 5 Hotels gebucht</strong> · Hotel Koller (Appenzell) angefragt · Lötschberg-Verlad und Aescher-Reservierung stehen aus</p>
+      <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+      <p class="progress-text"><strong>5 von 5 Hotels gebucht ✓</strong> · Lötschberg-Verlad und Aescher-Reservierung stehen noch aus</p>
     </div>
 
     <div class="grid g2">
@@ -332,7 +402,7 @@ footer a{color:#F6D9B8}
       </div>
     </div>
 
-    <div class="note-box nb-good"><div class="ico">✓</div><div><strong>Hotels weitgehend gebucht.</strong> Engelberg, Innertkirchen, Täsch und Wengen sind fix. Hotel Koller in Appenzell ist angefragt — Antwort steht aus. Wengen ist autofrei: Auto wird in Lauterbrunnen geparkt, dann mit der WAB-Bahn hoch.</div></div>
+    <div class="note-box nb-good"><div class="ico">✓</div><div><strong>Alle Hotels gebucht.</strong> Appenzell (Gästehaus Koller), Engelberg, Innertkirchen, Täsch und Wengen stehen. Wengen ist autofrei: Auto wird in Lauterbrunnen geparkt, dann mit der WAB-Bahn hoch.</div></div>
     <div class="note-box nb-warn"><div class="ico">!</div><div><strong>Wengen-Buchung ist nicht stornierbar.</strong> Das Chalet Sonnenhof ist ein Apartment mit Küche, kein Frühstück — wir versorgen uns morgens selbst, das spart in Hauptlage 30–40 CHF pro Tag.</div></div>
   </div>
 </section>
@@ -351,17 +421,17 @@ footer a{color:#F6D9B8}
           <tr><th>Nacht</th><th>Hotel</th><th>Datum</th><th>Buchungs-Nr.</th><th class="num">CHF</th><th class="num">EUR</th><th>Frühst.</th><th>Parkpl.</th><th>Storno</th><th>Status</th></tr>
         </thead>
         <tbody>
-          <tr><td><b>1+2</b><br><span class="muted small">Fr+Sa</span></td><td><b>Hotel Koller</b><br><span class="muted small">Appenzell</span></td><td>11.–13.9.</td><td><span class="muted small">— angefragt</span></td><td class="num">~420</td><td class="num">~450</td><td>inkl. ?</td><td>?</td><td>?</td><td><span class="badge b-pending">angefragt</span></td></tr>
-          <tr><td><b>3</b><br><span class="muted small">So</span></td><td><b>Hotel Terrace</b><br><span class="muted small">Engelberg · 3*</span></td><td>13.–14.9.</td><td class="tiny">6534.329.360</td><td class="num">160</td><td class="num">175</td><td>✓ inkl.</td><td>5 CHF/N</td><td>bis 10.9.</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
-          <tr><td><b>4</b><br><span class="muted small">Mo</span></td><td><b>Hotel Urweider</b><br><span class="muted small">Innertkirchen · 3*</span></td><td>14.–15.9.</td><td class="tiny">5043.366.090</td><td class="num">208</td><td class="num">227</td><td>✓ inkl.</td><td>✓ kostenlos</td><td>bis 6.9.</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
-          <tr><td><b>5+6</b><br><span class="muted small">Di+Mi</span></td><td><b>Matterhorn Inn</b><br><span class="muted small">Täsch · 3*</span></td><td>15.–17.9.</td><td class="tiny">6289.367.067</td><td class="num">297</td><td class="num">324</td><td><span style="color:var(--terra-deep)">✗</span></td><td>10 CHF/N</td><td>bis 7.9.</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
-          <tr><td><b>7+8</b><br><span class="muted small">Do+Fr</span></td><td><b>Chalet Sonnenhof</b><br><span class="muted small">Wengen · Apartment</span></td><td>17.–19.9.</td><td class="tiny">5567.427.143</td><td class="num">427</td><td class="num">466</td><td><span style="color:var(--terra-deep)">✗ Küche</span></td><td><span style="color:var(--terra-deep)">✗ autofrei</span></td><td><span style="color:var(--terra-deep)"><b>NICHT</b></span></td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
-          <tr class="row-total"><td colspan="4">Hotel-Summe (4 gebucht + 1 geschätzt)</td><td class="num">~1.512</td><td class="num">~1.642</td><td colspan="4"></td></tr>
+          <tr><td><b>1+2</b><br><span class="muted small">Fr+Sa</span></td><td><b>Gästehaus Koller</b><br><span class="muted small">Appenzell · B&amp;B</span><br><button class="btn-pdf" data-pdf="Appenzell.pdf" data-title="Gästehaus Koller · Appenzell">PDF</button></td><td>11.–13.9.</td><td class="tiny">Direktbuchung</td><td class="num">290</td><td class="num">307</td><td><span style="color:var(--terra-deep)">✗</span></td><td>✓ kostenlos</td><td>bis 7 Tage vor</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
+          <tr><td><b>3</b><br><span class="muted small">So</span></td><td><b>Hotel Terrace</b><br><span class="muted small">Engelberg · 3*</span><br><button class="btn-pdf" data-pdf="Engelberg.pdf" data-title="Hotel Terrace · Engelberg">PDF</button></td><td>13.–14.9.</td><td class="tiny">6534.329.360</td><td class="num">160</td><td class="num">175</td><td>✓ inkl.</td><td>5 CHF/N</td><td>bis 10.9.</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
+          <tr><td><b>4</b><br><span class="muted small">Mo</span></td><td><b>Hotel Urweider</b><br><span class="muted small">Innertkirchen · 3*</span><br><button class="btn-pdf" data-pdf="Innertkirchen.pdf" data-title="Hotel Urweider · Innertkirchen">PDF</button></td><td>14.–15.9.</td><td class="tiny">5043.366.090</td><td class="num">208</td><td class="num">227</td><td>✓ inkl.</td><td>✓ kostenlos</td><td>bis 6.9.</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
+          <tr><td><b>5+6</b><br><span class="muted small">Di+Mi</span></td><td><b>Matterhorn Inn</b><br><span class="muted small">Täsch · 3*</span><br><button class="btn-pdf" data-pdf="taesch.pdf" data-title="Hotel Matterhorn Inn · Täsch">PDF</button></td><td>15.–17.9.</td><td class="tiny">6289.367.067</td><td class="num">297</td><td class="num">324</td><td><span style="color:var(--terra-deep)">✗</span></td><td>10 CHF/N</td><td>bis 7.9.</td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
+          <tr><td><b>7+8</b><br><span class="muted small">Do+Fr</span></td><td><b>Chalet Sonnenhof</b><br><span class="muted small">Wengen · Apartment</span><br><button class="btn-pdf" data-pdf="wengen.pdf" data-title="Chalet Sonnenhof · Wengen">PDF</button></td><td>17.–19.9.</td><td class="tiny">5567.427.143</td><td class="num">427</td><td class="num">466</td><td><span style="color:var(--terra-deep)">✗ Küche</span></td><td><span style="color:var(--terra-deep)">✗ autofrei</span></td><td><span style="color:var(--terra-deep)"><b>NICHT</b></span></td><td><span class="badge b-booked">gebucht ✓</span></td></tr>
+          <tr class="row-total"><td colspan="4">Hotel-Summe (alle gebucht ✓)</td><td class="num">1.382</td><td class="num">1.499</td><td colspan="4"></td></tr>
         </tbody>
       </table>
     </div>
 
-    <div class="note-box nb-info" style="margin-top:18px"><div class="ico">i</div><div><strong>Hotel Koller, Appenzell:</strong> traditionsreiches 3*-Stadthaus in der Hauptgasse, kostenfreier Parkplatz, gutes Restaurant. Antwort auf Anfrage sollte binnen einer Woche kommen. Falls ausgebucht: Hotel Säntis 4* als Backup (CHF 500–600).</div></div>
+    <div class="note-box nb-good" style="margin-top:18px"><div class="ico">✓</div><div><strong>Gästehaus Koller, Appenzell:</strong> Bed &amp; Breakfast bei Karin &amp; Stefan Koller, Eggerstandenstrasse 9, T +41 71 787 02 22. Doppelzimmer 18 m² mit Dusche/WC, <strong>ohne Frühstück</strong>. CHF 280 für 2 Nächte + Kurtaxe CHF 10 = CHF 290. Frei stornierbar bis 7 Tage vor Anreise.</div></div>
     <div class="note-box nb-warn"><div class="ico">!</div><div><strong>Stornofrist-Check (zeitkritisch):</strong> Engelberg bis 10.9., Innertkirchen bis 6.9., Täsch bis 7.9. — alle anderen sind fix. Bei Wetter- oder Krankheits-Sorge spätestens 8.9. entscheiden.</div></div>
   </div>
 </section>
@@ -396,7 +466,7 @@ footer a{color:#F6D9B8}
       <article class="day">
         <div class="day-bullet"><div class="ring" style="background:var(--d1)"><span class="n">1</span><span class="t">Fr</span></div><div class="date hand">Fr 11.9.</div></div>
         <div class="day-card">
-          <div class="day-photo" style="background:linear-gradient(135deg,#C0653C,#9C4A26)"><span>Anreise</span></div>
+          <div class="day-photo" data-day="1" style="background:linear-gradient(135deg,#C0653C,#9C4A26)"><span>Anreise</span><span class="photo-pick">🖼 Foto wählen</span></div>
           <div class="day-stripe" style="background:var(--d1)"></div>
           <div class="day-body">
             <h3 class="day-title">Anreise &amp; Rheinfall</h3>
@@ -410,7 +480,7 @@ footer a{color:#F6D9B8}
               <li><strong>Ankunft Appenzell:</strong> Spaziergang durch die bemalte Hauptgasse, Abendessen im Ort</li>
             </ul>
             <div class="note-box nb-warn"><div class="ico">!</div><div>Lange Autoetappe — Frühstart ist wichtig. Bei Regen ist der Rheinfall trotzdem sehenswert.</div></div>
-            <p class="stay">Übernachtung · <b>Appenzell — Hotel Koller</b> <span class="badge b-pending">angefragt</span> · 1. von 2 Nächten</p>
+            <p class="stay">Übernachtung · <b>Appenzell — Gästehaus Koller</b> <span class="badge b-booked">gebucht ✓</span> · 1. von 2 Nächten · CHF 290 ges. · B&amp;B ohne Frühstück</p>
           </div>
         </div>
       </article>
@@ -418,7 +488,7 @@ footer a{color:#F6D9B8}
       <article class="day">
         <div class="day-bullet"><div class="ring" style="background:var(--d2)"><span class="n">2</span><span class="t">Sa</span></div><div class="date hand">Sa 12.9.</div></div>
         <div class="day-card">
-          <div class="day-photo" style="background:linear-gradient(135deg,#9C4A26,#7E5F88)"><span>Alpstein</span></div>
+          <div class="day-photo" data-day="2" style="background:linear-gradient(135deg,#9C4A26,#7E5F88)"><span>Alpstein</span><span class="photo-pick">🖼 Foto wählen</span></div>
           <div class="day-stripe" style="background:var(--d2)"></div>
           <div class="day-body">
             <h3 class="day-title">Alpstein · Ebenalp · Schäfler · Seealpsee</h3>
@@ -434,7 +504,7 @@ footer a{color:#F6D9B8}
             </ul>
             <p class="small"><span class="badge b-opt">Optional</span> Saxer Lücke statt Seealpsee bei guter Kondition (6–7 h, T3)</p>
             <div class="note-box nb-good"><div class="ico">☂</div><div><strong>Plan B bei Nebel:</strong> Säntis-Schwebebahn ab Schwägalp (fährt auch im Nebel) oder die Stiftsbibliothek St. Gallen.</div></div>
-            <p class="stay">Übernachtung · <b>Appenzell — Hotel Koller</b> <span class="badge b-pending">angefragt</span> · 2. Nacht</p>
+            <p class="stay">Übernachtung · <b>Appenzell — Gästehaus Koller</b> <span class="badge b-booked">gebucht ✓</span> · 2. Nacht</p>
           </div>
         </div>
       </article>
@@ -442,7 +512,7 @@ footer a{color:#F6D9B8}
       <article class="day">
         <div class="day-bullet"><div class="ring" style="background:var(--d3)"><span class="n">3</span><span class="t">So</span></div><div class="date hand">So 13.9.</div></div>
         <div class="day-card">
-          <div class="day-photo" style="background:linear-gradient(135deg,#7E5F88,#4F5C84)"><span>Klöntal · Stoos</span></div>
+          <div class="day-photo" data-day="3" style="background:linear-gradient(135deg,#7E5F88,#4F5C84)"><span>Klöntal · Stoos</span><span class="photo-pick">🖼 Foto wählen</span></div>
           <div class="day-stripe" style="background:var(--d3)"></div>
           <div class="day-body">
             <h3 class="day-title">Klöntalersee · Stoos/Fronalpstock · Engelberg</h3>
@@ -464,7 +534,7 @@ footer a{color:#F6D9B8}
       <article class="day">
         <div class="day-bullet"><div class="ring" style="background:var(--d4)"><span class="n">4</span><span class="t">Mo</span></div><div class="date hand">Mo 14.9.</div></div>
         <div class="day-card">
-          <div class="day-photo" style="background:linear-gradient(135deg,#4F5C84,#4A6650)"><span>Susten · Aare</span></div>
+          <div class="day-photo" data-day="4" style="background:linear-gradient(135deg,#4F5C84,#4A6650)"><span>Susten · Aare</span><span class="photo-pick">🖼 Foto wählen</span></div>
           <div class="day-stripe" style="background:var(--d4)"></div>
           <div class="day-body">
             <h3 class="day-title">Bannalpsee · Sustenpass · Aareschlucht</h3>
@@ -486,7 +556,7 @@ footer a{color:#F6D9B8}
       <article class="day">
         <div class="day-bullet"><div class="ring" style="background:var(--d5)"><span class="n">5</span><span class="t">Di</span></div><div class="date hand">Di 15.9.</div></div>
         <div class="day-card">
-          <div class="day-photo" style="background:linear-gradient(135deg,#4A6650,#3C6A85)"><span>Grimsel · Furka</span></div>
+          <div class="day-photo" data-day="5" style="background:linear-gradient(135deg,#4A6650,#3C6A85)"><span>Grimsel · Furka</span><span class="photo-pick">🖼 Foto wählen</span></div>
           <div class="day-stripe" style="background:var(--d5)"></div>
           <div class="day-body">
             <h3 class="day-title">Grimsel · Furka · Rhonegletscher · Wallis</h3>
@@ -512,7 +582,7 @@ footer a{color:#F6D9B8}
       <article class="day">
         <div class="day-bullet"><div class="ring" style="background:var(--d6)"><span class="n">6</span><span class="t">Mi</span></div><div class="date hand">Mi 16.9.</div></div>
         <div class="day-card">
-          <div class="day-photo" style="background:linear-gradient(135deg,#3C6A85,#2E6E72)"><span>Gornergrat</span></div>
+          <div class="day-photo" data-day="6" style="background:linear-gradient(135deg,#3C6A85,#2E6E72)"><span>Gornergrat</span><span class="photo-pick">🖼 Foto wählen</span></div>
           <div class="day-stripe" style="background:var(--d6)"></div>
           <div class="day-body">
             <h3 class="day-title">Zermatt · Gornergrat · Matterhorn</h3>
@@ -535,7 +605,7 @@ footer a{color:#F6D9B8}
       <article class="day">
         <div class="day-bullet"><div class="ring" style="background:var(--d7)"><span class="n">7</span><span class="t">Do</span></div><div class="date hand">Do 17.9.</div></div>
         <div class="day-card">
-          <div class="day-photo" style="background:linear-gradient(135deg,#2E6E72,#B25975)"><span>5-Seen · Lötschberg · Wengen</span></div>
+          <div class="day-photo" data-day="7" style="background:linear-gradient(135deg,#2E6E72,#B25975)"><span>5-Seen · Lötschberg · Wengen</span><span class="photo-pick">🖼 Foto wählen</span></div>
           <div class="day-stripe" style="background:var(--d7)"></div>
           <div class="day-body">
             <h3 class="day-title">5-Seenwanderung · Lötschberg-Verlad · Wengen</h3>
@@ -564,7 +634,7 @@ footer a{color:#F6D9B8}
       <article class="day">
         <div class="day-bullet"><div class="ring" style="background:var(--d8)"><span class="n">8</span><span class="t">Fr</span></div><div class="date hand">Fr 18.9.</div></div>
         <div class="day-card">
-          <div class="day-photo" style="background:linear-gradient(135deg,#B25975,#7C6F5C)"><span>Oeschi · Männlichen</span></div>
+          <div class="day-photo" data-day="8" style="background:linear-gradient(135deg,#B25975,#7C6F5C)"><span>Oeschi · Männlichen</span><span class="photo-pick">🖼 Foto wählen</span></div>
           <div class="day-stripe" style="background:var(--d8)"></div>
           <div class="day-body">
             <h3 class="day-title">Oeschinensee &amp; Männlichen–Kleine Scheidegg</h3>
@@ -594,7 +664,7 @@ footer a{color:#F6D9B8}
       <article class="day">
         <div class="day-bullet"><div class="ring" style="background:var(--d9)"><span class="n">9</span><span class="t">Sa</span></div><div class="date hand">Sa 19.9.</div></div>
         <div class="day-card">
-          <div class="day-photo" style="background:linear-gradient(135deg,#7C6F5C,#988877)"><span>First · Rückreise</span></div>
+          <div class="day-photo" data-day="9" style="background:linear-gradient(135deg,#7C6F5C,#988877)"><span>First · Rückreise</span><span class="photo-pick">🖼 Foto wählen</span></div>
           <div class="day-stripe" style="background:var(--d9)"></div>
           <div class="day-body">
             <h3 class="day-title">First · Bachalpsee · Iseltwald · Rückreise</h3>
@@ -714,17 +784,21 @@ footer a{color:#F6D9B8}
       <p class="sec-lead">Detail-Karten zu allen Hotels mit Adresse, Telefonnummer, Buchungsnummer und PIN für den Check-in. Alle Daten aus den Booking.com-Bestätigungen.</p>
     </div>
 
-    <div class="hotel pending">
-      <div class="hotel-head"><div><span class="place hand">Nacht 1+2 · Appenzell</span><h3>Hotel Koller</h3></div><span class="badge b-pending">angefragt</span></div>
+    <div class="hotel booked">
+      <div class="hotel-head"><div><span class="place hand">Nacht 1+2 · Appenzell</span><h3>Gästehaus Koller (B&amp;B)</h3></div><span class="badge b-booked">gebucht ✓</span></div>
       <div class="hotel-grid-info">
         <div class="hi-cell"><span class="lbl">Anreise</span><span class="val">Fr 11.9.</span></div>
         <div class="hi-cell"><span class="lbl">Abreise</span><span class="val">So 13.9.</span></div>
-        <div class="hi-cell"><span class="lbl">Nächte</span><span class="val">2</span></div>
-        <div class="hi-cell"><span class="lbl">Preis ges. (geschätzt)</span><span class="val big">~CHF 420 <small>(~€450)</small></span></div>
-        <div class="hi-cell"><span class="lbl">Status</span><span class="val">Anfrage offen</span></div>
+        <div class="hi-cell"><span class="lbl">Buchung über</span><span class="val">Direkt bei Familie Koller</span></div>
+        <div class="hi-cell"><span class="lbl">Zimmer</span><span class="val">DZ 18 m² · Dusche/WC</span></div>
+        <div class="hi-cell"><span class="lbl">Preis ges. (2 N.)</span><span class="val big">CHF 290 <small>(€307 inkl. Kurtaxe)</small></span></div>
+        <div class="hi-cell"><span class="lbl">Frühstück</span><span class="val">✗ ohne Frühstück</span></div>
+        <div class="hi-cell"><span class="lbl">Parkplatz</span><span class="val">✓ kostenlos</span></div>
+        <div class="hi-cell"><span class="lbl">Storno</span><span class="val">bis 7 Tage vor Anreise frei</span></div>
       </div>
-      <p class="small"><strong>Hotel Koller</strong> · Hauptgasse, Appenzell · Traditionsreiches 3*-Stadthaus, kostenfreier Parkplatz, gutes Restaurant. Antwort steht aus.</p>
-      <p class="small muted"><em>Backup falls ausgebucht:</em> Hotel Säntis 4* am Landsgemeindeplatz (CHF 500–600 ges.) oder Hotel Appenzell (CHF 440–520 ges.)</p>
+      <p class="small"><strong>Karin &amp; Stefan Koller · Eggerstandenstrasse 9, CH-9050 Appenzell</strong> · T +41 71 787 02 22 · info@gaestehaus-koller.ch · <a href="https://www.gaestehaus-koller.ch" target="_blank">gaestehaus-koller.ch</a> · Familiäres B&amp;B, ruhige Lage, herzlicher Empfang von Karin Koller.</p>
+      <p class="small muted">Frühstück nicht im Preis – Optionen: Bäckerei Böhli (3 min zu Fuss, sehr gut), Cafe Hörler in der Hauptgasse oder Brötchen vom Coop holen.</p>
+      <div class="btn-row"><button class="btn btn-primary btn-pdf" data-pdf="Appenzell.pdf" data-title="Gästehaus Koller · Appenzell">📄 Buchungs­bestätigung anzeigen</button></div>
     </div>
 
     <div class="hotel booked">
@@ -740,6 +814,7 @@ footer a{color:#F6D9B8}
         <div class="hi-cell"><span class="lbl">Storno</span><span class="val">bis 10.9. frei</span></div>
       </div>
       <p class="small"><strong>Terracestrasse 33, 6390 Engelberg</strong> · T +41 41 639 66 00 · GPS N 46° 49.378, E 8° 24.063 · Standard-Zweibettzimmer, eigenes Bad mit Dusche, Flachbild-TV. WLAN kostenfrei.</p>
+      <div class="btn-row"><button class="btn btn-primary btn-pdf" data-pdf="Engelberg.pdf" data-title="Hotel Terrace · Engelberg">📄 Buchungs­bestätigung anzeigen</button></div>
     </div>
 
     <div class="hotel booked">
@@ -755,6 +830,7 @@ footer a{color:#F6D9B8}
         <div class="hi-cell"><span class="lbl">Storno</span><span class="val">bis 6.9. frei</span></div>
       </div>
       <p class="small"><strong>Dorfstrasse 11, 3862 Innertkirchen</strong> · T +41 33 971 38 88 · GPS N 46° 42.330, E 8° 13.566 · <em>Doppelzimmer mit Balkon</em>, Bergblick, Holzboden. Logistisch perfekt für den Grimsel-Start am nächsten Tag.</p>
+      <div class="btn-row"><button class="btn btn-primary btn-pdf" data-pdf="Innertkirchen.pdf" data-title="Hotel Urweider · Innertkirchen">📄 Buchungs­bestätigung anzeigen</button></div>
     </div>
 
     <div class="hotel booked">
@@ -770,6 +846,7 @@ footer a{color:#F6D9B8}
         <div class="hi-cell"><span class="lbl">Storno</span><span class="val">bis 7.9. frei</span></div>
       </div>
       <p class="small"><strong>Kantonsstrasse 171, 3929 Täsch</strong> · T +41 27 966 26 44 · GPS N 46° 4.024, E 7° 46.553 · Doppelzimmer, Berg-/Gartenblick, allergikerfreundlich. <strong>Wichtig:</strong> Zermatt nur per Shuttlezug erreichbar. Frühstück optional zubuchen oder am Bahnhof beim Bäcker holen.</p>
+      <div class="btn-row"><button class="btn btn-primary btn-pdf" data-pdf="taesch.pdf" data-title="Hotel Matterhorn Inn · Täsch">📄 Buchungs­bestätigung anzeigen</button></div>
     </div>
 
     <div class="hotel booked">
@@ -786,6 +863,7 @@ footer a{color:#F6D9B8}
       </div>
       <p class="small"><strong>Hausenegg 1202e, 3823 Wengen</strong> · T +41 76 204 58 11 · GPS N 46° 35.774, E 7° 55.433 · Apartment mit 1 Schlafzimmer, Terrasse, Bergblick, Küche mit Backofen + Herdplatte + Toaster, eigenes Bad mit Dusche, Schlafsofa.</p>
       <div class="note-box nb-warn" style="margin-top:10px"><div class="ico">!</div><div><strong>Wichtig zur Anreise:</strong> Auto in <strong>Lauterbrunnen Parkhaus Mätten</strong> abstellen (CHF 14/Tag, gedeckt), dann mit der WAB-Bahn nach Wengen (CHF 16 retour/Pers., 30 min). Vom Bahnhof Wengen sind es 5 min Fußweg bis zum Chalet. <strong>Coop Wengen</strong> für Frühstück und Abendessen einkaufen.</div></div>
+      <div class="btn-row"><button class="btn btn-primary btn-pdf" data-pdf="wengen.pdf" data-title="Chalet Sonnenhof · Wengen">📄 Buchungs­bestätigung anzeigen</button></div>
     </div>
 
   </div>
@@ -810,12 +888,12 @@ footer a{color:#F6D9B8}
       <table class="budget-table">
         <thead><tr><th>Position</th><th>Quelle</th><th class="num">CHF</th><th class="num">EUR ca.</th></tr></thead>
         <tbody>
-          <tr><td>Hotel Koller Appenzell (Schätzung)</td><td>angefragt</td><td class="num">420</td><td class="num">450</td></tr>
+          <tr><td>Gästehaus Koller Appenzell (inkl. Kurtaxe)</td><td>gebucht ✓</td><td class="num">290</td><td class="num">307</td></tr>
           <tr><td>Hotel Terrace Engelberg</td><td>gebucht ✓</td><td class="num">160</td><td class="num">175</td></tr>
           <tr><td>Hotel Urweider Innertkirchen</td><td>gebucht ✓</td><td class="num">208</td><td class="num">227</td></tr>
           <tr><td>Hotel Matterhorn Inn Täsch</td><td>gebucht ✓</td><td class="num">297</td><td class="num">324</td></tr>
           <tr><td>Chalet Sonnenhof Wengen</td><td>gebucht ✓</td><td class="num">427</td><td class="num">466</td></tr>
-          <tr class="row-subtotal"><td>Hotels gesamt (4 fix + 1 geschätzt)</td><td></td><td class="num">1.512</td><td class="num">1.642</td></tr>
+          <tr class="row-subtotal"><td>Hotels gesamt (alle gebucht ✓)</td><td></td><td class="num">1.382</td><td class="num">1.499</td></tr>
 
           <tr><td>Bergbahnen Tag 2: Ebenalp</td><td>CHF 35 × 2</td><td class="num">70</td><td class="num">76</td></tr>
           <tr><td>Bergbahnen Tag 3: Stoosbahn + Fronalpstock</td><td>CHF 50 × 2</td><td class="num">100</td><td class="num">109</td></tr>
@@ -844,7 +922,7 @@ footer a{color:#F6D9B8}
 
           <tr><td>Reserve für Unvorhergesehenes</td><td>~5 %</td><td class="num">—</td><td class="num">200</td></tr>
 
-          <tr class="row-total"><td>Gesamt für 2 Personen</td><td></td><td class="num">~3.620</td><td class="num">~4.300</td></tr>
+          <tr class="row-total"><td>Gesamt für 2 Personen</td><td></td><td class="num">~3.490</td><td class="num">~4.150</td></tr>
         </tbody>
       </table>
     </div>
@@ -854,13 +932,13 @@ footer a{color:#F6D9B8}
       <table>
         <thead><tr><th>Kategorie</th><th class="num">CHF/Person</th><th class="num">EUR/Person</th><th>Anteil</th></tr></thead>
         <tbody>
-          <tr><td><strong>Hotels</strong> (5 Unterkünfte · ½ Anteil)</td><td class="num">756</td><td class="num">821</td><td>19 %</td></tr>
+          <tr><td><strong>Hotels</strong> (5 Unterkünfte · ½ Anteil)</td><td class="num">691</td><td class="num">750</td><td>18 %</td></tr>
           <tr><td><strong>Bergbahnen + Eintritte</strong> (Pflicht-Highlights)</td><td class="num">499</td><td class="num">543</td><td>13 %</td></tr>
           <tr><td><strong>Verpflegung</strong> (Restaurant + Apartment-Küche)</td><td class="num">~500</td><td class="num">540</td><td>13 %</td></tr>
           <tr><td><strong>Sprit + Maut</strong> (½ Anteil)</td><td class="num">~160</td><td class="num">175</td><td>4 %</td></tr>
           <tr><td><strong>Vignette + Verlad + Parken</strong> (½ Anteil)</td><td class="num">80</td><td class="num">85</td><td>2 %</td></tr>
           <tr><td><strong>Reserve</strong> (½ Anteil)</td><td class="num">90</td><td class="num">100</td><td>2 %</td></tr>
-          <tr class="row-total"><td>Gesamt pro Person</td><td class="num">~2.085</td><td class="num">~2.150</td><td>100 %</td></tr>
+          <tr class="row-total"><td>Gesamt pro Person</td><td class="num">~2.020</td><td class="num">~2.075</td><td>100 %</td></tr>
         </tbody>
       </table>
     </div>
@@ -903,7 +981,7 @@ footer a{color:#F6D9B8}
     <div class="check done"><div class="prio">✓</div><div class="body"><h4>Täsch buchen (15.–17.9.)</h4><p>Hotel Matterhorn Inn · Buchungsnummer 6289.367.067</p></div><span class="when">erledigt</span></div>
     <div class="check done"><div class="prio">✓</div><div class="body"><h4>Wengen buchen (17.–19.9.)</h4><p>Chalet Sonnenhof Apartment · Buchungsnummer 5567.427.143 · nicht stornierbar!</p></div><span class="when">erledigt</span></div>
 
-    <div class="check urgent"><div class="prio">1</div><div class="body"><h4>Antwort Hotel Koller Appenzell abwarten</h4><p>Falls keine Antwort bis 25.6.: Backup Hotel Säntis 4* oder Hotel Appenzell direkt buchen. Wochenend-Nächte sind knapp.</p></div><span class="when">bis 25.6.</span></div>
+    <div class="check done"><div class="prio">✓</div><div class="body"><h4>Appenzell buchen (11.–13.9.)</h4><p>Gästehaus Koller (B&amp;B) · Direktbuchung bei Karin Koller · CHF 290 inkl. Kurtaxe · ohne Frühstück</p></div><span class="when">erledigt</span></div>
 
     <div class="check"><div class="prio">2</div><div class="body"><h4>Lötschberg-Autoverlad reservieren</h4><p>Für Do 17.9. nachmittags ab Goppenstein, online über <a href="https://www.bls.ch/de/fahren/autoverlad/loetschberg" target="_blank">bls.ch/autoverlad</a>. Spart Wartezeit am Verlad-Bahnhof.</p></div><span class="when">3–5 Tage vorher</span></div>
 
@@ -1099,6 +1177,67 @@ footer a{color:#F6D9B8}
   </div>
 </section>
 
+<!-- ===== MODALS ===== -->
+<div class="modal" id="pdfModal" role="dialog" aria-modal="true" aria-labelledby="pdfTitle">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h3 id="pdfTitle">Buchungsbestätigung</h3>
+        <div class="modal-sub" id="pdfSub">PDF</div>
+      </div>
+      <button class="modal-close" data-modal-close aria-label="Schließen">×</button>
+    </div>
+    <div class="modal-body"><iframe id="pdfFrame" title="PDF-Vorschau" src=""></iframe></div>
+    <div class="modal-foot">
+      <span>Falls die Vorschau nicht angezeigt wird, ist der Browser oder die Datei nicht freigegeben.</span>
+      <a id="pdfDownload" href="#" target="_blank" rel="noopener">PDF in neuem Tab öffnen ↗</a>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="sightModal" role="dialog" aria-modal="true" aria-labelledby="sightTitle">
+  <div class="modal-box sight-modal-box">
+    <div class="modal-head">
+      <div>
+        <h3 id="sightTitle">Sehenswürdigkeit</h3>
+        <div class="modal-sub" id="sightSub">Bild von Wikipedia · Mehr unter Google Bilder / Wikimedia Commons</div>
+      </div>
+      <button class="modal-close" data-modal-close aria-label="Schließen">×</button>
+    </div>
+    <div class="sight-img-wrap" id="sightImgWrap">
+      <div class="sight-img-loading">Bild wird geladen…</div>
+    </div>
+    <div class="sight-info" id="sightInfo">
+      <div class="sight-actions">
+        <a class="btn btn-primary" id="sightGoogle" target="_blank" rel="noopener">🔍 Google Bilder</a>
+        <a class="btn" id="sightWikimedia" target="_blank" rel="noopener">🖼 Wikimedia Commons</a>
+        <a class="btn" id="sightWiki" target="_blank" rel="noopener">📖 Wikipedia</a>
+        <a class="btn" id="sightMaps" target="_blank" rel="noopener">📍 Google Maps</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="imgModal" role="dialog" aria-modal="true" aria-labelledby="imgTitle">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div>
+        <h3 id="imgTitle">Bilder für diesen Tag</h3>
+        <div class="modal-sub">Klick auf ein Bild, um es als Tageskopf zu wählen. Auswahl wird im Browser gespeichert.</div>
+      </div>
+      <button class="modal-close" data-modal-close aria-label="Schließen">×</button>
+    </div>
+    <div class="gal-hint">Quelle: Wikimedia Commons (freie Bilder). Weitere Bilder findest du unten verlinkt.</div>
+    <div class="modal-body" style="background:var(--paper)">
+      <div class="gal-grid" id="galGrid"></div>
+    </div>
+    <div class="modal-foot">
+      <span>Eigene Bild-URL: <input id="customImg" type="url" placeholder="https://..." style="padding:4px 9px; border-radius:6px; border:1px solid var(--line-strong); font-size:12px; width:240px"> <button class="btn-img" id="customImgBtn" type="button">übernehmen</button></span>
+      <a id="moreImagesLink" href="#" target="_blank" rel="noopener">Mehr Bilder auf Wikimedia ↗</a>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="wrap">
     <p class="fsig">Schweiz '26 ♥</p>
@@ -1132,7 +1271,7 @@ const pts = [
   ['Traben-Trarbach', 49.9519, 7.1201, 1, 'Start', 'pflicht', 'Startpunkt der Rundreise.'],
   ['Rheinfall Schaffhausen', 47.6783, 8.6157, 1, 'Wasserfall', 'pflicht', 'Größter Wasserfall Europas.'],
   ['Schloss Laufen', 47.6775, 8.6147, 1, 'Aussichtspunkt', 'pflicht', 'Aussichtsplattform am Rheinfall.'],
-  ['Appenzell · Hotel Koller', 47.3308, 9.4096, 1, 'Hotel', 'pflicht', 'Hotel Koller angefragt. 2 Nächte.'],
+  ['Appenzell · Gästehaus Koller', 47.3308, 9.4096, 1, 'Hotel', 'pflicht', 'Gästehaus Koller B&B GEBUCHT · CHF 290 · 2 Nächte ohne Frühstück.'],
   ['Wasserauen Talstation', 47.2780, 9.4307, 2, 'Bergbahn', 'pflicht', 'Talstation Ebenalp-Bahn. Parkplatz CHF 8.'],
   ['Ebenalp 1640m', 47.2799, 9.4080, 2, 'Aussichtspunkt', 'pflicht', 'Bergstation. Aussicht Bodensee/Säntis.'],
   ['Wildkirchli', 47.2829, 9.4060, 2, 'Sehenswürdigkeit', 'pflicht', 'Höhlenkapelle.'],
@@ -1222,9 +1361,9 @@ pts.forEach(p => {
 });
 
 const routes = {
-  1: ['Rheinfall Schaffhausen','Appenzell · Hotel Koller'],
-  2: ['Appenzell · Hotel Koller','Wasserauen Talstation','Ebenalp 1640m','Schäfler 1924m','Seealpsee','Wasserauen Talstation','Appenzell · Hotel Koller'],
-  3: ['Appenzell · Hotel Koller','Klöntalersee','Stoosbahn Schlattli','Stoos','Fronalpstock','Engelberg · Hotel Terrace'],
+  1: ['Rheinfall Schaffhausen','Appenzell · Gästehaus Koller'],
+  2: ['Appenzell · Gästehaus Koller','Wasserauen Talstation','Ebenalp 1640m','Schäfler 1924m','Seealpsee','Wasserauen Talstation','Appenzell · Gästehaus Koller'],
+  3: ['Appenzell · Gästehaus Koller','Klöntalersee','Stoosbahn Schlattli','Stoos','Fronalpstock','Engelberg · Hotel Terrace'],
   4: ['Engelberg · Hotel Terrace','Wolfenschiessen','Oberrickenbach','Bannalpsee','Wolfenschiessen','Sustenpass 2224m','Steingletscher-Aussicht','Aareschlucht','Innertkirchen · Hotel Urweider'],
   5: ['Innertkirchen · Hotel Urweider','Handeggfallbrücke','Grimselpass 2165m','Furkapass 2429m','Rhonegletscher','Realp','Brig','Visp','Täsch · Matterhorn Inn'],
   6: ['Täsch · Matterhorn Inn','Zermatt','Gornergrat 3089m','Zermatt','Täsch · Matterhorn Inn'],
@@ -1253,6 +1392,348 @@ Object.entries(dayLabels).forEach(([d,label]) => {
   el.className = 'leg';
   el.innerHTML = `<span class="sw" style="background:${dayColors[d]}"></span> ${label}`;
   lm.appendChild(el);
+});
+</script>
+
+<!-- pdf_data.js enthält die Buchungsbestätigungen als base64 (für Online-Hosting).
+     Fehlt die Datei, fällt showPDF auf die lokalen PDF-Pfade zurück. -->
+<script src="pdf_data.js" onerror="window.pdfData = window.pdfData || null;"></script>
+<script>
+/* ============================================
+   PDF MODAL · zeigt die Booking-Bestätigungen
+   Lädt aus base64-pdfData (online) oder von Datei (lokal)
+   ============================================ */
+const pdfModal = document.getElementById('pdfModal');
+const pdfFrame = document.getElementById('pdfFrame');
+const pdfTitle = document.getElementById('pdfTitle');
+const pdfSub   = document.getElementById('pdfSub');
+const pdfDl    = document.getElementById('pdfDownload');
+
+function showPDF(pdfUrl, title) {
+  pdfTitle.textContent = title || 'Buchungsbestätigung';
+  pdfSub.textContent   = pdfUrl;
+  let src = pdfUrl;
+  // Falls pdf_data.js geladen ist, base64 -> blob URL (für Online-Versand)
+  if (typeof pdfData !== 'undefined' && pdfData && pdfData[pdfUrl]) {
+    try {
+      const bin = atob(pdfData[pdfUrl]);
+      const arr = new Uint8Array(bin.length);
+      for (let i=0; i<bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const blob = new Blob([arr], { type: 'application/pdf' });
+      src = URL.createObjectURL(blob);
+      pdfDl.setAttribute('download', pdfUrl);
+    } catch(e) {
+      console.warn('Base64-PDF fehlgeschlagen, nutze lokalen Pfad', e);
+    }
+  }
+  pdfFrame.src = src;
+  pdfDl.href   = src;
+  pdfModal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeModals() {
+  document.querySelectorAll('.modal.show').forEach(m => m.classList.remove('show'));
+  pdfFrame.src = '';
+  document.body.style.overflow = '';
+}
+
+document.querySelectorAll('.btn-pdf').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    const pdf = btn.dataset.pdf;
+    const title = btn.dataset.title || 'Buchungs­bestätigung';
+    showPDF(pdf, title);
+  });
+});
+document.querySelectorAll('[data-modal-close]').forEach(b => b.addEventListener('click', closeModals));
+document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if(e.target===m) closeModals(); }));
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModals(); });
+
+/* ============================================
+   BILDER · Wikipedia-Galerie pro Tag
+   ============================================ */
+const dayWikiArticles = {
+  1: { title: 'Tag 1 · Rheinfall &amp; Appenzell', articles: ['Rheinfall', 'Schloss Laufen', 'Appenzell'], search: 'Rheinfall Schaffhausen' },
+  2: { title: 'Tag 2 · Alpstein &amp; Schäfler',   articles: ['Berggasthaus Aescher-Wildkirchli', 'Seealpsee', 'Säntis', 'Wildkirchli', 'Ebenalp'], search: 'Aescher Wildkirchli Seealpsee' },
+  3: { title: 'Tag 3 · Klöntal &amp; Stoos',       articles: ['Klöntalersee', 'Stoosbahn', 'Stoos (Schwyz)', 'Fronalpstock (Glarus)'], search: 'Klöntalersee Stoos Fronalpstock' },
+  4: { title: 'Tag 4 · Sustenpass &amp; Aare',     articles: ['Sustenpass', 'Aareschlucht', 'Bannalpsee', 'Steingletscher'], search: 'Sustenpass Aareschlucht' },
+  5: { title: 'Tag 5 · Grimsel &amp; Furka',       articles: ['Grimselpass', 'Furkapass', 'Rhonegletscher', 'Hotel Belvédère (Furka)', 'Handeck'], search: 'Grimselpass Furkapass Rhonegletscher' },
+  6: { title: 'Tag 6 · Gornergrat &amp; Matterhorn', articles: ['Gornergrat', 'Matterhorn', 'Zermatt', 'Riffelsee', 'Monte Rosa'], search: 'Matterhorn Gornergrat Zermatt' },
+  7: { title: 'Tag 7 · 5-Seen &amp; Wengen',       articles: ['Stellisee', 'Blausee BE', 'Lauterbrunnen', 'Wengen', 'Staubbachfall'], search: 'Stellisee Matterhorn Spiegelung Blausee' },
+  8: { title: 'Tag 8 · Oeschi &amp; Männlichen',   articles: ['Oeschinensee', 'Männlichen', 'Kleine Scheidegg', 'Trümmelbachfälle'], search: 'Oeschinensee Männlichen Eiger' },
+  9: { title: 'Tag 9 · First &amp; Bachalpsee',    articles: ['Bachalpsee', 'First (Grindelwald)', 'Iseltwald', 'Brienzersee'], search: 'Bachalpsee Grindelwald First Iseltwald' }
+};
+
+const galGrid = document.getElementById('galGrid');
+const imgModal = document.getElementById('imgModal');
+const imgTitle = document.getElementById('imgTitle');
+const moreImagesLink = document.getElementById('moreImagesLink');
+const customImg = document.getElementById('customImg');
+const customImgBtn = document.getElementById('customImgBtn');
+let activeDay = null;
+
+// Cache für geladene Wiki-Bilder, damit wir nicht doppelt fetchen
+const wikiCache = {};
+
+async function fetchWikiImage(article) {
+  if (wikiCache[article]) return wikiCache[article];
+  // Versuche zuerst deutsche, dann englische Wikipedia
+  for (const lang of ['de','en']) {
+    try {
+      const url = `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(article)}`;
+      const r = await fetch(url);
+      if (!r.ok) continue;
+      const d = await r.json();
+      const src = (d.originalimage && d.originalimage.source) || (d.thumbnail && d.thumbnail.source);
+      if (src) {
+        wikiCache[article] = { src, page: d.content_urls?.desktop?.page, desc: d.description || d.extract?.slice(0,80) };
+        return wikiCache[article];
+      }
+    } catch(e) { /* try next lang */ }
+  }
+  wikiCache[article] = null;
+  return null;
+}
+
+async function openGallery(day) {
+  activeDay = day;
+  const cfg = dayWikiArticles[day];
+  if (!cfg) return;
+  imgTitle.innerHTML = cfg.title;
+  moreImagesLink.href = `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(cfg.search)}&title=Special:MediaSearch&go=Go&type=image`;
+  galGrid.innerHTML = '<div class="gal-empty">Bilder werden geladen…</div>';
+  imgModal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  const currentSrc = localStorage.getItem('dayImg_' + day) || '';
+  const results = await Promise.all(cfg.articles.map(a => fetchWikiImage(a).then(r => ({article:a, data:r}))));
+  galGrid.innerHTML = '';
+  let added = 0;
+  results.forEach(r => {
+    if (!r.data) return;
+    const thumb = document.createElement('div');
+    thumb.className = 'gal-thumb' + (currentSrc === r.data.src ? ' selected' : '');
+    thumb.innerHTML = `<img src="${r.data.src}" alt="${r.article}" loading="lazy"
+      onerror="this.parentNode.style.display='none'">
+      <div class="gal-cap">${r.article}</div>`;
+    thumb.addEventListener('click', () => selectImage(r.data.src, r.article));
+    galGrid.appendChild(thumb);
+    added++;
+  });
+  if (added === 0) {
+    galGrid.innerHTML = '<div class="gal-empty">Keine Bilder gefunden. Such mal direkt auf Wikimedia Commons (Link unten).</div>';
+  }
+}
+
+function selectImage(src, label) {
+  if (activeDay == null) return;
+  localStorage.setItem('dayImg_' + activeDay, src);
+  localStorage.setItem('dayImgLabel_' + activeDay, label || '');
+  applyDayImage(activeDay);
+  // Update Selection UI
+  document.querySelectorAll('.gal-thumb').forEach(t => t.classList.remove('selected'));
+  const matched = [...document.querySelectorAll('.gal-thumb img')].find(img => img.src === src);
+  if (matched) matched.parentNode.classList.add('selected');
+}
+
+function applyDayImage(day) {
+  const src = localStorage.getItem('dayImg_' + day);
+  const dp = document.querySelector(`.day-photo[data-day="${day}"]`);
+  if (!dp) return;
+  if (src) {
+    dp.style.backgroundImage = `url(${src})`;
+    dp.classList.add('has-img');
+  } else {
+    dp.style.backgroundImage = '';
+    dp.classList.remove('has-img');
+  }
+}
+
+// Beim Laden: Bisher gewählte Bilder anwenden
+for (let d=1; d<=9; d++) applyDayImage(d);
+
+// Klick auf day-photo (oder photo-pick Button) öffnet Galerie
+document.querySelectorAll('.day-photo').forEach(dp => {
+  dp.style.cursor = 'pointer';
+  dp.addEventListener('click', e => {
+    const day = parseInt(dp.dataset.day,10);
+    openGallery(day);
+  });
+});
+
+// Eigene URL
+customImgBtn.addEventListener('click', () => {
+  const v = customImg.value.trim();
+  if (!v || !/^https?:\/\//.test(v)) { customImg.focus(); return; }
+  selectImage(v, 'Eigene URL');
+  customImg.value = '';
+});
+
+/* ============================================
+   SIGHT POPUPS · Klickbare Sehenswürdigkeiten
+   mit Wikipedia-Bild + Google/Wikimedia-Links
+   ============================================ */
+const sightModal     = document.getElementById('sightModal');
+const sightTitle     = document.getElementById('sightTitle');
+const sightSub       = document.getElementById('sightSub');
+const sightImgWrap   = document.getElementById('sightImgWrap');
+const sightGoogle    = document.getElementById('sightGoogle');
+const sightWikimedia = document.getElementById('sightWikimedia');
+const sightWiki      = document.getElementById('sightWiki');
+const sightMaps      = document.getElementById('sightMaps');
+
+// Map vom Listentext (klein-Variante) zu Wikipedia-Artikelnamen.
+// Wenn nicht gemappt, wird der bereinigte Listentext verwendet.
+const sightWikiMap = {
+  'rheinfall schaffhausen': 'Rheinfall',
+  'schloss laufen + plattform känzeli': 'Schloss Laufen',
+  'schloss laufen': 'Schloss Laufen',
+  'appenzell hauptgasse': 'Appenzell',
+  'bootsfahrt mittelfelsen': 'Rheinfall',
+  'känzeli mit schloss laufen': 'Schloss Laufen',
+  'bemalte häuser hauptgasse': 'Appenzell',
+  'ebenalp-bahn': 'Ebenalp',
+  'wildkirchli + aescher': 'Berggasthaus Aescher-Wildkirchli',
+  'wildkirchli': 'Wildkirchli',
+  'aescher-wildkirchli': 'Berggasthaus Aescher-Wildkirchli',
+  'aescher in der felswand': 'Berggasthaus Aescher-Wildkirchli',
+  'schäfler 1.924 m': 'Schäfler',
+  'schäfler': 'Schäfler',
+  'seealpsee + talweg': 'Seealpsee',
+  'seealpsee mit spiegelung': 'Seealpsee',
+  'seealpsee': 'Seealpsee',
+  'säntis vom schäfler': 'Säntis',
+  'saxer lücke': 'Saxer Lücke',
+  'säntis-gipfel': 'Säntis',
+  'säntis-schwebebahn': 'Säntis-Schwebebahn',
+  'stiftsbibliothek st. gallen': 'Stiftsbibliothek St. Gallen',
+  'appenzeller schaukäserei': 'Appenzeller Schaukäserei',
+  'klöntalersee': 'Klöntalersee',
+  'klöntalersee (westufer)': 'Klöntalersee',
+  'stoosbahn': 'Stoosbahn',
+  'fronalpstock-sessellift': 'Fronalpstock (Glarus)',
+  'klingenstock–fronalpstock-grat': 'Fronalpstock (Glarus)',
+  'fronalpstock': 'Fronalpstock (Glarus)',
+  'schwyz bundesbriefmuseum': 'Bundesbriefmuseum',
+  'glärnisch-spiegelung morgens': 'Klöntalersee',
+  'vierwaldstättersee vom fronalpstock': 'Vierwaldstättersee',
+  'verkehrshaus luzern': 'Verkehrshaus der Schweiz',
+  'engelberger klosterkirche': 'Kloster Engelberg',
+  'sustenpass 2.224 m': 'Sustenpass',
+  'sustenpass': 'Sustenpass',
+  'aareschlucht': 'Aareschlucht',
+  'bannalpsee': 'Bannalpsee',
+  'steingletscher-aussicht': 'Steingletscher',
+  'sustenhornblick': 'Sustenhorn',
+  'bannalpsee mit walenstöcken': 'Bannalpsee',
+  'sustenpass-kehren': 'Sustenpass',
+  'grimselpass 2.165 m + totensee': 'Grimselpass',
+  'grimselpass': 'Grimselpass',
+  'furkapass 2.429 m + belvedere': 'Furkapass',
+  'furkapass': 'Furkapass',
+  'rhonegletscher': 'Rhonegletscher',
+  'rhonegletscher (foto)': 'Rhonegletscher',
+  'handeggfallbrücke': 'Handeck',
+  'eisgrotte': 'Rhonegletscher',
+  'stadtbummel brig': 'Brig-Glis',
+  'furka-belvedere mit rhonegletscher': 'Hotel Belvédère (Furka)',
+  'grimsel-stauseen': 'Grimselsee',
+  'gornergrat-bahn': 'Gornergratbahn',
+  'gornergrat': 'Gornergrat',
+  'zermatt-hinterdorf': 'Zermatt',
+  'klein matterhorn': 'Klein Matterhorn',
+  'matterhorn-museum': 'Zermatt',
+  'riffelsee-abstecher': 'Riffelsee',
+  'matterhorn vom gornergrat': 'Matterhorn',
+  'riffelsee-spiegelung': 'Riffelsee',
+  'shuttle täsch → zermatt': 'Zermatt',
+  'sunnegga-bahn': 'Sunnegga',
+  '5 seen mit matterhorn': 'Stellisee',
+  'lötschberg-verlad': 'Lötschberg-Basistunnel',
+  'blausee': 'Blausee BE',
+  'fluhalp-mittag': 'Fluhalp',
+  'forellenessen blausee': 'Blausee BE',
+  'spaziergang lauterbrunnental': 'Lauterbrunnen',
+  'stellisee mit matterhorn': 'Stellisee',
+  'blausee smaragdgrün': 'Blausee BE',
+  'oeschinensee-sesselbahn': 'Oeschinensee',
+  'oeschinensee + blümlisalp': 'Oeschinensee',
+  'oeschinensee': 'Oeschinensee',
+  'männlichenbahn': 'Männlichen',
+  'männlichen': 'Männlichen',
+  'panoramaweg männlichen–kleine scheidegg': 'Kleine Scheidegg',
+  'kleine scheidegg': 'Kleine Scheidegg',
+  'trümmelbachfälle': 'Trümmelbachfälle',
+  'mürren-abstecher': 'Mürren',
+  'mürren': 'Mürren',
+  'schilthorn / piz gloria': 'Schilthorn',
+  'schilthorn': 'Schilthorn',
+  'oeschinensee mit blümlisalp-wand': 'Oeschinensee',
+  'eiger-nordwand vom männlichen': 'Eiger',
+  'first-bahn grindelwald': 'First (Grindelwald)',
+  'first-bahn': 'First (Grindelwald)',
+  'bachalpsee-wanderung': 'Bachalpsee',
+  'bachalpsee': 'Bachalpsee',
+  'first cliff walk': 'First (Grindelwald)',
+  'iseltwald bond-steg': 'Iseltwald',
+  'iseltwald': 'Iseltwald',
+  'bachalpsee mit schreckhorn': 'Bachalpsee',
+  'eiger vom first-sessellift': 'Eiger',
+  'bond-steg iseltwald': 'Iseltwald',
+  'brienzersee-aussicht von der brünigstraße': 'Brienzersee',
+  'brienzersee': 'Brienzersee'
+};
+
+function cleanSightText(txt) {
+  return txt
+    .replace(/\(CHF\s?[\d.,]+\)/gi,'')
+    .replace(/\(€\s?[\d.,]+\)/gi,'')
+    .replace(/\(\d+[.,]?\d*\s?(h|min|HM|m|km|Min|kg)\.?\)/gi,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+async function openSightPopup(rawText) {
+  const clean = cleanSightText(rawText);
+  const key = clean.toLowerCase();
+  const wikiArticle = sightWikiMap[key] || clean;
+
+  sightTitle.textContent = clean;
+  sightSub.textContent = 'Bild von Wikipedia · Mehr unter Google Bilder / Wikimedia Commons';
+  sightImgWrap.innerHTML = '<div class="sight-img-loading">Bild wird geladen…</div>';
+
+  const q = encodeURIComponent(clean + ' Schweiz');
+  const qw = encodeURIComponent(wikiArticle);
+  sightGoogle.href    = 'https://www.google.com/search?tbm=isch&q=' + q;
+  sightWikimedia.href = 'https://commons.wikimedia.org/w/index.php?search=' + qw + '&title=Special:MediaSearch&go=Go&type=image';
+  sightWiki.href      = 'https://de.wikipedia.org/wiki/' + qw;
+  sightMaps.href      = 'https://www.google.com/maps/search/' + q;
+
+  sightModal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+
+  // Versuch: deutsche Wikipedia
+  let data = await fetchWikiImage(wikiArticle);
+  // Fallback: englische Wikipedia
+  if (!data && wikiArticle !== clean) {
+    data = await fetchWikiImage(clean);
+  }
+
+  if (data && data.src) {
+    sightImgWrap.innerHTML = `<a href="${data.page || sightWiki.href}" target="_blank" rel="noopener"><img src="${data.src}" alt="${clean}"></a>`;
+    if (data.desc) sightSub.textContent = data.desc;
+  } else {
+    sightImgWrap.innerHTML = `<div style="text-align:center; padding:30px">
+      <div class="sight-img-loading" style="margin-bottom:14px">Kein Wikipedia-Bild gefunden.</div>
+      <div style="font-size:13px; color:var(--ink-soft)">Probier die externen Bild-Suchen unten:</div>
+    </div>`;
+  }
+}
+
+// Alle Listenpunkte in der Sehenswürdigkeiten-Sektion klickbar machen
+document.querySelectorAll('#highlights .sights-cols ul li').forEach(li => {
+  li.addEventListener('click', () => openSightPopup(li.textContent));
+  li.setAttribute('title', 'Bild ansehen / Mehr Informationen');
 });
 </script>
 
