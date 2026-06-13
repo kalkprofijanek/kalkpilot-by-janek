@@ -83,11 +83,14 @@ td.small{font-size:12px;color:var(--muted)}
         </div>
         <input id="folderInput" type="file" webkitdirectory directory multiple>
         <input id="fileInput" type="file" accept=".d83,.D83,.p83,.P83,.x83,.X83,.xml,.XML" multiple>
+        <input id="baseJsonInput" type="file" accept=".json,.JSON">
         <div class="actions">
+          <button id="pickBaseJsonBtn" type="button">Bestehende JSON laden</button>
           <button class="primary" id="buildBtn" type="button" disabled>Referenzpaket erzeugen</button>
           <button id="downloadBtn" type="button" disabled>JSON herunterladen</button>
           <button id="clearBtn" type="button" disabled>Leeren</button>
         </div>
+        <div class="note" id="baseJsonStatus">Keine bestehende Referenzbasis geladen.</div>
         <div class="quality" id="qualityPills"></div>
       </div>
     </section>
@@ -96,7 +99,7 @@ td.small{font-size:12px;color:var(--muted)}
       <div class="panel-b">
         <div class="stats">
           <div class="stat"><div class="k">Dateien</div><div class="v" id="statFiles">0</div></div>
-          <div class="stat"><div class="k">Projekte</div><div class="v" id="statProjects">0</div></div>
+          <div class="stat"><div class="k">Projekte neu</div><div class="v" id="statProjects">0</div></div>
           <div class="stat"><div class="k">Positionen</div><div class="v" id="statPositions">0</div></div>
           <div class="stat"><div class="k">Mit Kalk.</div><div class="v" id="statCosts">0</div></div>
         </div>
@@ -124,7 +127,7 @@ td.small{font-size:12px;color:var(--muted)}
 (function(){
   'use strict';
 
-  const state={files:[],groups:[],projects:[],payload:null};
+  const state={files:[],groups:[],projects:[],baseProjects:[],baseFileName:'',payload:null};
   const supportedRe=/\.(d83|p83|x83|xml)$/i;
   const lvRe=/\.(d83|p83|x83)$/i;
   const xmlRe=/\.xml$/i;
@@ -453,6 +456,44 @@ td.small{font-size:12px;color:var(--muted)}
     };
   }
 
+  function normalizeImportedProject(project){
+    const positions=Array.isArray(project?.positions)?project.positions:[];
+    return {
+      ...project,
+      name:String(project?.name||project?.projectName||'Referenzprojekt').trim()||'Referenzprojekt',
+      active:project?.active!==false,
+      d83Name:project?.d83Name||project?.lvName||null,
+      xmlName:project?.xmlName||null,
+      positions,
+      stats:project?.stats&&typeof project.stats==='object'?project.stats:calculateProjectStats(positions)
+    };
+  }
+
+  function coerceReferenceProjectsPayload(payload){
+    if(Array.isArray(payload))return payload.map(normalizeImportedProject);
+    if(payload&&Array.isArray(payload.refProjects))return payload.refProjects.map(normalizeImportedProject);
+    if(payload&&Array.isArray(payload.projects))return payload.projects.map(normalizeImportedProject);
+    if(payload&&Array.isArray(payload.data))return payload.data.map(normalizeImportedProject);
+    return null;
+  }
+
+  function projectIdentity(project){
+    return [project?.name,project?.d83Name||'',project?.xmlName||''].map(v=>String(v||'').trim().toLowerCase()).join('|');
+  }
+
+  function combineReferenceProjects(baseProjects,newProjects){
+    const out=[];
+    const seen=new Set();
+    [...(baseProjects||[]),...(newProjects||[])].forEach(project=>{
+      const normalized=normalizeImportedProject(project);
+      const key=projectIdentity(normalized);
+      if(seen.has(key))return;
+      seen.add(key);
+      out.push(normalized);
+    });
+    return out;
+  }
+
   function getProjectKey(file){
     const rel=String(file.webkitRelativePath||file.relativePath||file.name||'');
     const parts=rel.split(/[\\/]+/).filter(Boolean);
@@ -692,6 +733,17 @@ td.small{font-size:12px;color:var(--muted)}
     setText('statCosts',costs.toLocaleString('de-DE'));
   }
 
+  function renderBaseJsonStatus(){
+    const el=document.getElementById('baseJsonStatus');
+    if(!el)return;
+    if(!state.baseProjects.length){
+      el.textContent='Keine bestehende Referenzbasis geladen.';
+      return;
+    }
+    const positions=state.baseProjects.reduce((sum,project)=>sum+(project.positions?.length||0),0);
+    el.textContent=`Bestehende Basis: ${state.baseProjects.length.toLocaleString('de-DE')} Projekte, ${positions.toLocaleString('de-DE')} Positionen${state.baseFileName?` aus ${state.baseFileName}`:''}. Neue Projekte werden beim Export ergaenzt.`;
+  }
+
   function renderPills(){
     const complete=state.groups.filter(g=>g.status==='complete').length;
     const ambiguous=state.groups.filter(g=>g.status==='ambiguous').length;
@@ -751,11 +803,43 @@ td.small{font-size:12px;color:var(--muted)}
     document.getElementById('downloadBtn').disabled=true;
     document.getElementById('clearBtn').disabled=!state.files.length;
     renderStats();
+    renderBaseJsonStatus();
     renderPills();
     renderReview();
     log(`${state.files.length} passende Dateien erkannt.`);
     if(state.files.length>2&&!state.files.some(file=>file.webkitRelativePath||file.relativePath)){
       log('Hinweis: Ohne Ordnerstruktur koennen mehrere Projekte nicht sicher gepaart werden. Bitte den Oberordner auswaehlen oder Projektordner ablegen.');
+    }
+  }
+
+  function readTextFile(file){
+    return new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=event=>resolve(String(event.target.result||''));
+      reader.onerror=()=>reject(reader.error||new Error('Datei konnte nicht gelesen werden'));
+      reader.readAsText(file,'utf-8');
+    });
+  }
+
+  async function loadBaseJsonFile(file){
+    try{
+      const raw=await readTextFile(file);
+      const payload=JSON.parse(raw.replace(/^\uFEFF/,'').trim());
+      const projects=coerceReferenceProjectsPayload(payload);
+      if(!projects)throw new Error('Kein gueltiges Referenzdatenbank-Format gefunden');
+      state.baseProjects=projects;
+      state.baseFileName=file.name||'Referenzdatenbank.json';
+      state.payload=null;
+      document.getElementById('downloadBtn').disabled=true;
+      document.getElementById('clearBtn').disabled=false;
+      renderBaseJsonStatus();
+      log(`Bestehende Referenzbasis geladen: ${projects.length} Projekte aus ${state.baseFileName}.`);
+    }catch(error){
+      state.baseProjects=[];
+      state.baseFileName='';
+      renderBaseJsonStatus();
+      alert(`JSON konnte nicht geladen werden: ${error.message||error}`);
+      log(`JSON konnte nicht geladen werden: ${error.message||error}`);
     }
   }
 
@@ -847,10 +931,11 @@ td.small{font-size:12px;color:var(--muted)}
       renderStats();
       renderReview();
     }
-    state.payload=buildReferencePayload(state.projects);
-    downloadBtn.disabled=!state.projects.length;
+    const combined=combineReferenceProjects(state.baseProjects,state.projects);
+    state.payload=buildReferencePayload(combined);
+    downloadBtn.disabled=!combined.length;
     buildBtn.disabled=false;
-    log(`Fertig: ${state.projects.length} Projekte fuer den KalkPilot-Import vorbereitet.`);
+    log(`Fertig: ${state.projects.length} neue Projekte vorbereitet. Export enthaelt ${combined.length} Projekte insgesamt.`);
   }
 
   function downloadPackage(){
@@ -864,15 +949,20 @@ td.small{font-size:12px;color:var(--muted)}
     state.files=[];
     state.groups=[];
     state.projects=[];
+    state.baseProjects=[];
+    state.baseFileName='';
     state.payload=null;
     const fileInput=document.getElementById('fileInput');
     const folderInput=document.getElementById('folderInput');
+    const baseJsonInput=document.getElementById('baseJsonInput');
     if(fileInput)fileInput.value='';
     if(folderInput)folderInput.value='';
+    if(baseJsonInput)baseJsonInput.value='';
     document.getElementById('buildBtn').disabled=true;
     document.getElementById('downloadBtn').disabled=true;
     document.getElementById('clearBtn').disabled=true;
     renderStats();
+    renderBaseJsonStatus();
     renderPills();
     renderReview();
     log('Auswahl geleert.');
@@ -884,8 +974,10 @@ td.small{font-size:12px;color:var(--muted)}
     const reviewBox=document.getElementById('reviewBox');
     const fileInput=document.getElementById('fileInput');
     const folderInput=document.getElementById('folderInput');
+    const baseJsonInput=document.getElementById('baseJsonInput');
     document.getElementById('pickFilesBtn')?.addEventListener('click',()=>fileInput?.click());
     document.getElementById('pickFolderBtn')?.addEventListener('click',()=>folderInput?.click());
+    document.getElementById('pickBaseJsonBtn')?.addEventListener('click',()=>baseJsonInput?.click());
     document.getElementById('buildBtn')?.addEventListener('click',buildPackage);
     document.getElementById('downloadBtn')?.addEventListener('click',downloadPackage);
     document.getElementById('clearBtn')?.addEventListener('click',clearAll);
@@ -895,6 +987,7 @@ td.small{font-size:12px;color:var(--muted)}
     });
     fileInput?.addEventListener('change',event=>setFiles(event.target.files));
     folderInput?.addEventListener('change',event=>setFiles(event.target.files));
+    baseJsonInput?.addEventListener('change',event=>{if(event.target.files?.[0])loadBaseJsonFile(event.target.files[0]);});
     drop?.addEventListener('dragover',event=>{event.preventDefault();drop.classList.add('drag');});
     drop?.addEventListener('dragleave',()=>drop.classList.remove('drag'));
     drop?.addEventListener('drop',async event=>{
@@ -916,6 +1009,8 @@ td.small{font-size:12px;color:var(--muted)}
     collectDroppedFiles,
     buildProjectName,
     buildReferencePayload,
+    coerceReferenceProjectsPayload,
+    combineReferenceProjects,
     buildProjectFromGroup,
     calculateProjectStats,
     mergeD83andXML,
