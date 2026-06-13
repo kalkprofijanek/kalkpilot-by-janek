@@ -23,6 +23,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:10px
 nav{background:var(--card);border-bottom:1px solid var(--border);display:flex;padding:0 18px;flex-shrink:0}
 .tb{padding:9px 16px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-size:12px;font-weight:500;transition:.15s}
 .tb:hover{color:var(--text)}.tb.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tb-link{margin-left:auto;text-decoration:none}
 main{flex:1;overflow:hidden;display:flex;flex-direction:column}
 .tab{display:none;flex:1;overflow:auto;padding:16px;flex-direction:column;gap:14px}
 .tab.active{display:flex}
@@ -44,6 +45,12 @@ input[type=file]{display:none}
 .btn-warn{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}.btn-warn:hover{background:rgba(245,158,11,.25)}
 .btn-sm{padding:3px 9px;font-size:11px}
 .tbl-wrap{overflow:auto;border:1px solid var(--border);border-radius:6px}
+/* Sichtbare Scrollbalken im Dark Theme (Standard ist dunkel-auf-dunkel und kaum erkennbar) */
+*{scrollbar-width:auto;scrollbar-color:#4b5872 #11151d}
+::-webkit-scrollbar{width:12px;height:12px}
+::-webkit-scrollbar-track{background:#11151d;border-radius:6px}
+::-webkit-scrollbar-thumb{background:#4b5872;border-radius:6px;border:2px solid #11151d}
+::-webkit-scrollbar-thumb:hover{background:#5f6f8f}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:var(--input);padding:7px 9px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;position:sticky;top:0;white-space:nowrap}
 th.sortable{cursor:pointer;user-select:none}
@@ -90,7 +97,7 @@ input[type=checkbox]{accent-color:var(--accent);cursor:pointer;width:14px;height
 .diag-k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
 .diag-v{font-size:18px;font-weight:800;color:var(--text)}
 .diag-s{font-size:11px;color:var(--muted);line-height:1.35}
-.xml-out{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:14px;font-family:'Cascadia Code',Consolas,monospace;font-size:11px;color:#98d1c0;overflow:auto;flex:1;min-height:0;white-space:pre;line-height:1.5;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
+.xml-out{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:14px;font-family:'Cascadia Code',Consolas,monospace;font-size:12px;color:#98d1c0;overflow:auto;flex:1;min-height:340px;max-height:70vh;white-space:pre;line-height:1.5;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
 .rng-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
 .rng-row input[type=range]{flex:1;accent-color:var(--accent)}
 .rng-val{color:var(--accent);font-weight:700;min-width:32px}
@@ -107,6 +114,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .info-btn:hover{border-color:var(--accent);color:var(--accent)}
 .top-btn.active{border-color:#fbbf24;color:#fbbf24;background:rgba(245,158,11,.08)}
 .match-top{box-shadow:inset 2px 0 0 #fbbf24}
+.match-risk{margin-top:4px;font-size:10px;color:#fbbf24;line-height:1.35}
 .review-modal{display:none;position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,.72);align-items:center;justify-content:center;padding:18px}
 .review-modal.open{display:flex}
 .review-box{width:min(980px,96vw);max-height:88vh;background:var(--card);border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.65)}
@@ -135,7 +143,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .drop-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .status-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.preview-compact .tbl-wrap{max-height:180px}
+.preview-compact .tbl-wrap{max-height:340px}
 .decision-col{min-width:86px}
 .accept-btn{min-width:92px}
 .accept-btn.off{background:rgba(22,163,74,.1);color:#86efac;border:1px solid rgba(22,163,74,.25)}
@@ -299,6 +307,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
   <button class="tb" onclick="switchTab('t2')">② Matching & Übernahme</button>
   <button class="tb" onclick="switchTab('t4')">③ Manuelles Matching</button>
   <button class="tb" onclick="switchTab('t3')">④ Export iTWO-XML</button>
+  <a class="tb tb-link" href="KalkPilot_Referenzpaket_Builder.html" target="_blank" rel="noopener">Referenzpaket Builder</a>
 </nav>
 
 <main>
@@ -348,8 +357,9 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
     </div>
   </div>
 
-  <!-- Geladene Referenzprojekte -->
-  <div class="card" style="flex:1;display:flex;flex-direction:column;gap:10px;min-height:0">
+  <!-- Geladene Referenzprojekte: flex 1 0 auto statt min-height:0, sonst quetscht der Tab die
+       Karte zusammen und die innen fixe projList (280px) wird abgeschnitten/überlappt -->
+  <div class="card" style="flex:1 0 auto;display:flex;flex-direction:column;gap:10px">
     <div class="ref-notice" id="refDataNotice"></div>
     <div class="section-head">
       <div class="section-copy">
@@ -373,7 +383,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         <div class="limit-detail" id="refLoadLimitDetail">Empfohlene Lastgrenze: bis ca. <span id="refLoadLimitMax">15.000</span> aktive Referenzpositionen · im sicheren Bereich</div>
       </div>
     </div>
-    <div id="projList" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1">
+    <div id="projList" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;flex:1;min-height:280px;max-height:60vh">
       <div class="empty"><div class="empty-i">🗄</div>Noch keine Referenzprojekte - D83+XML oben laden und hinzufügen</div>
     </div>
   </div>
@@ -463,6 +473,9 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
           <option value="yellow">🟡 Gelb 60-79%</option>
           <option value="orange">🟠 Orange 40-59%</option>
           <option value="red">🔴 Rot ≤ 39%</option>
+          <option value="risk">⚠ Prüfen / riskant</option>
+          <option value="calc">📊 Nur Kalkulation</option>
+          <option value="textonly">📋 Nur D83-Texttreffer</option>
           <option value="nomatch">⬜ Kein Treffer</option>
           <option value="acc">✅ Übernommen</option>
           <option value="notacc">☐ Nicht übernommen</option>
@@ -471,8 +484,10 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       </div>
     </div>
     <div class="toolbar action-strip" style="gap:5px">
-      <button class="btn btn-ok btn-sm" onclick="acceptAllVisible()">☑ Alle Sichtbaren übernehmen</button>
-      <button class="btn btn-s btn-sm" onclick="deselectAllVisible()">☐ Alle Sichtbaren abwählen</button>
+      <label class="unit-toggle" title="Treffer ab dieser Punktzahl werden beim Matching automatisch übernommen und vom Übernahme-Button erfasst">
+        Schwelle <input type="number" id="acceptThresh" min="0" max="100" step="5" value="75" onchange="onAcceptThreshChange()" style="width:56px;padding:2px 4px"> %
+      </label>
+      <button class="btn btn-ok btn-sm" onclick="acceptAllAboveThreshold()">☑ Alle ≥ Schwelle übernehmen</button>
       <button class="btn btn-s btn-sm" onclick="deselectAll()" style="color:var(--red)">✕ Alle abwählen</button>
       <button class="btn btn-s btn-sm" onclick="openReviewModal()">🤖 Testbericht für ChatGPT erzeugen</button>
       <button class="btn btn-s btn-sm" onclick="runDiagnosticsSelfTest(true,true)">🧪 Diagnose ausführen</button>
@@ -561,7 +576,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       <div class="section-note">Zielprojekt-XML laden, damit die OZ-Struktur geprüft und bei Bedarf auf Seite 4 angepasst werden kann.</div>
     </div>
   </div>
-  <div class="card" style="flex:1;display:flex;flex-direction:column;gap:8px;min-height:0">
+  <div class="card" style="flex:1 0 auto;display:flex;flex-direction:column;gap:8px">
     <div class="ctitle">XML-Vorschau (iTWO: Rechtsklick → Kalkulation importieren → Kalkulation XML)</div>
     <div class="xml-out" id="xmlPrev">/* Positionen in Tab 2 markieren, dann erscheint hier die Vorschau. */</div>
   </div>
@@ -775,6 +790,7 @@ const NORM_CACHE=new Map();
 const STOPWORD_CACHE=new Map();
 const TERM_CACHE=new Map();
 const TOKEN_CACHE=new Map();
+const TOKEN_INDEX_CACHE=new Map();
 function cacheGetOrSet(map,key,build){
   if(map.has(key))return map.get(key);
   const value=build();
@@ -834,10 +850,35 @@ function sameOZ(a,b){
   const bKeys=new Set(ozLookupKeys(b));
   return ozLookupKeys(a).some(key=>bKeys.has(key));
 }
-function lev(a,b){
+function lev(a,b,maxDist=Infinity){
+  // Gemeinsamen Prefix/Suffix abschneiden – verhaltensidentisch, spart bei ähnlichen LV-Texten
+  // (gleicher Anfang/Ende, Unterschied in der Mitte) den Großteil der DP-Matrix.
+  let s=0;const min=Math.min(a.length,b.length);
+  while(s<min&&a.charCodeAt(s)===b.charCodeAt(s))s++;
+  let ea=a.length,eb=b.length;
+  while(ea>s&&eb>s&&a.charCodeAt(ea-1)===b.charCodeAt(eb-1)){ea--;eb--;}
+  if(s>0||ea<a.length){a=a.slice(s,ea);b=b.slice(s,eb);}
   if(!a.length)return b.length;if(!b.length)return a.length;
+  if(Math.abs(a.length-b.length)>maxDist)return maxDist+1;
   let prev=Array.from({length:a.length+1},(_,i)=>i);
   let curr=new Array(a.length+1);
+  if(maxDist!==Infinity){
+    // Banded-Variante mit Early-Exit: die Distanz ist monoton – liegt schon das Zeilenminimum
+    // über maxDist, kann das Endergebnis maxDist nicht mehr unterschreiten.
+    for(let j=1;j<=b.length;j++){
+      curr[0]=j;
+      let rowMin=j;
+      for(let i=1;i<=a.length;i++){
+        curr[i]=b[j-1]===a[i-1]
+          ?prev[i-1]
+          :1+Math.min(prev[i-1],prev[i],curr[i-1]);
+        if(curr[i]<rowMin)rowMin=curr[i];
+      }
+      if(rowMin>maxDist)return maxDist+1;
+      [prev,curr]=[curr,prev];
+    }
+    return prev[a.length];
+  }
   for(let j=1;j<=b.length;j++){
     curr[0]=j;
     for(let i=1;i<=a.length;i++){
@@ -890,7 +931,7 @@ const BAU_SYNONYMS=[
   ['grabenverbau herstellen','verbau leitungsgraben','schachtbaugrubenverbau'],
   ['bauwerkshinterfuellung','bauwerkshinterfuellung','hinterfuellung','hinterfullung','bw hinterfuellung','bw hinterfullung','bauwerkshinterfuellung einbauen'],
   ['oberboden abtragen','oberboden abtragen laden','oberboden abtragen beseitigen','oberboden abtragen abfahren','oberboden loesen','oberboden loesen laden','mutterboden abtragen','mutterboden loesen','mutterboden beseitigen','oberboden beseitigen','humosen oberboden'],
-  ['oberboden andecken','oberboden liefern und andecken','oberboden des ag andecken','andeckung oberboden'],
+  ['oberboden andecken','oberboden liefern und andecken','oberboden des ag andecken','andeckung oberboden','oberboden einbauen','oberboden antragen','oberboden aufbringen'],
   ['oberboden lagern','oberboden weiterverwenden','oberboden mieten','oberboden haufen'],
   ['wiedereinbau boden','boden einbauen','verfuellen','boden verfuellen','arbeitsraum verfuellen','leerschlitz verfuellen'],
   ['rasenansaat','graseinsaat','begruenen','begruenung','nassansaat','ansaat'],
@@ -912,6 +953,7 @@ const BAU_SYNONYMS=[
   ['bm 1','bm1','bm-1','einbauklasse bm1','laga z0','nicht gefaehrlicher abfall bm1'],
   ['bm 2','bm2','bm-2','einbauklasse bm2','laga z1','nicht gefaehrlicher abfall bm2'],
   ['bm f1','bmf1','bm-f1','einbauklasse bmf1'],
+  ['bm f0','bmf0','bm-f0','einbauklasse bmf0','bm 0 star','bm0 star'],
   ['bm f2','bmf2','bm-f2','einbauklasse bmf2'],
   ['bm f3','bmf3','bm-f3','einbauklasse bmf3','avv 170506','gefaehrlicher abfall ebv'],
   ['laga z0','z0 laga','einbauklasse z0'],
@@ -919,9 +961,10 @@ const BAU_SYNONYMS=[
   ['laga z1 2','z1 2','laga z1.2'],
   ['laga z2','z2 laga','einbauklasse z2','deponieklasse 2'],
   ['dk 0','dk0','deponieklasse 0','inertabfall deponie'],
-  ['dk i','dki','deponieklasse i','deponieklasse 1'],
-  ['dk ii','dkii','deponieklasse ii','deponieklasse 2'],
+  ['dk i','dki','dk 1','dk1','deponieklasse i','deponieklasse 1'],
+  ['dk ii','dkii','dk 2','dk2','deponieklasse ii','deponieklasse 2'],
   ['dk iii','dkiii','deponieklasse iii','deponieklasse 3','hausmuelldeponie'],
+  ['kippstelle','annahmestelle','deponieannahme','abfallannahme'],
   ['zwischenlager','laden vom zwischenlager'],
   ['technische barriere','mineralische dichtung','basisabdichtung'],
   ['kunststoffdichtungsbahn','pehd kunststoffdichtungsbahn','kdb'],
@@ -934,7 +977,7 @@ const BAU_SYNONYMS=[
   ['pumpe','pumpen','wasserhaltung','abpumpen','stromaggregat','pumpensteuerung'],
   ['kettenbagger','bagger loeffelinhalt ueber 1 m3','hydraulikbagger','bagger'],
   ['planierraupe','raupe','dozer'],
-  ['walze','glattmantelwalze','vibrationswalze'],
+  ['walze','glattmantelwalze','vibrationswalze','stampffusswalze','bandagewalze','tandemwalze','gummiradwalze'],
   ['radlader','dumper','lkw'],
   ['baufacharbeiter','facharbeiter','stundenlohn'],
   // --- Fachterme Straßenbau / Einbau ---
@@ -956,8 +999,14 @@ const BAU_SYNONYMS=[
   ['transportieren','transport','bodentransport','abtransport','antransport','umlagern','transportarbeiten'],
   // --- Abbruch / Rückbau (Komposita-Phrasen, bewusst eng gehalten) ---
   ['betonabbruch','beton abbrechen','betonabbrucharbeiten','beton rueckbau'],
+  // --- Verbau / Spundwand ---
+  ['grabenverbau','spundwand','stahlspundwand','berliner verbau','traegerbohlenwand'],
+  // --- Entwässerungsrinne / Schlitzrinne ---
+  ['entwaesserungsrinne','schlitzrinne','abflussrinne','strassenablauf','gully','einlaufschacht'],
+  // --- Schutzplanken / Leitplanken (BE) ---
+  ['schutzplanke','leitplanke','fahrzeugrueckhaltesystem','betongleitwand','deltablock'],
 ];
-const SYNONYM_IGNORE=new Set(['be','bau','boden','material','leitung','anlage','arbeiten','herstellen','liefern','einbauen','ausfuehren','position']);
+const SYNONYM_IGNORE=new Set(['be','bau','boden','material','leitung','anlage','arbeiten','herstellen','liefern','einbauen','ausfuehren','position','verlegen','montieren','errichten','erstellen','vorhalten','erbringen']);
 const SYNONYM_MAP=new Map();
 BAU_SYNONYMS.forEach((group,groupIdx)=>{
   group.forEach(term=>{
@@ -1003,7 +1052,7 @@ const TERM_NORMS=[
   [/dekontaminations[\s-]*anlage/g,'dekontaminationsanlage'],
   [/baustellen[\s-]*einrichtung/g,'baustelleneinrichtung'],
   [/baustelle[\s-]*(einrichten|einrichtung)/g,'baustelleneinrichtung'],
-  [/baustelle[\s-]*(raeumen|räumen)|baustelleneinrichtung[\s-]*(raeumen|räumen)/g,'baustelleneinrichtung raeumen'],
+  [/\bbaustelle\b[\s\w,]{0,80}(raeumen|räumen)|baustelleneinrichtung[\s-]*(raeumen|räumen)/g,'baustelleneinrichtung raeumen'],
   [/ketten[\s-]*bagger/g,'kettenbagger'],
   [/hydraulik[\s-]*bagger/g,'hydraulikbagger'],
   [/planier[\s-]*raupe/g,'planierraupe'],
@@ -1032,12 +1081,15 @@ const TERM_NORMS=[
   [/schacht[\s-]*baugrube(n)?/g,'schachtbaugrube'],
   [/baugrube[\s-]*fuer[\s-]*schacht/g,'baugrube fuer schacht'],
   [/graben[\s-]*(verfuellen|verfüllen|fuellen|füllen)/g,'graben verfuellen'],
+  [/\bverfuellen\s+schacht\b/g,'schacht verfuellen'],
+  [/\bauffuellen\s+schacht\b/g,'schacht auffuellen'],
   [/graben[\s-]*fuer[\s-]*sickerleitung(en)?/g,'graben fuer sickerleitung'],
   [/oberhalb[\s-]*der[\s-]*leitungszone|oberhalb[\s-]*leitungszone/g,'oberhalb leitungszone'],
   [/einschliesslich[\s-]*der[\s-]*leitungszone|einschl[\s-]*leitungszone/g,'einschliesslich leitungszone'],
   [/in[\s-]*der[\s-]*leitungszone/g,'in leitungszone'],
   [/verfuellboden[\s-]*ges(?:ondert)?|verf[üu]llen[\s-]*des[\s-]*grabens[\s-]*wird[\s-]*gesondert/g,'verfuellboden gesondert'],
   [/graben[\s-]*verbau/g,'grabenverbau'],
+  [/stahl[\s-]*spundwand|spund[\s-]*wand|spund[\s-]*bohlen?|spundbohlenwand|berliner[\s-]*verbau|traeger[\s-]*bohlenwand/g,'grabenverbau'],
   [/schichten?[\s-]*ohne[\s-]*bindemittel/g,'schichten ohne bindemittel'],
   [/\bsfm\b/g,'frostunempfindliches baustoffgemisch'],
   [/\bkts\b/g,'kiestragschicht'],
@@ -1061,28 +1113,44 @@ const TERM_NORMS=[
   [/hydro[\s-]*saat/g,'hydrosaat'],
   [/loesen[\s-]*und[\s-]*laden|loesen[\s-]*laden/g,'loesen und laden'],
   [/bauwerkshinter[\s-]*fuellung/g,'bauwerkshinterfuellung'],
+  [/(?:ober|mutter)boden[\s-]*abtrag\b/g,'oberboden abtragen'],
   [/erdaushub|bodenaushub/g,'bodenaushub'],
-  [/kdb/g,'kunststoffdichtungsbahn'],
+  [/\bboden[\s-]*verwert\w*\b|\bbodenverwertung\b/g,'boden verwertung'],
+  [/\bboden[\s-]*deponier\w*\b|\bbodendeponierung\b/g,'boden deponierung'],
+  [/\bkdb\b/g,'kunststoffdichtungsbahn'],
   [/pehd[\s-]*dr[aäÃ¤]nrohr/g,'pehd draenrohr'],
   [/dr[aäÃ¤]nrohr/g,'draenrohr'],
   [/pehd[\s-]*draenrohr|draenrohr|drainagerohr|sickerwasserrohr/g,'sickerwasserrohr'],
   [/sickerwasser[\s-]*rohr|sickerwasser[\s-]*leitung/g,'sickerwasserrohr'],
   [/kunststoff[\s-]*dichtungsbahn/g,'kunststoffdichtungsbahn'],
-  [/std\.?|stunden?|akh|arbeitskraftstunden?/g,'h'],
-  [/lfm|laufmeter/g,'m'],
+  // Wortgrenzen-Pflicht bei Unit-/Abkürzungsregeln: ohne \b korrumpieren sie echte Wörter
+  // ("stundenweise"→"hweise", "monatsbericht"→"mtsbericht", "vorwoche"→"vorwo", "pauschalvertrag"→"pschvertrag").
+  [/\bstd\.?(?=\s|$)|\bstunden?\b|\bakh\b|\barbeitskraftstunden?\b/g,'h'],
+  [/\blfm\b|\blaufmeter\b|\blfd\s+m\b/g,'m'],
   [/\blastkraftwagen\b|\blastwagen\b|\blastzug\b/g,'lkw'],
-  [/stmt|st[\s\-\/]*mt/g,'stmt'],
-  [/mmt|m[\s\-\/]*mt/g,'mmt'],
-  [/stwo|st[\s\-\/]*wo/g,'stwo'],
-  [/mt|monat|monate/g,'mt'],
+  [/\bstmt\b|\bst[\s\-\/]*mt\b/g,'stmt'],
+  [/\bmmt\b|\bm[\s\-\/]*mt\b/g,'mmt'],
+  [/\bstwo\b|\bst[\s\-\/]*wo\b/g,'stwo'],
+  [/\bmt\b|\bmonat(?:e|en|s)?\b/g,'mt'],
   [/\bstück\b|\bstÃ¼ck\b|\bstk\b/g,'st'],
-  [/wochen?|woche/g,'wo'],
-  [/psch|pauschale?|pauschal/g,'psch'],
+  [/\bwochen?\b/g,'wo'],
+  [/\bpsch\b|\bpauschal(?:e|en)?\b/g,'psch'],
   [/\btonnen?\b|\bto\b/g,'t'],
   [/abfallschluessel|abfallschlüssel/g,'abfallschluessel'],
   [/ersatzbaustoffverordnung/g,'ersatzbaustoffverordnung'],
   [/\bfreitext\b/g,' '],
   [/\babrechn(?:ung|g)\b/g,' '],
+  // Erdbau-Komposita: Bodenaustausch und Ausschachtung → bodenaushub
+  [/\bbodenaustausch(?:arbeiten?)?\b/g,'bodenaushub'],
+  [/\bausschacht(?:en|ung|ungsarbeiten?)?\b/g,'bodenaushub'],
+  // Leitungsbau: Entwässerungsrinne und Varianten → entwaesserungsrinne
+  [/entw[aä]sserungs[\s-]*rinne[n]?|schlitz[\s-]*rinne[n]?|abfluss[\s-]*rinne[n]?/g,'entwaesserungsrinne'],
+  // Rodungsarbeiten → rodung (für categoryMap-Treffer)
+  [/\brodungs[\s-]*arbeiten?\b/g,'rodung'],
+  // Schutzplanken und Leitplanken → schutzplanke (BE-Kontext)
+  [/\bschutzplanken?\b|\bleitplanken?\b|\bfahrzeugrueckhalte?(?:system)?\b|\bbetongleitwand\b|\bdeltablock[e]?\b/g,'schutzplanke'],
+  // Kubikm.-Varianten → m3 (cbm/kbm erscheinen in Kurztexten als Maßangabe)
+  [/\bcbm\b|\bkbm\b/g,'m3'],
 ];
 function normalizeConstructionTerms(text){
   const src=String(text||'');
@@ -1168,38 +1236,48 @@ function getSynonymPhrases(){
   });
   return __SYNONYM_PHRASES;
 }
+// Seitenprofil für synonymScore pro Text cachen (Hot Path): Wort-Splits, Gruppenzuordnung und
+// Phrasen-Scans hängen nur vom EINEN Text ab und werden im Matching-Loop sonst pro Paar neu gerechnet.
+const SYN_SIDE_CACHE=new Map();
+function synonymSideProfile(text){
+  return cacheGetOrSet(SYN_SIDE_CACHE,String(text||''),()=>{
+    const n=normalizeConstructionTerms(text);
+    const words=n.split(/\s+/).filter(w=>w.length>=4&&!SYNONYM_IGNORE.has(w));
+    const groups=new Set(words.map(w=>SYNONYM_MAP.get(w)).filter(g=>g!==undefined));
+    // Mehrwort-Phrasengruppen (z.B. "boden loesen laden") über die wortweise Map nicht auffindbar →
+    // als zusätzliche Gruppensignale ergänzen; je Gruppe die Phrasenwörter für die Deckung merken.
+    const phraseHits=new Map();
+    for(const {g,p} of getSynonymPhrases()){
+      if(!n.includes(p))continue;
+      groups.add(g);
+      let s=phraseHits.get(g);if(!s){s=new Set();phraseHits.set(g,s);}
+      for(const pw of p.split(/\s+/))if(pw.length>=4)s.add(pw);
+    }
+    return {n,words,wordSet:new Set(words),groups,phraseHits};
+  });
+}
 function synonymScore(a,b){
-  const na=normalizeConstructionTerms(a);
-  const nb=normalizeConstructionTerms(b);
-  const wordsA=na.split(/\s+/).filter(w=>w.length>=4&&!SYNONYM_IGNORE.has(w));
-  const wordsB=nb.split(/\s+/).filter(w=>w.length>=4&&!SYNONYM_IGNORE.has(w));
-  const groupsA=new Set(wordsA.map(w=>SYNONYM_MAP.get(w)).filter(g=>g!==undefined));
-  const groupsB=new Set(wordsB.map(w=>SYNONYM_MAP.get(w)).filter(g=>g!==undefined));
-  // Mehrwort-Phrasengruppen (z.B. "boden loesen laden") über die wortweise Map nicht auffindbar →
-  // als zusätzliche Gruppensignale je Seite ergänzen.
-  for(const {g,p} of getSynonymPhrases()){
-    if(na.includes(p))groupsA.add(g);
-    if(nb.includes(p))groupsB.add(g);
-  }
+  const A=synonymSideProfile(a),B=synonymSideProfile(b);
+  const na=A.n,nb=B.n;
+  const wordsA=A.words,wordsB=B.words;
   // Geteilte Synonymgruppen.
-  const inter=new Set();for(const g of groupsA){if(groupsB.has(g))inter.add(g);}
+  const inter=new Set();for(const g of A.groups){if(B.groups.has(g))inter.add(g);}
   const fallback=tokSim(na,nb)*0.30;
   if(inter.size===0)return fallback;
   // Wörter, die zu einer GETEILTEN Mehrwort-Phrasengruppe gehören, gelten als gedeckt –
   // aber nur DIESE Wörter, nicht pauschal die ganze Seite (sonst erneut 1.0-Inflation, wenn
   // eine Seite neben der Phrase viele unverwandte distinktive Wörter trägt).
   const phraseWordsA=new Set(),phraseWordsB=new Set();
-  for(const {g,p} of getSynonymPhrases()){
-    if(!inter.has(g))continue;
-    if(na.includes(p))for(const pw of p.split(/\s+/))if(pw.length>=4)phraseWordsA.add(pw);
-    if(nb.includes(p))for(const pw of p.split(/\s+/))if(pw.length>=4)phraseWordsB.add(pw);
+  for(const g of inter){
+    const sa=A.phraseHits.get(g);if(sa)for(const pw of sa)phraseWordsA.add(pw);
+    const sb=B.phraseHits.get(g);if(sb)for(const pw of sb)phraseWordsB.add(pw);
   }
   // Graduelle Deckung statt binärer 1.0: ein einzelnes geteiltes Nebenwort soll
   // textConfidence NICHT mehr auf 1.0 hochziehen und so die fachlichen Hard-Caps umgehen.
   // Stattdessen messen wir, welcher Anteil der DISTINKTIVEN Wörter je Seite über eine
   // geteilte Synonymgruppe (oder literal) gedeckt ist. Volle Deckung der kleineren Seite → ~1.0
   // (erhält Recall für kurze Positionen), partielle Deckung skaliert linear herunter.
-  const setA=new Set(wordsA),setB=new Set(wordsB);
+  const setA=A.wordSet,setB=B.wordSet;
   // Längengewichtung: lange Komposita (frostschutzschicht) sind distinktiver als kurze
   // Admin-/Füllwörter (unterlagen, einbaudoku) – ein geteiltes Hauptwort soll daher stärker
   // wiegen als ein nicht geteiltes Nebenwort, ohne wieder pauschal auf 1.0 zu springen.
@@ -1253,10 +1331,13 @@ function buildPositionMatchProfile(p){
     surcharge:false,
     ebv:null,
     depv:null,
+    disposalRoute:'',
     siteContext:'',
     materialBand:'',
     compactionSpec:'',
     transportDir:'',
+    leitungSub:'',
+    nennweite:'',
     actionFlags:null
   };
   profile.category=positionCategory({...p,kurztext:shortRaw,langtext:longRaw,outlineSpecs:p?.outlineSpecs||''});
@@ -1266,16 +1347,19 @@ function buildPositionMatchProfile(p){
   profile.docLike=isDocLikeText(fullNorm);
   profile.beAsset=profile.category==='BE'?detectBeAsset(fullNorm):'';
   profile.earthFamily=profile.category==='ERDBAU'?detectEarthworkFamily(fullNorm):'';
-  profile.disposalSig=profile.category==='ENTSORGUNG'?detectDisposalSignature(fullRaw):'';
+  profile.disposalSig=['ENTSORGUNG','ERDBAU','TRANSPORT','ABBRUCH_RUECKBAU'].includes(profile.category)?detectDisposalSignature(fullRaw):'';
   profile.docSub=['DOKUMENTATION','QUALITAET_PROBEFELD','BAULEITUNG_PLANUNG','ARBEITSSCHUTZ_SW'].includes(profile.category)?detectDocSubcategory(fullNorm):'';
   profile.demolitionFamily=profile.category==='ABBRUCH_RUECKBAU'?detectDemolitionFamily(fullNorm):'';
   profile.surcharge=hasSurchargeSemantics(fullRaw);
   profile.ebv=getEbvClass(fullRaw);
   profile.depv=getDepvClass(fullRaw);
+  profile.disposalRoute=detectDisposalRoute(fullRaw);
   profile.siteContext=detectSiteContext(fullNorm);
   profile.materialBand=detectMaterialBand(fullNorm,fullRaw);
   profile.compactionSpec=detectCompactionSpec(fullNorm);
   profile.transportDir=profile.category==='TRANSPORT'?detectTransportDirection(fullRaw):'';
+  profile.leitungSub=profile.category==='LEITUNGSBAU'?detectLeitungbauSub(fullNorm):'';
+  profile.nennweite=detectNennweite(fullRaw);
   profile.actionFlags=detectActionFlags(fullNorm,fullRaw);
   return profile;
 }
@@ -1354,8 +1438,8 @@ function detectDisposalSignature(text){
   if(/\b17\s*05\s*07\b/.test(t))parts.push('AVV170507');
   if(/\b17\s*05\s*08\b/.test(t))parts.push('AVV170508');
   if(/\bzwischenlager\b/.test(t))parts.push('ZWISCHENLAGER');
-  if(/\bverwert/.test(t))parts.push('VERWERTUNG');
-  if(/\bdeponi/.test(t))parts.push('DEPONIE');
+  if(/\bverwert|\brecycl|\baufbereit/.test(t))parts.push('VERWERTUNG');
+  if(/\bdeponi|\bkippstelle\b|\bannahmestelle\b|\bbeseitig|\bablager/.test(t))parts.push('DEPONIE');
   // NGA: "nicht gefährlicher Abfall" - mit und ohne Leerzeichen/Bindestrich
   if(/\bnicht[\s-]*gefaehrlicher[\s-]*abfall\b|\bn[\s-]*gefaehrl[\s-]*abfall\b|\bnga\b/.test(t))parts.push('NGA');
   // GA: "gefährlicher Abfall" - mit und ohne Bindestrich
@@ -1363,6 +1447,14 @@ function detectDisposalSignature(text){
   if(ebv)parts.push(ebv);
   if(depv)parts.push(depv);
   return parts.join('|');
+}
+function detectDisposalRoute(text){
+  const t=norm(text);
+  if(/\bverwert|\brecycl|\bwiederverwend|\baufbereit/.test(t))return'VERWERTUNG';
+  if(/\bdeponi|\bkippstelle\b|\bannahmestelle\b|\bbeseitig|\bablager/.test(t))return'DEPONIE';
+  if(/\bzwischenlager\b/.test(t))return'ZWISCHENLAGER';
+  if(/\babfuhr|\babfahren|\btransport/.test(t))return'TRANSPORT';
+  return'';
 }
 // Zwei Entsorgungs-Signaturen widersprechen sich NUR, wenn sich eine identitätsstiftende
 // Komponente echt gegenseitig ausschließt – nicht schon bei jeder String-Differenz.
@@ -1443,6 +1535,19 @@ function detectTransportDirection(text){
   if(/\babtransport|\babtransporte|\babtransportieren\b|\babfahren\b/.test(t))return'OUT';
   return'';
 }
+function detectNennweite(text){
+  const t=norm(text);
+  const m=t.match(/\b(?:dn|nw)\s*(\d{2,4})\b/);
+  return m?'DN'+m[1]:'';
+}
+function detectLeitungbauSub(text){
+  const t=normalizeConstructionTerms(text);
+  if(/\beinlaufschacht\b|\bgully\b|\bstrassenablauf\b/.test(t))return'EINLAUF';
+  if(/\bschieber\b|\bhydrant\b/.test(t))return'SCHIEBER';
+  if(/\bschacht\b/.test(t))return'SCHACHT';
+  if(/\brohr\b|\bsickerrohr\b|\bdraenrohr\b|\bsickerwasserrohr\b/.test(t))return'ROHRLEITUNG';
+  return'';
+}
 function detectActionFlags(text,rawText){
   const t=normalizeConstructionTerms(text);
   // Aktionsrichtung auf ROHTEXT (vor Stopwort-Entfernung), da "herstellen"/"liefern" Stopwörter sind.
@@ -1456,7 +1561,7 @@ function detectActionFlags(text,rawText){
     controlTest:/\bkontrollpruefung\b|\bkontrollprufung\b|\bplattendruckversuch\b|\blastplattenversuch\b|\bpruefplan\b/.test(t),
     loading:/\bladen\b/.test(t),
     loosening:/\bloesen\b/.test(t),
-    delivery:/\bliefern\b/.test(t),
+    delivery:/\bliefern\b/.test(raw),
     storage:/\bzwischenlager\b|\blagern\b|\bseitlich lagern\b|\bbodenmiete\b/.test(t),
     recovery:/\bverwert/.test(t),
     transport:/\btransport|\bbodentransport\b|\bantransport|\babtransport|\babfahren\b|\bumlagern\b|\bverbringen\b/.test(t),
@@ -1518,13 +1623,12 @@ function buildReferenceBuckets(pool){
 function getBucketCandidates(profile,buckets,fallbackPool){
   if(!buckets||!fallbackPool?.length)return fallbackPool||[];
   const merged=[];
-  const seen=new Set();
+  const seen=new WeakSet();
   const take=list=>{
     if(!list)return;
     list.forEach(item=>{
-      const key=(item.source||'')+'|'+(item.ozCanon||item.oz||item.kurztext||'');
-      if(seen.has(key))return;
-      seen.add(key);
+      if(seen.has(item))return;
+      seen.add(item);
       merged.push(item);
     });
   };
@@ -1625,27 +1729,42 @@ function isPlausibleCandidate(npProf,rpProf){
   return compat>=0.45;
 }
 function positionCategory(p){
-  const t=normalizeConstructionTerms((p?.kurztext||'')+' '+(p?.langtext||'')+' '+(p?.outlineSpecs||''));
-  // Kurztext separat normalisiert: "weiche" Kategorien (DOKUMENTATION, VERMESSUNG) werden NUR aus
-  // dem Titel erkannt, damit ein beiläufiges "nachweis/vermessen" im Langtext keine physische
-  // Leistung kapert. (normalizeConstructionTerms ist gecached – kein doppelter Rechenaufwand.)
+  // Kurztext-first: Der Titel benennt die Leistung, der Langtext enthält Floskeln/Boilerplate
+  // ("Abstimmung mit der Bauleitung", "Reste transportieren und entsorgen", "nach Rückbau …"),
+  // die im Volltext-Durchlauf physisch korrekte Kurztext-Kategorien kapern (Polier→BAULEITUNG,
+  // Baustelleneinrichtung→ABBRUCH, Bodeneinbau→TRANSPORT). Erst wenn der Kurztext keine
+  // Kategorie liefert, entscheidet der Volltext.
   const kt=normalizeConstructionTerms(p?.kurztext||'');
+  const fromShort=classifyCategoryText(kt,kt);
+  if(fromShort!=='SONSTIGES')return fromShort;
+  const t=normalizeConstructionTerms((p?.kurztext||'')+' '+(p?.langtext||'')+' '+(p?.outlineSpecs||''));
+  return classifyCategoryText(t,kt);
+}
+function classifyCategoryText(t,kt){
+  // "weiche" Kategorien (DOKUMENTATION, VERMESSUNG) werden NUR aus dem Titel (kt) erkannt,
+  // damit ein beiläufiges "nachweis/vermessen" im Langtext keine physische Leistung kapert.
   if(/\bbauzeitenplan\b|\bbalkendiagramm\b|\bsoll ist vergleich\b|\bbaustelleneinrichtungsplan\b|\bwerks und montageplanung\b|\bmontageplanung\b/.test(t))return'BAULEITUNG_PLANUNG';
   // Hochprioritäts-Vorabcheck nur für ECHTE Dokumentation. "nachweis"/"bericht" bewusst NICHT hier
   // (kapern sonst physische Leistungen mit beiläufigem Nachweis im Langtext) – bleiben als später
   // categoryMap-Fallback erhalten, greifen also nur wenn keine physische Kategorie zutrifft.
-  if(/\bqualitaetssicherungsplan\b|\bsondierungskonzept\b|\brettungskonzept\b|\bhavariekonzept\b|\bgefaehrdungsanalyse\b|dokumentation\b/.test(kt))return'DOKUMENTATION';
+  // konzept\b nur im KURZTEXT: "Wasserhaltungskonzept/Entsorgungskonzept/Bodenmanagementkonzept erstellen"
+  // sind Doku-Leistungen, nicht die physische Leistung, deren Wort im Kompositum steckt.
+  if(/\bqualitaetssicherungsplan\b|\bsondierungskonzept\b|\brettungskonzept\b|\bhavariekonzept\b|\bgefaehrdungsanalyse\b|dokumentation\b|konzept\b/.test(kt))return'DOKUMENTATION';
   if(/\brettungskonzept\b|\bhavariekonzept\b|\bgefaehrdungsanalyse\b|\bgefaehrdungsbeurteilung\b|\bbetriebsanweisung\b|\balarmplan\b|\bnotfallplan\b/.test(t))return'ARBEITSSCHUTZ_SW';
   if(/\bqualitaetssicherungsplan\b|\bkontrollpruefung\b|\bplattendruckversuch\b|\bprobefeld\b/.test(t))return'QUALITAET_PROBEFELD';
   // VERMESSUNG nur, wenn das Signal im KURZTEXT (Titel) steht – nicht bei beiläufigem "einmessen/
   // vermessen" im Langtext einer physischen Leistung (sonst Hijack wie zuvor bei "nachweis").
-  if(/vermessung\b|\bhauptachsen\b|\babstecken\b|\baufmass\b/.test(kt))return'VERMESSUNG';
+  if(/vermessung\b|\bhauptachsen\b|\babstecken\b|\baufmass\b|\beinmessen\b|einmessung\b/.test(kt))return'VERMESSUNG';
+  // verfuellen/auffuellen + schacht/rohrgraben → LEITUNGSBAU, auch wenn Langtext ABBRUCH-Signal hat
+  if((/\bverfuell|\bauffuell/.test(t))&&(/\bschacht\b|\brohrgraben\b|\bkabelgraben\b/.test(t)))return'LEITUNGSBAU';
   if(/\babbrechen\b|rueckbau\b|\bruckbau\b|\baufbrechen\b|aufbruch\b|\babbau\b|abbruch\b/.test(t))return'ABBRUCH_RUECKBAU';
   // Eine Baugrube/Schachtbaugrube IST Erdaushub – das generische \bschacht\b der LEITUNGSBAU-Regel
   // darunter würde "Baugrube für Schacht herstellen" sonst fälschlich dem Leitungsbau zuordnen.
   if(/\bschachtbaugrube\b|\bbaugrube\b[\s\S]*\bschacht\b|\bschacht\b[\s\S]*\bbaugrube\b/.test(t))return'ERDBAU';
-  if(/\bsickerwasserrohr\b|\bdraenrohr\b|\bdrainagerohr\b|\brohrleitung\b|\brohrbettung\b|rohr\b|\bschacht\b|\bkontrollschacht\b|\bschachtbauwerk\b|\bschachtabdeckung\b|\bauflagering\b|\bschieber\b|\bmuffe\b|\bformteil\b|\bbogen\b/.test(t))return'LEITUNGSBAU';
-  if(/\bschwarzweissanlage\b|\bdekontaminationsanlage\b|\bpersonen deko\b|\bstiefelwaschanlage\b|\breifenwaschanlage\b|\batemschutz\b|\bschutzanzug\b|\bgefahrstoff\b|\bbetriebsanweisung\b|\balarmplan\b|\bnotfallplan\b|\bgefaehrdungsbeurteilung\b/.test(t))return'ARBEITSSCHUTZ_SW';
+  // bodeneinbau im Kurztext → ERDBAU, bevor TRANSPORT-Signale im Langtext feuern können
+  if(/\bbodeneinbau\b|\bboden einbauen\b/.test(kt))return'ERDBAU';
+  if(/\bentwaesserungsrinne\b|\bsickerwasserrohr\b|\bdraenrohr\b|\bdrainagerohr\b|\brohrleitung\b|\brohrbettung\b|rohr\b|\bschacht\b|\bkontrollschacht\b|\bschachtbauwerk\b|\bschachtabdeckung\b|\bauflagering\b|\bschieber\b|muffe\b|\bformteil\b|\bbogen\b|\bboegen\b|\bdichtheitspruefung\b|\bdichtigkeitspruefung\b|\bhochdruckreinigung\b/.test(t))return'LEITUNGSBAU';
+  if(/\bschwarzweissanlage\b|\bdekontaminationsanlage\b|\bpersonen deko\b|\bstiefelwaschanlage\b|\breifenwaschanlage\b|\breifenreinigungsanlage\b|\batemschutz\b|\bschutzanzug\b|\bgefahrstoff\b|\bbetriebsanweisung\b|\balarmplan\b|\bnotfallplan\b|\bgefaehrdungsbeurteilung\b/.test(t))return'ARBEITSSCHUTZ_SW';
   // Eindeutige Abdichtungs-Begriffe gehören zu DEPONIEBAU – auch wenn "Deponie" (als Ort) im Text steht,
   // sonst zieht die ENTSORGUNG-Regel z.B. "Schutzvlies … vom Lager der Deponie" fälschlich zu sich.
   if(/\bkunststoffdichtungsbahn\b|\bschutzvlies\b|\bbentonitmatte\b|\bgeosynthetische tondichtung\b|\bbasisabdichtung\b|\bkdb\b/.test(t))return'DEPONIEBAU_ABDICHTUNG';
@@ -1654,23 +1773,27 @@ function positionCategory(p){
   // \btransport(?!beton|moertel|anker): "Transport/transportieren/-arbeiten" als Leistung erkennen,
   // aber NICHT Material-Komposita wie "Transportbeton"/"Transportmörtel"/"Transportanker".
   if(/\btransport(?!beton|moertel|anker)|\bbodentransport\b|\bantransport|\babtransport|\babfahren\b|\bumlagern\b|\bverbringen\b/.test(t)&&!hasDisposalSignal&&!hasRemovalSignal)return'TRANSPORT';
-  if(/\bbaustelleneinrichtung\b|\bbauzaun\b|\bbaustelleneinrichtung raeumen\b|\bbauschild\b|\bbaucontainer\b|\bdrehfluegeltor\b|\bschiebetor\b|\bschutzgelaender\b|\btreppenturm\b|\bbaustromversorgung\b|\bbauwasserversorgung\b|\bbaustellenbeleuchtung\b|\bbaustra(s|ß)e\b|\bueberfahrschutz\b|\bbehelfsueberfahrt\b/.test(t))return'BE';
-  if(/\bbodenaushub\b|\baushub\b|\berdaushub\b|\bboden loesen\b|\bboden laden\b|\bboden fuer baugrube loesen\b|\bboden fuer baugrube laden\b|\bbaugrube herstellen\b|\bbaugrube loesen\b|\boberboden abtragen\b|\boberboden andecken\b|\boberboden liefern und andecken\b|\boberboden lagern\b|\boberboden weiterverwenden\b|\bmutterboden\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bboden\b[\s\S]{0,80}\beinbauen\b|\blagenweise\b|planum\b|profilier|\bverdichten\b|\bverdichtung\b|\bnachverdicht|\barbeitsraum verfuellen\b|\bleerschlitz verfuellen\b|\barbeitsebene\b|\barbeitsplattform\b|\bbauwerkshinterfuellung\b|\bhinterfuellung\b|\bhinterfullung\b|\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b|\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b|\bboeschungsansaat\b|\bboeschungsbegruenung\b|\bboeschungssicherung\b|\bhydrosaat\b/.test(t))return'ERDBAU';
+  if(/\bbaustelleneinrichtung\b|\bbauzaun\b|\bbaustelleneinrichtung raeumen\b|\bbauschild\b|\bbaucontainer\b|\bdrehfluegeltor\b|\bschiebetor\b|\bschutzgelaender\b|\btreppenturm\b|\bbaustrom|\bbauwasser|\bbaustellenbeleuchtung\b|\bbaustrassen?\b|\bverkehrsschild|\bhinweisschild|\bverkehrszeichen\b|\bfahrbahnmarkierung\b|\bverkehrsspiegel\b|\bfahrbahnbegrenzung\b|\bbauzauntor\b|\bueberfahrschutz\b|\bbehelfsueberfahrt\b|\bschutzplanke\b/.test(t))return'BE';
+  // Walzen-Komposita → GERÄTE bevor ERDBAU-Vorabcheck (verdichtung/verdichten) kapern kann
+  if(/\b(?:stampffuss|glattmantel|schaffuss|bandage|tandem|gummiradr?|vibrations)walze[rn]?\b/.test(t))return'GERÄTE';
+  if(/\bbodenaushub\b|aushub\b|\berdaushub\b|bodenabtrag\b|\bbaggerschuerf|\bschuerfgrube|\bboden loesen\b|\bboden laden\b|\bboden fuer baugrube loesen\b|\bboden fuer baugrube laden\b|\bbaugrube herstellen\b|\bbaugrube loesen\b|\boberboden abtragen\b|\boberboden andecken\b|\boberboden liefern und andecken\b|\boberboden lagern\b|\boberboden weiterverwenden\b|\bmutterboden\b|\bunterboden\b|\bbodenmiete\b|\bumlagern\b|\bwiedereinbau\b|\bverfuellen\b|\bboden einbauen\b|\bboden\b[\s\S]{0,80}\beinbauen\b|\blagenweise\b|planum\b|profilier|\bverdichten\b|\bverdichtung\b|\bnachverdicht|\barbeitsraum verfuellen\b|\bleerschlitz verfuellen\b|\barbeitsebene\b|\barbeitsplattform\b|\bbauwerkshinterfuellung\b|\bhinterfuellung\b|\bhinterfullung\b|\bwiderlager\b|\bfluegelwand\b|\bflugelwand\b|\brasenansaat\b|\bgraseinsaat\b|\bbegruenen\b|\bbegruenung\b|\bnassansaat\b|\bansaat\b|\bboeschungsansaat\b|\bboeschungsbegruenung\b|\bboeschungssicherung\b|\bhydrosaat\b|\bgrabenverbau\b/.test(t))return'ERDBAU';
   const categoryMap={
-    'ENTSORGUNG':[/\bentsorgung\b/,/\bverwertung\b/,/\babfahren\b/,/\bdeponieren\b/,/\bdeponie\b/,/\bbeprobung\b/,/\bchemischer nachweis\b/,/\babfallinventar\b/,/\bgefaehrlicher abfall\b/,/\bnicht gefaehrlicher abfall\b/,/\bn gefaehrl abfall\b/,/\babfallschluessel\b/,/\b170504\b/,/\bbm0\b/,/\bersatzbaustoffverordnung\b/,/\bzwischenlager\b/],
-    'DEPONIEBAU_ABDICHTUNG':[/\btechnische barriere\b/,/\bmineralische dichtung\b/,/\bbasisabdichtung\b/,/\bkunststoffdichtungsbahn\b/,/\bkdb\b/,/\bpehd\b/,/\bschutzvlies\b/,/\bfiltervlies\b/,/\bvliesstoff\b/,/\bsandmatte\b/,/\bentwaesserungsschicht\b/,/\brandwall\b/,/\bboeschungsbereich\b/,/\banschluss an bestand\b/],
-    'LEITUNGSBAU':[/\brohr\b/,/\brohrleitung\b/,/\bpehd rohr\b/,/\bschmutzwasserleitung\b/,/\bkompostwasserleitung\b/],
-    'QUALITAET_PROBEFELD':[/\bprobefeld\b/,/\bprobebau\b/,/\bproctor\b/,/\bplattendruckversuch\b/,/\beigenpruefung\b/,/\bgueteueberwachung\b/,/\bkontrollpruefung\b/,/\bqualitaetssicherungsplan\b/],
-    'BAULEITUNG_PLANUNG':[/\bbauleitung\b/,/\bbauzeitenplan\b/,/\bbauablaufplan\b/,/\bplanung\b/,/\bprojektleitung\b/,/\bkoordination\b/,/\bbaustelleneinrichtungsplan\b/,/\bwerks und montageplanung\b/,/\blieferkonzept\b/,/\bsondierungskonzept\b/],
+    'ENTSORGUNG':[/\bentsorgung\b/,/\bverwertung\b/,/\babfahren\b/,/\bdeponieren\b/,/\bdeponie\b/,/\bbeprobung\b/,/\bchemischer nachweis\b/,/\babfallinventar\b/,/\bgefaehrlicher abfall\b/,/\bnicht gefaehrlicher abfall\b/,/\bn gefaehrl abfall\b/,/\babfallschluessel\b/,/\b170504\b/,/\bbm0\b/,/\bersatzbaustoffverordnung\b/,/\bzwischenlager\b/,/schuttcontainer|schuttmulden?\b|schuttabwurf/],
+    'DEPONIEBAU_ABDICHTUNG':[/\btechnische barriere\b/,/\bmineralische dichtung\b/,/\bbasisabdichtung\b/,/\bkunststoffdichtungsbahn\b/,/\bkdb\b/,/\bpehd\b/,/\bschutzvlies\b/,/\bfiltervlies\b/,/\bvliesstoff\b/,/\bsandmatte\b/,/\bentwaesserungsschicht\b/,/gasdraen/,/draenageschicht\b/,/\brandwall\b/,/\bboeschungsbereich\b/,/\banschluss an bestand\b/],
+    'LEITUNGSBAU':[/\brohr\b/,/\brohrleitung\b/,/\bpehd rohr\b/,/\bschmutzwasserleitung\b/,/\bkompostwasserleitung\b/,/\bkanal/],
+    'QUALITAET_PROBEFELD':[/\bprobefeld\b/,/\bprobebau\b/,/\bproctor/,/\bplattendruckversuch\b/,/\beigenpruefung\b/,/\beigenueberwachung\b/,/\bfremdueberwachung\b/,/\bgueteueberwachung\b/,/\bkontrollpruefung\b/,/\bqualitaetssicherungsplan\b/,/siebanalyse\b/,/sedimentationsanalyse\b/,/druckpruefung\b/],
+    'BAULEITUNG_PLANUNG':[/\bbauleitung\b/,/\bbauzeitenplan\b/,/\bbauablaufplan\b/,/\bplanung\b/,/\bprojektleitung\b/,/\bkoordination\b/,/\bbaustelleneinrichtungsplan\b/,/\bwerks und montageplanung\b/,/\blieferkonzept\b/,/\bsondierungskonzept\b/,/\bplanungsleistung/,/\bbestandsunterlagen\b/],
     'DOKUMENTATION':[/\bdokumentation\b/,/\bnachweis\b/,/\bbericht\b/,/\brettungskonzept\b/,/\bhavariekonzept\b/,/\bgefaehrdungsanalyse\b/],
-    'VERMESSUNG':[/\bhauptachsen\b/,/\babstecken\b/,/\bvermessung\b/,/\bvermessungsarbeiten\b/,/\btrassenabsteckung\b/,/\bachspunkt\b/],
-    'WASSERHALTUNG':[/\bpumpe\b/,/\bpumpen\b/,/\bwasserhaltung\b/,/\babpumpen\b/,/\bniederschlagswasser\b/,/\bstromaggregat\b/,/\bpumpensteuerung\b/],
-    'RODUNG_FREIMACHUNG':[/\brodung\b/,/\bfreimach\b/,/\bbewuchs\b/,/\bbaum\b/,/\bhecke\b/,/\bstraeucher\b/],
-    'STRASSENBAU':[/\basphalt\b/,/\bbitumen\b/,/\bdeckschicht\b/,/tragschicht\b/,/\bbelag\b/,/\bfrostschutzschicht\b/,/\bschichten ohne bindemittel\b/,/\bsob\b/,/\bfss\b/,/\bkts\b/,/\bsts\b/,/\bdob\b/,/\bbaustoffgemisch\b/,/\bmineralgemisch\b/,/\bunterlage profilieren\b/,/\bprofilausgleich\b/,/\bbankett\b/],
-    'ABBRUCH_RUECKBAU':[/\babbrechen\b/,/\brueckbau\b/,/\baufbrechen\b/,/\babbau\b/,/\babbruch\b/],
-    'GERÄTE':[/\bbagger\b/,/\bkettenbagger\b/,/\bhydraulikbagger\b/,/\bmobilbagger\b/,/\braupe\b/,/\bplanierraupe\b/,/\bdozer\b/,/\bwalze\b/,/\bglattmantelwalze\b/,/\bvibrationswalze\b/,/\bradlader\b/,/\bdumper\b/,/\blkw\b/,/\blastkraftwagen\b/,/verdichtungsger/,/ruettler/,/\bruettelplatte\b/,/\bfrontlader/,/\bmotorsaege\b/,/\bkehrmaschine\b/],
-    'PERSONAL':[/\bbaufacharbeiter\b/,/\bfacharbeiter\b/,/\bhilfsarbeiter\b/,/\bpolier\b/,/vorarbeiter\b/,/\bbauleiter\b/,/helfer\b/,/\bgeraetefuehrer\b/,/\bstundenlohn\b/],
-    'MATERIAL':[/\brohr\b/,/\bbeton\b/,/\bstahl\b/,/\bholz\b/,/\bsand\b/,/\bbrechsand\b/,/\bkies\b/,/\bschotter\b/,/\bzement\b/,/\bbitumen\b/,/\basphalt\b/,/\bvlies\b/,/\btrennvlies\b/,/material\b/,/\bvorsiebmaterial\b/]
+    'VERMESSUNG':[/\bhauptachsen\b/,/\babstecken\b/,/\bvermessung\b/,/\bvermessungsarbeiten\b/,/\btrassenabsteckung\b/,/\bachspunkt\b/,/\beinmessen\b|einmessung\b/,/\bschnurgeruest\b/],
+    'WASSERHALTUNG':[/\bpumpe\b/,/\bpumpen\b/,/\bwasserhaltung/,/\babpumpen\b/,/\bniederschlagswasser\b/,/\bstromaggregat\b/,/\bpumpensteuerung\b/,/\bgrundwasser/,/neutralisationsanlage\b/,/absetzanlage\b/],
+    'RODUNG_FREIMACHUNG':[/\brodung\b/,/\broden\b/,/wurzelstoecke?\b/,/wurzelstock\b/,/\baufwuchs\b/,/\bmaehen\b/,/\bmaehgut\b/,/gehoelz/,/\bfaellen\b/,/\bfreimach\b/,/\bbewuchs\b/,/\bbaum\b/,/\bhecke\b/,/\bstraeucher\b/],
+    'STRASSENBAU':[/\basphalt/,/\bbitumen\b/,/\bdeckschicht\b/,/tragschicht\b/,/\bbelag\b/,/\bfrostschutzschicht\b/,/\bschichten ohne bindemittel\b/,/\bsob\b/,/\bfss\b/,/\bkts\b/,/\bsts\b/,/\bdob\b/,/\bbaustoffgemisch\b/,/\bmineralgemisch\b/,/\bunterlage profilieren\b/,/\bprofilausgleich\b/,/\bbankett\b/,/\banschluss an? fuge\b/,/fugenmasse\b|fugenverguss\b|fugenschnitt\b/,/\bfuge[n]?\b/],
+    // "abbauen" bewusst NUR hier im Fallback (nicht im Vorabcheck): "Bauzaun auf-/abbauen" bleibt BE,
+    // weil der BE-Vorabcheck vorher greift; "Verkehrsschild/Leitpfosten abbauen" landet hier korrekt.
+    'ABBRUCH_RUECKBAU':[/\babbrechen\b/,/\brueckbau\b/,/\baufbrechen\b/,/\babbau\b/,/\babbauen\b/,/\babbruch\b/],
+    'GERÄTE':[/\bbagger\b/,/\bkettenbagger\b/,/\bhydraulikbagger\b/,/\bmobilbagger\b/,/\braupe\b/,/\bplanierraupe\b/,/\bdozer\b/,/walze\b/,/kran\b/,/\bglattmantelwalze\b/,/\bvibrationswalze\b/,/\bradlader\b/,/\bdumper\b/,/\blkw\b/,/\blastkraftwagen\b/,/verdichtungsger/,/ruettler/,/\bruettelplatte\b/,/\bfrontlader/,/\bmotorsaege\b/,/\bkehrmaschine\b/],
+    'PERSONAL':[/facharbeiter/,/hilfsarbeiter/,/\bpolier\b/,/vorarbeiter\b/,/\bbauleiter\b/,/helfer(?:stunden)?\b/,/geraetefuehrer/,/stundenlohn/],
+    'MATERIAL':[/\brohr\b/,/\bbeton\b/,/\bstahl\b/,/\bholz\b/,/\bsand\b/,/\bbrechsand\b/,/\bkies\b/,/\bschotter\b/,/\bgrobschlag\b/,/kraftstoff\b/,/\bzement\b/,/\bbitumen\b/,/\basphalt\b/,/\bvlies\b/,/\btrennvlies\b/,/material\b/,/\bvorsiebmaterial\b/]
   };
   for(const [cat,patterns] of Object.entries(categoryMap)){if(patterns.some(rx=>rx.test(t)))return cat;}
   return 'SONSTIGES';
@@ -1709,24 +1832,27 @@ function getEbvClass(text){
   // "nicht gefaehrlicher abfall" (= nicht gefährlich, i.d.R. BM-0/170504) darf NICHT als BM-F3 (gefährlich)
   // klassifiziert werden – die Negation kippt die Bedeutung. Ohne den Lookbehind matcht der Teilstring
   // "gefaehrlicher abfall" in "nicht gefaehrlicher abfall" und deckelt echte BM-0↔BM-0-Treffer auf 10%.
-  if(/\bbm[\s-]?f3\b|\bbmf3\b|\bavv[\s-]*17[\s-]*05[\s-]*06\b|(?<!nicht )gefaehrlicher abfall\b|\bklasse[\s-]*f3\b/.test(t))return'BM-F3';
+  // Zweiter Lookbehind (?<!nicht) fängt das zusammengeschriebene Kompositum "nichtgefaehrlicher" –
+  // JS-Lookbehind ist fixlängig, ein einzelner (?<!nicht ) sieht die Variante ohne Leerzeichen nicht.
+  if(/\bbm[\s-]?f3\b|\bbmf3\b|\bavv[\s-]*17[\s-]*05[\s-]*06\b|(?<!nicht )(?<!nicht)gefaehrlicher abfall\b|\bklasse[\s-]*f3\b/.test(t))return'BM-F3';
   if(/\bbm[\s-]?f2\b|\bbmf2\b|\bklasse[\s-]*f2\b/.test(t))return'BM-F2';
   if(/\bbm[\s-]?f1\b|\bbmf1\b|\bklasse[\s-]*f1\b/.test(t))return'BM-F1';
-  if(/\bbm[\s-]?2\b|\bbm2\b|\beinbauklasse[\s-]*2\b|\blaga[\s-]*z1\b(?![\s.]*1)/.test(t))return'BM-2';
-  if(/\bbm[\s-]?1\b|\bbm1\b|\beinbauklasse[\s-]*1\b|\blaga[\s-]*z0\b/.test(t))return'BM-1';
-  if(/\bbm[\s-]?0\b|\bbm0\b|\beinbauklasse[\s-]*0\b|\b17\s*05\s*04\b|\bersatzbaustoffverordnung\b|\blaga[\s-]*rc\b/.test(t))return'BM-0';
-  if(/\bz[\s-]?2\b|\bz2\b|\blaga[\s-]*z2\b|\bdeponieklasse[\s-]*(?:dk[\s-]*)?ii\b/.test(t))return'Z2';
+  if(/\bbm[\s-]?f0\b|\bbmf0\b|\bklasse[\s-]*f0\b|\bbm[\s-]?0\s*\*/.test(t))return'BM-F0';
+  if(/\bz[\s-]?2\b|\bz2\b|\blaga[\s-]*z2\b/.test(t))return'Z2';
   if(/\bz[\s-]?1[\s-.]?2\b|\bz1[\s-.]?2\b|\blaga[\s-]*z1[\s-.]?2\b/.test(t))return'Z1.2';
   if(/\bz[\s-]?1[\s-.]?1\b|\bz1[\s-.]?1\b|\blaga[\s-]*z1[\s-.]?1\b/.test(t))return'Z1.1';
   if(/\bz[\s-]?1\b(?![\s.]*[12])\b|\bz1\b(?![\s.]*[12])|\blaga[\s-]*z1\b(?![\s.]*[12])/.test(t))return'Z1';
-  if(/\bz[\s-]?0\b|\bz0\b|\blaga[\s-]*z0\b|\b17\s*05\s*04\b/.test(t))return'Z0';
+  if(/\bz[\s-]?0\b|\bz0\b|\blaga[\s-]*z0\b/.test(t))return'Z0';
+  if(/\bbm[\s-]?2\b|\bbm2\b|\beinbauklasse[\s-]*2\b/.test(t))return'BM-2';
+  if(/\bbm[\s-]?1\b|\bbm1\b|\beinbauklasse[\s-]*1\b/.test(t))return'BM-1';
+  if(/\bbm[\s-]?0\b|\bbm0\b|\beinbauklasse[\s-]*0\b|\b17\s*05\s*04\b|\bersatzbaustoffverordnung\b|\blaga[\s-]*rc\b/.test(t))return'BM-0';
   return null;
 }
 function getDepvClass(text){
   const t=norm(text);
   if(/\bdk[\s-]?0\b|\bdeponieklasse[\s-]*0\b|\binertabfall\b/.test(t))return'DK-0';
-  if(/\bdk[\s-]?i\b(?!i)|\bdeponieklasse[\s-]*i\b(?!i)/.test(t))return'DK-I';
-  if(/\bdk[\s-]?ii\b(?!i)|\bdeponieklasse[\s-]*ii\b(?!i)/.test(t))return'DK-II';
+  if(/\bdk[\s-]?(?:i|1)\b(?!i)|\bdeponieklasse[\s-]*(?:i|1)\b(?!i)/.test(t))return'DK-I';
+  if(/\bdk[\s-]?(?:ii|2)\b(?!i)|\bdeponieklasse[\s-]*(?:ii|2)\b(?!i)/.test(t))return'DK-II';
   if(/\bdk[\s-]?iii\b|\bdeponieklasse[\s-]*iii\b/.test(t))return'DK-III';
   if(/\bdk[\s-]?iv\b|\bdeponieklasse[\s-]*iv\b/.test(t))return'DK-IV';
   if(/\bdepv\b|\bdeponieverordnung\b|\bta[\s-]?abfall\b|\babfallablagerung\b/.test(t))return'DEPV_UNSPEC';
@@ -1735,6 +1861,7 @@ function getDepvClass(text){
 const EBV_COMPAT={
   'BM-0|BM-1':0.30,'BM-1|BM-2':0.25,'BM-0|BM-2':0.20,
   'BM-0|BM-F1':0.15,'BM-0|BM-F2':0.15,'BM-0|BM-F3':0.10,
+  'BM-0|BM-F0':0.45,'BM-F0|BM-F1':0.30,'BM-F0|BM-F2':0.20,'BM-F0|BM-F3':0.10,
   'BM-1|BM-F1':0.20,'BM-1|BM-F2':0.15,'BM-1|BM-F3':0.10,
   'BM-2|BM-F1':0.25,'BM-2|BM-F2':0.20,'BM-2|BM-F3':0.15,
   'Z0|Z1':0.30,'Z0|Z1.1':0.30,'Z0|Z1.2':0.25,'Z0|Z2':0.20,
@@ -1749,13 +1876,21 @@ function ebvCompat(ca,cb){
   const key=ca<cb?ca+'|'+cb:cb+'|'+ca;
   return EBV_COMPAT[key]??0.15;
 }
-function strSim(a,b){
+function strSim(a,b,floor=0){
   a=normalizeConstructionTerms(a);
   b=normalizeConstructionTerms(b);
   if(a===b)return 1;
   const mx=Math.max(a.length,b.length);
   if(!mx)return 1;
   if(mx>260)return tokSim(a,b);
+  // floor>0: Aufrufer nimmt ohnehin max(strSim, floor) – Distanzen jenseits des Floors sind
+  // irrelevant, lev darf dann früh abbrechen und wir geben den Floor zurück (exakt äquivalent).
+  if(floor>0){
+    const maxDist=Math.floor(mx*(1-floor));
+    if(Math.abs(a.length-b.length)>maxDist)return floor;
+    const d=lev(a,b,maxDist);
+    return d>maxDist?floor:Math.max(0,1-d/mx);
+  }
   return Math.max(0,1-lev(a,b)/mx);
 }
 function literalShortSim(a,b){
@@ -1791,8 +1926,10 @@ function buildTokenIndex(tokens){
 }
 function tokSim(a,b){
   const ta=[...new Set(tokenizeForMatch(a))];
-  const tb=[...new Set(tokenizeForMatch(b))];
-  const tbIndex=buildTokenIndex(tb);
+  // Index pro Referenztext cachen: im Matching-Loop wird derselbe Referenztext gegen viele neue
+  // Positionen verglichen – ohne Cache wird der Prefix-/Suffix-Index pro Paar neu gebaut (Hot Path).
+  const tbIndex=cacheGetOrSet(TOKEN_INDEX_CACHE,b,()=>buildTokenIndex([...new Set(tokenizeForMatch(b))]));
+  const tb=tbIndex.tokens;
   if(!ta.length&&!tb.length)return 1;
   if(!ta.length||!tb.length)return 0;
   let score=0,exactHits=0;
@@ -1855,7 +1992,6 @@ function buildReasonText(debug){
   if((debug.disposalPenalty||0)>0)parts.push('Entsorgungsklasse weicht ab');
   if((debug.demolitionPenalty||0)>0)parts.push('Abbruch-Familie weicht ab');
   if((debug.sitePenalty||0)>0)parts.push('Einbauort/Feldkontext weicht ab');
-  if((debug.materialBandPenalty||0)>0)parts.push('Kornband/Materialklasse weicht ab');
   if((debug.compactionPenalty||0)>0)parts.push('Verdichtungs-/Pruefwert weicht ab');
   if((debug.agPenalty||0)>0)parts.push('AG-Stellung weicht ab');
   if((debug.controlPenalty||0)>0)parts.push('Pruef-/Ausfuehrungslogik weicht ab');
@@ -1863,6 +1999,13 @@ function buildReasonText(debug){
   if((debug.profileAdjustmentPenalty||0)>0)parts.push('Profilausgleich weicht ab');
   if((debug.uf3Penalty||0)>0)parts.push('Feinanteil UF3 weicht ab');
   if((debug.drainageModePenalty||0)>0)parts.push('Hinterfuellbereich weicht ab');
+  if((debug.deliveryPenalty||0)>0)parts.push('Lieferung vs. Einbau weicht ab');
+  if((debug.leitungSubPenalty||0)>0)parts.push('Leitungsbau-Typ weicht ab ('+debug.leitungSubNew+'≠'+debug.leitungSubRef+')');
+  if((debug.nennweitePenalty||0)>0)parts.push('Nennweite unpassend ('+debug.nennweiteNew+'≠'+debug.nennweiteRef+')');
+  if(debug.ebvSignal)parts.push('EBV-Klasse stimmt überein');
+  if(debug.disposalStrongMatch)parts.push('Starker Entsorgungstreffer');
+  if(debug.nennweiteMatchSignal)parts.push('Nennweite stimmt überein ('+debug.nennweiteNew+')');
+  if(debug.leitungSubMatchSignal)parts.push('Leitungsbau-Typ stimmt überein ('+debug.leitungSubNew+')');
   if(debug.learningBoost>0)parts.push('Lernbonus '+debug.learningBoost+'%');
   if(debug.topMatchBoost>0)parts.push('Top-Signal '+debug.topMatchBoost+'%');
   if(debug.hardCapsApplied.length)parts.push('Deckel: '+debug.hardCapsApplied.join(', '));
@@ -1881,7 +2024,11 @@ function calcScore(np,rp,meta={}){
   const literalShortScore=literalShortSim(npProf.shortRaw,rpProf.shortRaw);
   const tokenShortScore=tokSim(npProf.shortNorm,rpProf.shortNorm);
   const shortScore=Math.max(tokenShortScore,literalShortScore>=0.90?literalShortScore:0);
-  const longScore=Math.max(strSim(npProf.longNorm||npProf.shortNorm,rpProf.longNorm||rpProf.shortNorm),tokSim(npProf.longNorm||npProf.shortNorm,rpProf.longNorm||rpProf.shortNorm)); 
+  // tokSim zuerst (gecached, billig) und als Floor an strSim geben: das Levenshtein darf exakt
+  // abbrechen, sobald es den tokSim-Wert nicht mehr übertreffen kann (max() macht es irrelevant).
+  const _lnA=npProf.longNorm||npProf.shortNorm,_lnB=rpProf.longNorm||rpProf.shortNorm;
+  const _tokLong=tokSim(_lnA,_lnB);
+  const longScore=Math.max(strSim(_lnA,_lnB,_tokLong),_tokLong);
   const synScore=synonymScore(npProf.shortNorm,rpProf.fullNorm);
   const categoryNew=npProf.category;
   const categoryRef=rpProf.category;
@@ -1923,6 +2070,9 @@ function calcScore(np,rp,meta={}){
   const disposalShareKey=(sa,sb)=>{const A=new Set(sa.split('|')),B=new Set(sb.split('|'));return [...A].some(x=>(x.startsWith('AVV')||/^(BM-|Z\d|DK-)/.test(x))&&B.has(x));};
   const disposalStrongMatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalSigNew&&disposalSigRef&&(disposalSigNew===disposalSigRef||(disposalShareKey(disposalSigNew,disposalSigRef)&&!disposalContradicts(disposalSigNew,disposalSigRef)));
   const disposalMismatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalContradicts(disposalSigNew,disposalSigRef);
+  const disposalRouteNew=npProf.disposalRoute;
+  const disposalRouteRef=rpProf.disposalRoute;
+  const disposalRouteMismatch=categoryNew==='ENTSORGUNG'&&categoryRef==='ENTSORGUNG'&&disposalRouteNew&&disposalRouteRef&&disposalRouteNew!==disposalRouteRef;
   const transportEntsorgungMismatch=(categoryNew==='TRANSPORT'&&categoryRef==='ENTSORGUNG')||(categoryNew==='ENTSORGUNG'&&categoryRef==='TRANSPORT');
   const siteContextNew=npProf.siteContext;
   const siteContextRef=rpProf.siteContext;
@@ -1976,7 +2126,18 @@ function calcScore(np,rp,meta={}){
   const dirRefPlace=flagsRef.placing&&!flagsRef.removing;
   const dirRefRemove=flagsRef.removing&&!flagsRef.placing;
   const actionDirMismatch=(dirNewPlace&&dirRefRemove)||(dirNewRemove&&dirRefPlace);
-  let penalties=0,genericPenalty=0,textOnlyPenalty=0,unitPenalty=0,quantityPenalty=0,swPenalty=0,holdingPenalty=0,docPenalty=0,assetPenalty=0,surchargePenalty=0,earthPenalty=0,disposalPenalty=0,docSubPenalty=0,demolitionPenalty=0,sitePenalty=0,materialBandPenalty=0,compactionPenalty=0,agPenalty=0,controlPenalty=0,lineZonePenalty=0,backfillModePenalty=0,shoringModePenalty=0,waterModePenalty=0,reuseSidePenalty=0,planumModePenalty=0,profileAdjustmentPenalty=0,uf3Penalty=0,drainageModePenalty=0;
+  // Nur "nur liefern" (ohne Einbau) vs. "nur einbauen" (ohne Lieferung) ist eine echte Leistungsart-
+  // Abweichung. "liefern und einbauen" ist ein kombiniertes Leistungsbild und löst keinen Mismatch aus.
+  const pureDeliveryNew=flagsNew.delivery&&!flagsNew.placing&&!flagsNew.removing;
+  const pureDeliveryRef=flagsRef.delivery&&!flagsRef.placing&&!flagsRef.removing;
+  const deliveryMismatch=(pureDeliveryNew&&!pureDeliveryRef&&flagsRef.placing)||(pureDeliveryRef&&!pureDeliveryNew&&flagsNew.placing);
+  const leitungSubNew=npProf.leitungSub;
+  const leitungSubRef=rpProf.leitungSub;
+  const leitungSubMismatch=leitungSubNew&&leitungSubRef&&leitungSubNew!==leitungSubRef&&categoryNew==='LEITUNGSBAU'&&categoryRef==='LEITUNGSBAU';
+  const nennweiteNew=npProf.nennweite;
+  const nennweiteRef=rpProf.nennweite;
+  const nennweiteMismatch=nennweiteNew&&nennweiteRef&&nennweiteNew!==nennweiteRef;
+  let penalties=0,genericPenalty=0,textOnlyPenalty=0,unitPenalty=0,quantityPenalty=0,swPenalty=0,holdingPenalty=0,docPenalty=0,assetPenalty=0,surchargePenalty=0,earthPenalty=0,disposalPenalty=0,docSubPenalty=0,demolitionPenalty=0,sitePenalty=0,compactionPenalty=0,agPenalty=0,controlPenalty=0,lineZonePenalty=0,backfillModePenalty=0,shoringModePenalty=0,waterModePenalty=0,reuseSidePenalty=0,planumModePenalty=0,profileAdjustmentPenalty=0,uf3Penalty=0,drainageModePenalty=0,deliveryPenalty=0,leitungSubPenalty=0,nennweitePenalty=0;
   const hardCapsApplied=[];
   if(genericWrongCategory){genericPenalty=0.20;penalties+=genericPenalty;}
   if(meta.isTextOnly&&literalShortScore<0.97){textOnlyPenalty=0.05;penalties+=textOnlyPenalty;}
@@ -1990,6 +2151,9 @@ function calcScore(np,rp,meta={}){
   if(surchargeMismatch&&textConfidence<0.95){surchargePenalty=0.10;penalties+=surchargePenalty;}
   if(earthFamilyMismatch&&textConfidence<0.95){earthPenalty=0.14;penalties+=earthPenalty;}
   if(disposalMismatch&&textConfidence<0.98){disposalPenalty=0.18;penalties+=disposalPenalty;}
+  // disposalPenalty muss die SUMME widerspiegeln: penalties bekommt hier zusätzlich 0.12, also auch
+  // disposalPenalty (sonst zeigt das Debug 0.18, während effektiv 0.30 abgezogen werden).
+  if(disposalRouteMismatch&&!disposalStrongMatch&&textConfidence<0.98){disposalPenalty+=0.12;penalties+=0.12;}
   if(demolitionMismatch&&textConfidence<0.95){demolitionPenalty=0.16;penalties+=demolitionPenalty;}
   if(siteContextMismatch&&textConfidence<0.95){sitePenalty=0.10;penalties+=sitePenalty;}
   if(compactionMismatch&&textConfidence<0.98){compactionPenalty=0.10;penalties+=compactionPenalty;}
@@ -2004,6 +2168,9 @@ function calcScore(np,rp,meta={}){
   if(profileAdjustmentMismatch&&textConfidence<0.98){profileAdjustmentPenalty=0.08;penalties+=profileAdjustmentPenalty;}
   if(uf3Mismatch&&textConfidence<0.98){uf3Penalty=0.08;penalties+=uf3Penalty;}
   if(drainageModeMismatch&&textConfidence<0.98){drainageModePenalty=0.10;penalties+=drainageModePenalty;}
+  if(deliveryMismatch&&textConfidence<0.90){deliveryPenalty=0.08;penalties+=deliveryPenalty;}
+  if(leitungSubMismatch&&textConfidence<0.90){leitungSubPenalty=0.14;penalties+=leitungSubPenalty;}
+  if(nennweiteMismatch&&textConfidence<0.98){nennweitePenalty=0.12;penalties+=nennweitePenalty;}
   let final=
     SCORE_WEIGHTS.SHORT*shortScore+
     SCORE_WEIGHTS.LONG*longScore+
@@ -2040,6 +2207,10 @@ function calcScore(np,rp,meta={}){
   if(flagsNew.drainageArea&&flagsRef.drainageArea)final+=0.05;
   if(flagsNew.drainageAreaExcluded&&flagsRef.drainageAreaExcluded)final+=0.05;
   if(flagsNew.totalBackfillArea&&flagsRef.totalBackfillArea)final+=0.05;
+  const nennweiteMatchSignal=!!(nennweiteNew&&nennweiteRef&&nennweiteNew===nennweiteRef);
+  const leitungSubMatchSignal=!!(leitungSubNew&&leitungSubRef&&leitungSubNew===leitungSubRef&&categoryNew==='LEITUNGSBAU'&&categoryRef==='LEITUNGSBAU');
+  if(nennweiteMatchSignal)final+=0.05;
+  if(leitungSubMatchSignal)final+=0.04;
   final=Math.max(0,Math.min(1,final));
   if(categoryScore===0&&shortScore<0.80&&synScore<0.80){final=Math.min(final,0.39);hardCapsApplied.push('Kategorie unvereinbar');}
   if(genericWrongCategory){final=Math.min(final,0.35);hardCapsApplied.push('Generische Referenz');}
@@ -2058,6 +2229,7 @@ function calcScore(np,rp,meta={}){
   if(surchargeMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Kosten/Zuschlag unpassend');}
   if(earthFamilyMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Erdbau-Familie unpassend');}
   if(disposalMismatch&&textConfidence<0.98){final=Math.min(final,0.39);hardCapsApplied.push('Entsorgungsklasse unpassend');}
+  if(disposalRouteMismatch){final=Math.min(final,disposalStrongMatch?0.79:0.55);hardCapsApplied.push('Entsorgungsweg prüfen: '+disposalRouteNew+'≠'+disposalRouteRef);}
   if(transportEntsorgungMismatch){final=Math.min(final,0.55);hardCapsApplied.push('Transport ohne Entsorgungsnachweis');}
   if(demolitionMismatch&&textConfidence<0.95){final=Math.min(final,0.35);hardCapsApplied.push('Abbruch-Familie unpassend');}
   if(siteContextMismatch&&textConfidence<0.95){final=Math.min(final,0.49);hardCapsApplied.push('Einbauort unpassend');}
@@ -2081,6 +2253,9 @@ function calcScore(np,rp,meta={}){
   // (gleiches Objektwort, textConfidence≈1), daher NICHT durch textConfidence gaten.
   if(actionDirMismatch){final=Math.min(final,0.45);hardCapsApplied.push('Aktionsrichtung unpassend');}
   if(transportDirMismatch){final=Math.min(final,0.45);hardCapsApplied.push('Transportrichtung unpassend');}
+  if(deliveryMismatch&&textConfidence<0.90){final=Math.min(final,0.55);hardCapsApplied.push('Lieferung vs. Einbau unpassend');}
+  if(leitungSubMismatch&&textConfidence<0.90){final=Math.min(final,0.45);hardCapsApplied.push('Leitungsbau-Typ unpassend: '+leitungSubNew+'≠'+leitungSubRef);}
+  if(nennweiteMismatch){final=Math.min(final,0.55);hardCapsApplied.push('Nennweite unpassend: '+nennweiteNew+'≠'+nennweiteRef);}
   if(!hardCapsApplied.length&&literalShortScore>=0.995&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.99);
   else if(!hardCapsApplied.length&&literalShortScore>=0.97&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.96);
   else if(!hardCapsApplied.length&&literalShortScore>=0.94&&unitScore>=0.80&&categoryScore>=0.45)final=Math.max(final,0.92);
@@ -2115,7 +2290,7 @@ function calcScore(np,rp,meta={}){
   // Reines Absenken – verletzt keine fachliche Obergrenze (Hard-Cap), die per Math.min gilt.
   if(rejectPenalty>0)final=Math.max(0,final-rejectPenalty);
   const score=Math.max(0,Math.min(100,Math.round(final*100)));
-  const debug={shortScore:Math.round(shortScore*100),literalShortScore:Math.round(literalShortScore*100),longScore:Math.round(longScore*100),synonymScore:Math.round(synScore*100),categoryNew,categoryRef,categoryScore:Math.round(categoryScore*100),unitScore:Math.round(unitScore*100),quantityScore:Math.round(quantityScore*100),learningBoost:Math.round(learnBoost*100),topMatchBoost:Math.round(topBoost*100),linkedReferenceBoost:0,genericPenalty:Math.round(genericPenalty*100),textOnlyPenalty:Math.round(textOnlyPenalty*100),unitPenalty:Math.round(unitPenalty*100),quantityPenalty:Math.round(quantityPenalty*100),holdingPenalty:Math.round(holdingPenalty*100),docPenalty:Math.round(docPenalty*100),docSubPenalty:Math.round(docSubPenalty*100),assetPenalty:Math.round(assetPenalty*100),surchargePenalty:Math.round(surchargePenalty*100),earthPenalty:Math.round(earthPenalty*100),disposalPenalty:Math.round(disposalPenalty*100),demolitionPenalty:Math.round(demolitionPenalty*100),sitePenalty:Math.round(sitePenalty*100),materialBandPenalty:Math.round(materialBandPenalty*100),compactionPenalty:Math.round(compactionPenalty*100),agPenalty:Math.round(agPenalty*100),controlPenalty:Math.round(controlPenalty*100),lineZonePenalty:Math.round(lineZonePenalty*100),backfillModePenalty:Math.round(backfillModePenalty*100),shoringModePenalty:Math.round(shoringModePenalty*100),waterModePenalty:Math.round(waterModePenalty*100),reuseSidePenalty:Math.round(reuseSidePenalty*100),planumModePenalty:Math.round(planumModePenalty*100),profileAdjustmentPenalty:Math.round(profileAdjustmentPenalty*100),uf3Penalty:Math.round(uf3Penalty*100),drainageModePenalty:Math.round(drainageModePenalty*100),hardCapsApplied,finalScore:score,newUnit:normUnit(np.me),refUnit:normUnit(refMatchUnit),reasonText:''};
+  const debug={shortScore:Math.round(shortScore*100),literalShortScore:Math.round(literalShortScore*100),longScore:Math.round(longScore*100),synonymScore:Math.round(synScore*100),categoryNew,categoryRef,categoryScore:Math.round(categoryScore*100),unitScore:Math.round(unitScore*100),quantityScore:Math.round(quantityScore*100),learningBoost:Math.round(learnBoost*100),topMatchBoost:Math.round(topBoost*100),linkedReferenceBoost:0,genericPenalty:Math.round(genericPenalty*100),textOnlyPenalty:Math.round(textOnlyPenalty*100),unitPenalty:Math.round(unitPenalty*100),quantityPenalty:Math.round(quantityPenalty*100),holdingPenalty:Math.round(holdingPenalty*100),docPenalty:Math.round(docPenalty*100),docSubPenalty:Math.round(docSubPenalty*100),assetPenalty:Math.round(assetPenalty*100),surchargePenalty:Math.round(surchargePenalty*100),earthPenalty:Math.round(earthPenalty*100),disposalPenalty:Math.round(disposalPenalty*100),demolitionPenalty:Math.round(demolitionPenalty*100),sitePenalty:Math.round(sitePenalty*100),compactionPenalty:Math.round(compactionPenalty*100),agPenalty:Math.round(agPenalty*100),controlPenalty:Math.round(controlPenalty*100),lineZonePenalty:Math.round(lineZonePenalty*100),backfillModePenalty:Math.round(backfillModePenalty*100),shoringModePenalty:Math.round(shoringModePenalty*100),waterModePenalty:Math.round(waterModePenalty*100),reuseSidePenalty:Math.round(reuseSidePenalty*100),planumModePenalty:Math.round(planumModePenalty*100),profileAdjustmentPenalty:Math.round(profileAdjustmentPenalty*100),uf3Penalty:Math.round(uf3Penalty*100),drainageModePenalty:Math.round(drainageModePenalty*100),deliveryPenalty:Math.round(deliveryPenalty*100),leitungSubPenalty:Math.round(leitungSubPenalty*100),nennweitePenalty:Math.round(nennweitePenalty*100),nennweiteNew,nennweiteRef,nennweiteMatchSignal,leitungSubMatchSignal,leitungSubNew,leitungSubRef,ebvSignal,disposalStrongMatch,hardCapsApplied,finalScore:score,newUnit:normUnit(np.me),refUnit:normUnit(refMatchUnit),ebvNew,ebvRef,depvNew,depvRef,disposalRouteNew,disposalRouteRef,reasonText:''};
   debug.reasonText=buildReasonText(debug);
   // ---- Erklärbarer, gruppierter Score-Aufbau (additiv, ändert `score` NICHT) ----
   // Leitet die bereits oben berechneten Teilwerte in eine kompakte, menschen- und
@@ -2129,11 +2304,14 @@ function calcScore(np,rp,meta={}){
   const scoreParts={
     textScore:Math.round(Math.max(shortScore,longScore,literalShortScore)*100),
     keywordScore:Math.round(synScore*100),
+    categoryScore:Math.round(categoryScore*100),
     actionObjectScore,
     unitScore:Math.round(unitScore*100),
     quantityScore:Math.round(quantityScore*100),
+    costStructureScore:getCostStructureScore({pos:rp,kind:meta.isTextOnly?'TEXT_ONLY':'CALC'}),
     contextScore,
     learningScore:Math.round((learnBoost+topBoost-rejectPenalty)*100),
+    riskScore:hardCapsApplied.length?100:Math.min(100,Math.round((penalties+rejectPenalty)*100)),
     penaltyScore:Math.round(penalties*100),
     reasons:[],
     warnings:hardCapsApplied.slice()
@@ -3608,10 +3786,13 @@ function setRefDataNotice(message=''){
 }
 function updateRefLoadStatus(activeSource){
   const box=document.getElementById('refLoadLimitHint');
+  // refLoadLimitMax existiert nur im statischen Start-HTML: der erste detailEl.textContent-Schreibzugriff
+  // unten ersetzt den Span. Er darf deshalb NICHT Teil der Guard sein, sonst no-opt die Funktion ab dem
+  // zweiten Aufruf dauerhaft und "Aktuell aktiv" bleibt auf 0 hängen (Bug 2026-06-12).
   const maxEl=document.getElementById('refLoadLimitMax');
   const curEl=document.getElementById('refLoadCurrent');
   const detailEl=document.getElementById('refLoadLimitDetail');
-  if(!box||!maxEl||!curEl||!detailEl)return;
+  if(!box||!curEl||!detailEl)return;
   const activeState=activeSource&&typeof activeSource==='object'
     ?activeSource
     :getActiveRefState();
@@ -3633,7 +3814,7 @@ function updateRefLoadStatus(activeSource){
     text=S.refStorageWarning;
   }
   box.classList.add(tone);
-  maxEl.textContent=REF_POSITION_RECOMMENDED_MAX.toLocaleString('de-DE');
+  if(maxEl)maxEl.textContent=REF_POSITION_RECOMMENDED_MAX.toLocaleString('de-DE');
   curEl.textContent=current.toLocaleString('de-DE');
   detailEl.textContent=text;
 }
@@ -4270,10 +4451,13 @@ function saveReviewNotes(){
 function exportMatchMemoryJSON(){
   const payload={
     exportedAt:new Date().toISOString(),
-    version:1,
+    version:2,
+    schema:'kalkpilot.matching-memory',
+    containsSecrets:false,
     topMatches:getTopMatchStore(),
     learning:getLearningStore(),
     rejected:getRejectedStore(),
+    exportHistory:getExportHistory(),
     learningData:buildLearningData()
   };
   dl(JSON.stringify(payload,null,2),`KalkPilot_by_Janek_Matching_Wissen_${new Date().toISOString().slice(0,10)}.json`,'application/json');
@@ -4341,7 +4525,7 @@ function importRefFromJSON(file){
       const payload=JSON.parse(normalizeImportedJSONText(e.target.result));
       const projects=coerceReferenceProjectsPayload(payload);
       if(!projects)throw new Error('Kein gültiges Referenzformat (erwartet Array oder Objekt mit refProjects/projects)');
-      S.refProjects=projects;
+      S.refProjects=normalizeRefProjects(projects);
       saveRefToStorage();updateRefUI();
       log(`✓ ${projects.length} Referenzprojekte aus JSON geladen`,'s');
     }catch(err){
@@ -4529,8 +4713,9 @@ async function runMatch(){
       }
       const top3=ranked.slice(0,3);
       const best=top3[0];
-      const accepted=!!(best&&best.score>=80&&best.kind==='CALC'&&(best.pos?.kosten||[]).some(k=>k.typ!=='S')&&!(best.debug?.hardCapsApplied||[]).length);
-      nextResults.push(applyStoredMatchDecisions({newPos:np,matches:top3,sel:0,accepted}));
+      const candidateResult={newPos:np,matches:top3,sel:0,accepted:false};
+      candidateResult.accepted=canAutoAcceptMatch(candidateResult,best);
+      nextResults.push(applyStoredMatchDecisions(candidateResult));
     }
     const now=performance.now();
     if((now-lastYield)>18||i===S.newLV.length-1){
@@ -4614,12 +4799,53 @@ function hasExportableMatch(result){
   const best=result?.matches?.[result?.sel||0];
   return !!(best&&best.kind==='CALC'&&(best.pos?.kosten||[]).some(k=>k.typ!=='S'));
 }
+function getCostStructureScore(match){
+  const kosten=match?.pos?.kosten||[];
+  if(match?.kind!=='CALC')return 0;
+  if(!kosten.length)return 0;
+  const types=new Set(kosten.map(k=>k.typ).filter(Boolean));
+  if([...types].some(t=>t!=='S')&&types.size>=2)return 100;
+  if([...types].some(t=>t!=='S'))return 70;
+  return 20;
+}
+function getMatchRiskReasons(result,match=result?.matches?.[result?.sel||0]){
+  if(!match)return['kein Treffer'];
+  const reasons=[];
+  const debug=match.debug||calcScore(result?.newPos||{},match.pos||{},{isTextOnly:match.kind==='TEXT_ONLY'}).debug||{};
+  const pos=match.pos||{};
+  const bestScore=Number(match.score)||0;
+  const secondScore=Number(result?.matches?.find(m=>m!==match)?.score)||0;
+  const npProf=getMatchProfile(result?.newPos);
+  const rpProf=getMatchProfile(pos);
+  if(match.kind!=='CALC')reasons.push('nur D83-Texttreffer, keine Kalkulation exportierbar');
+  if(!(pos.kosten||[]).some(k=>k.typ!=='S'))reasons.push('keine belastbare L/M/G/N-Kostenstruktur');
+  if((debug.hardCapsApplied||[]).length)reasons.push('fachlicher Deckel: '+debug.hardCapsApplied[0]);
+  if(bestScore>=80&&secondScore>0&&(bestScore-secondScore)<8)reasons.push('knappes Top-1/Top-2-Rennen');
+  if((debug.unitScore||0)<80)reasons.push('Einheit nicht sicher gleich');
+  if((debug.categoryScore||0)<80)reasons.push('Kategorie nur teilweise passend');
+  if(npProf.category==='ENTSORGUNG'||rpProf.category==='ENTSORGUNG'){
+    if((npProf.ebv&&!rpProf.ebv)||(!npProf.ebv&&rpProf.ebv))reasons.push('EBV/LAGA-Klasse nur einseitig erkannt');
+    if((npProf.depv&&!rpProf.depv)||(!npProf.depv&&rpProf.depv))reasons.push('DK-Klasse nur einseitig erkannt');
+    if(npProf.disposalRoute&&rpProf.disposalRoute&&npProf.disposalRoute!==rpProf.disposalRoute)reasons.push('Entsorgungsweg weicht ab');
+  }
+  if((debug.learningBoost||0)>0&&(debug.hardCapsApplied||[]).length)reasons.push('Lernsignal trifft auf fachlichen Deckel');
+  if(isRejectedMatch(result?.newPos,pos))reasons.push('früher als falsch markiert');
+  return [...new Set(reasons)];
+}
+function isRiskyMatch(result,match=result?.matches?.[result?.sel||0]){
+  return getMatchRiskReasons(result,match).length>0;
+}
+function canAutoAcceptMatch(result,match=result?.matches?.[result?.sel||0],minScore=getAutoAcceptThreshold()){
+  const idx=Array.isArray(result?.matches)?result.matches.indexOf(match):-1;
+  const selected={...result,sel:idx>=0?idx:(result?.sel||0)};
+  return !!(match&&match.score>=minScore&&hasExportableMatch(selected)&&!isRiskyMatch(result,match));
+}
 function applyStoredMatchDecisions(result){
   if(!result||!Array.isArray(result.matches)||!result.matches.length)return result;
   const topIdx=result.matches.findIndex(m=>m?.pos&&isTopMatch(result.newPos,m.pos));
   if(topIdx>=0){
     result.sel=topIdx;
-    result.accepted=hasExportableMatch(result);
+    result.accepted=canAutoAcceptMatch(result,result.matches[topIdx],70);
     return result;
   }
   const selIdx=result.sel||0;
@@ -4645,8 +4871,29 @@ function setAccepted(idx,val){
   renderMatch();
   updateExport();
 }
-function acceptAllVisible(){S.visibleResults.forEach(r=>{if(hasExportableMatch(r))r.accepted=true;});renderMatch();updateExport();}
-function deselectAllVisible(){S.visibleResults.forEach(r=>r.accepted=false);renderMatch();updateExport();}
+const ACCEPT_THRESH_KEY='kalkpilot_accept_threshold_v1';
+function getAutoAcceptThreshold(){
+  const v=Number(localStorage.getItem(ACCEPT_THRESH_KEY));
+  return Number.isFinite(v)&&v>0&&v<=100?v:75;
+}
+function onAcceptThreshChange(){
+  const el=document.getElementById('acceptThresh');
+  if(!el)return;
+  const v=Math.max(0,Math.min(100,Number(el.value)||75));
+  el.value=v;
+  try{localStorage.setItem(ACCEPT_THRESH_KEY,String(v));}catch(e){}
+  log(`Übernahme-Schwelle auf ${v}% gesetzt - gilt für Auto-Übernahme beim Matching und den Übernahme-Button.`,'i');
+}
+function acceptAllAboveThreshold(){
+  const t=getAutoAcceptThreshold();
+  let n=0;
+  S.results.forEach(r=>{
+    const m=r.matches?.[r.sel||0];
+    if(m&&m.score>=t&&hasExportableMatch(r)){if(!r.accepted)n++;r.accepted=true;}
+  });
+  renderMatch();updateExport();
+  log(`✓ ${n} zusätzliche Position(en) mit Score ≥ ${t}% übernommen.`,'s');
+}
 function deselectAll(){S.results.forEach(r=>r.accepted=false);renderMatch();updateExport();}
 function toggleAllVisible(checked){S.visibleResults.forEach(r=>{if(!checked||hasExportableMatch(r))r.accepted=checked;});renderMatch();updateExport();}
 function updateAccStat(){
@@ -4670,6 +4917,9 @@ function renderMatch(){
   else if(filter==='yellow')  rows=rows.filter(r=>classifyMatchScore(fs(r))==='yellow');
   else if(filter==='orange')  rows=rows.filter(r=>classifyMatchScore(fs(r))==='orange');
   else if(filter==='red')     rows=rows.filter(r=>classifyMatchScore(fs(r))==='red');
+  else if(filter==='risk')    rows=rows.filter(r=>isRiskyMatch(r));
+  else if(filter==='calc')    rows=rows.filter(r=>r.matches[r.sel||0]?.kind==='CALC');
+  else if(filter==='textonly')rows=rows.filter(r=>r.matches[r.sel||0]?.kind==='TEXT_ONLY');
   else if(filter==='nomatch') rows=rows.filter(r=>!r.matches.length);
   else if(filter==='acc')     rows=rows.filter(r=>r.accepted);
   else if(filter==='notacc')  rows=rows.filter(r=>!r.accepted);
@@ -4695,6 +4945,8 @@ function renderMatch(){
     const rejMarked=best?isRejectedMatch(r.newPos,best.pos):false;
     const srcType=best?.pos?.matchedD83&&best?.pos?.matchedXML?'🔗':best?.pos?.matchedXML?'📊':'📋';
     const exportable=!!(best&&best.kind==='CALC'&&(best.pos?.kosten||[]).some(k=>k.typ!=='S'));
+    const riskReasons=best?getMatchRiskReasons(r,best):[];
+    const riskHint=riskReasons.length?`<div class="match-risk" title="${h(riskReasons.join(' | '))}">⚠ ${h(riskReasons[0])}</div>`:'';
     const hasAlt=r.matches.length>1;
     const altLabel=hasAlt?`${selIdx+1}/${r.matches.length}`:'';
     return`<tr class="${r.accepted?'acc-row':''} ${topMarked?'match-top':''}">
@@ -4724,7 +4976,7 @@ function renderMatch(){
             ${hasAlt?`<button class="info-btn" onclick="cycleAlt(${idx})" title="Alternative Treffer (${altLabel})">⇄ ${altLabel}</button>`:''}
             <button class="info-btn" onclick="openManualMatch(${idx})" title="Manuell passende Referenz suchen">Manuell</button>
           </div>
-        </div>${!exportable?'<div style="margin-top:4px;font-size:10px;color:#fbbf24">Kein XML-Kalkulationsmatch - nicht exportierbar</div>':''}${(best.debug&&best.debug.scoreParts&&((best.debug.scoreParts.warnings||[]).length||(best.debug.scoreParts.reasons||[]).length))?`<div style="margin-top:3px;font-size:10px" title="Detail über 🔍">${(best.debug.scoreParts.warnings||[]).length?`<span style="color:#fbbf24">⚠ ${h(best.debug.scoreParts.warnings[0])}</span>`:`<span style="color:var(--muted)">✓ ${h(best.debug.scoreParts.reasons[0])}</span>`}</div>`:''}`:'<span style="color:var(--muted);font-size:10px">Kein Treffer</span>'}</td>
+        </div>${riskHint}${!exportable?'<div style="margin-top:4px;font-size:10px;color:#fbbf24">Kein XML-Kalkulationsmatch - nicht exportierbar</div>':''}${(best.debug&&best.debug.scoreParts&&((best.debug.scoreParts.warnings||[]).length||(best.debug.scoreParts.reasons||[]).length))?`<div style="margin-top:3px;font-size:10px" title="Detail über 🔍">${(best.debug.scoreParts.warnings||[]).length?`<span style="color:#fbbf24">⚠ ${h(best.debug.scoreParts.warnings[0])}</span>`:`<span style="color:var(--muted)">✓ ${h(best.debug.scoreParts.reasons[0])}</span>`}</div>`:''}`:'<span style="color:var(--muted);font-size:10px">Kein Treffer</span>'}</td>
       <td>${renderPills(kosten)}</td>
       <td class="ep" style="white-space:nowrap">${ep>0?ep.toFixed(2)+' €':'-'}</td>
     </tr>`;
@@ -4735,7 +4987,7 @@ function renderMatch(){
 function renderPills(kosten){
   if(!kosten||!kosten.length)return'<span style="color:var(--muted);font-size:10px">-</span>';
   const by={};kosten.forEach(k=>{by[k.typ]=(by[k.typ]||0)+k.menge*k.preis;});
-  return'<div class="pills">'+Object.entries(by).map(([t,v])=>`<span class="pill p${t}">${t}: ${v>0?v.toFixed(0)+'€':'-'}</span>`).join('')+'</div>';
+  return'<div class="pills">'+Object.entries(by).map(([t,v])=>`<span class="pill p${h(t)}">${h(t)}: ${v>0?v.toFixed(0)+'€':'-'}</span>`).join('')+'</div>';
 }
 
 function formatLeistungsansatz(detail){
@@ -4801,6 +5053,7 @@ function cycleAlt(idx){
 function showDetail(idx){
   const r=S.results[idx];const best=r.matches[r.sel||0];if(!best)return;
   const rp=best.pos,np=r.newPos,dbg=best.debug||{};
+  const riskReasons=getMatchRiskReasons(r,best);
   document.getElementById('dHdr').textContent=`Referenzposition - ${rp.oz} (${rp.source})`;
   const totalEP=rp.kosten.reduce((s,k)=>s+k.menge*k.preis,0);
   document.getElementById('dBody').innerHTML=`
@@ -4817,9 +5070,11 @@ function showDetail(idx){
       <span class="detail-lbl">Lernbonus / Top:</span><span class="detail-val">${dbg.learningBoost??0}% / ${dbg.topMatchBoost??0}%</span>
       <span class="detail-lbl">Kurz / Literal / Lang / Syn:</span><span class="detail-val">${dbg.shortScore??0}% / ${dbg.literalShortScore??0}% / ${dbg.longScore??0}% / ${dbg.synonymScore??0}%</span>
       <span class="detail-lbl">Einheit / Menge:</span><span class="detail-val">${dbg.unitScore??0}% / ${dbg.quantityScore??0}%</span>
+      <span class="detail-lbl">Fachklassen:</span><span class="detail-val">EBV/LAGA ${h(dbg.ebvNew||'-')} → ${h(dbg.ebvRef||'-')} · DK ${h(dbg.depvNew||'-')} → ${h(dbg.depvRef||'-')} · Weg ${h(dbg.disposalRouteNew||'-')} → ${h(dbg.disposalRouteRef||'-')}</span>
       <span class="detail-lbl">Deckel:</span><span class="detail-val">${dbg.hardCapsApplied?.length?h(dbg.hardCapsApplied.join(', ')):'-'}</span>
+      <span class="detail-lbl">Auto-Prüfung:</span><span class="detail-val">${riskReasons.length?'<span style="color:#fbbf24">Manuell prüfen: '+h(riskReasons.join(' · '))+'</span>':'<span style="color:var(--green)">automatisch übernahmefähig</span>'}</span>
       <span class="detail-lbl">Grund:</span><span class="detail-val detail-lt">${h(dbg.reasonText||'')}</span>
-      ${dbg.scoreParts?`<span class="detail-lbl">Score-Aufbau:</span><span class="detail-val" style="font-size:11px;line-height:1.6">Text ${dbg.scoreParts.textScore}% · Fachbegriffe ${dbg.scoreParts.keywordScore}% · Aktion/Objekt ${dbg.scoreParts.actionObjectScore}% · Einheit ${dbg.scoreParts.unitScore}% · Menge ${dbg.scoreParts.quantityScore}% · Kontext ${dbg.scoreParts.contextScore}% · Lernen ${dbg.scoreParts.learningScore}% · Abzug ${dbg.scoreParts.penaltyScore}%${dbg.scoreParts.reasons&&dbg.scoreParts.reasons.length?'<br><span style="color:var(--green)">✓ '+h(dbg.scoreParts.reasons.join(' · '))+'</span>':''}${dbg.scoreParts.warnings&&dbg.scoreParts.warnings.length?'<br><span style="color:#fbbf24">⚠ '+h(dbg.scoreParts.warnings.join(' · '))+'</span>':''}</span>`:''}
+      ${dbg.scoreParts?`<span class="detail-lbl">Score-Aufbau:</span><span class="detail-val" style="font-size:11px;line-height:1.6">Text ${dbg.scoreParts.textScore}% · Kategorie ${dbg.scoreParts.categoryScore}% · Fachbegriffe ${dbg.scoreParts.keywordScore}% · Aktion/Objekt ${dbg.scoreParts.actionObjectScore}% · Einheit ${dbg.scoreParts.unitScore}% · Menge ${dbg.scoreParts.quantityScore}% · Kostenstruktur ${dbg.scoreParts.costStructureScore}% · Kontext ${dbg.scoreParts.contextScore}% · Lernen ${dbg.scoreParts.learningScore}% · Risiko ${dbg.scoreParts.riskScore}% · Abzug ${dbg.scoreParts.penaltyScore}%${dbg.scoreParts.reasons&&dbg.scoreParts.reasons.length?'<br><span style="color:var(--green)">✓ '+h(dbg.scoreParts.reasons.join(' · '))+'</span>':''}${dbg.scoreParts.warnings&&dbg.scoreParts.warnings.length?'<br><span style="color:#fbbf24">⚠ '+h(dbg.scoreParts.warnings.join(' · '))+'</span>':''}</span>`:''}
       ${rp.rawWBSItemXml?'<span class="detail-lbl">Export:</span><span class="detail-val" style="color:var(--green);font-size:11px">✓ 1:1 Rohkopie aus Referenz-XML</span>':'<span class="detail-lbl">Export:</span><span class="detail-val" style="color:var(--yellow);font-size:11px">⚠ Rekonstruiert (keine Rohkopie)</span>'}
     </div>
     <div>
@@ -5650,6 +5905,9 @@ function runMatchingSelfTest(showUI=false){
     // EBV/BM Entsorgung
     ,{kind:'good',a:{kurztext:'Entsorgung BM-0, AVV 17 05 04, nicht gefährlicher Abfall',me:'t'},b:{kurztext:'Verwertung BM0 Boden AVV 170504',me:'t'},min:75,label:'BM-0 Entsorgung match'}
     ,{kind:'bad',a:{kurztext:'Entsorgung BM-F3 gefährlicher Abfall AVV 170506',me:'t'},b:{kurztext:'Entsorgung BM-0 AVV 170504',me:'t'},max:35,label:'BM-F3 != BM-0'}
+    ,{kind:'bad',a:{kurztext:'Entsorgung Boden BM-F0',me:'t'},b:{kurztext:'Entsorgung Boden BM-F2',me:'t'},max:45,label:'BM-F0 != BM-F2'}
+    ,{kind:'good',a:{kurztext:'Boden verwerten LAGA Z0',me:'t'},b:{kurztext:'Bodenverwertung LAGA Z0 Material',me:'t'},min:70,label:'LAGA Z0 bleibt Z0 und matcht'}
+    ,{kind:'bad',a:{kurztext:'Boden verwerten LAGA Z0',me:'t'},b:{kurztext:'Boden verwerten LAGA Z2',me:'t'},max:45,label:'LAGA Z0 != Z2'}
     // Doku Grenzfall
     ,{kind:'bad',a:{kurztext:'Qualitätssicherungsplan erstellen',me:'psch'},b:{kurztext:'Bauzeitenplan erstellen',me:'psch'},max:39,label:'QS-Plan != Bauzeitenplan'}
     // Compound-Robustheit: Bindestrich/Leerzeichen-Variante == zusammengeschrieben (Praxisfall)
@@ -5659,10 +5917,12 @@ function runMatchingSelfTest(showUI=false){
     ,{kind:'good',a:{kurztext:'Boden lösen, laden',me:'m3'},b:{kurztext:'lösen laden',me:'m3'},min:70,label:'Boden lösen laden ⊃ lösen laden'}
     // Entsorgung: Entsorgungsweg (Verwertung/Deponie) ist NICHT abfall-identitätsstiftend → gleicher
     // AVV+Klasse darf trotz unterschiedlichem Weg matchen (disposalContradicts route-agnostisch).
-    ,{kind:'good',a:{kurztext:'Deponierung Boden BM-0 AVV 170504',me:'t'},b:{kurztext:'Verwertung Boden BM-0 AVV 170504',me:'t'},min:80,label:'Entsorgungsweg egal bei gleichem AVV/Klasse'}
+    ,{kind:'good',a:{kurztext:'Deponierung Boden BM-0 AVV 170504',me:'t'},b:{kurztext:'Verwertung Boden BM-0 AVV 170504',me:'t'},min:75,label:'Gleiche AVV/Klasse bleibt Treffer, Entsorgungsweg verhindert Auto-Accept'}
     // Echte Entsorgungs-Widersprüche müssen gedeckelt bleiben.
     ,{kind:'bad',a:{kurztext:'Entsorgung Boden AVV 170503 gefährlicher Abfall',me:'t'},b:{kurztext:'Entsorgung Boden AVV 170503 nicht gefährlicher Abfall',me:'t'},max:55,label:'GA != NGA (gleicher AVV)'}
     ,{kind:'bad',a:{kurztext:'Deponie Boden DK-I einbauen',me:'t'},b:{kurztext:'Deponie Boden DK-III einbauen',me:'t'},max:35,label:'DK-I != DK-III'}
+    ,{kind:'bad',a:{kurztext:'Deponie Boden DK 1 annehmen',me:'t'},b:{kurztext:'Deponie Boden DK 2 annehmen',me:'t'},max:45,label:'DK 1 != DK 2 (arabisch)'}
+    ,{kind:'bad',a:{kurztext:'Boden zur Verwertung Annahmestelle liefern',me:'t'},b:{kurztext:'Boden zur Deponie/Kippstelle beseitigen',me:'t'},max:79,label:'Verwertung vs. Deponie/Kippstelle bleibt manuell zu prüfen'}
     // synScore-Kalibrierung: ein einzelnes geteiltes Nebenwort (Synonymgruppe) darf NICHT zum Treffer
     // inflationieren, wenn die Positionen sonst unverwandt sind.
     ,{kind:'bad',a:{kurztext:'Sickerrohr DN 200 verlegen',me:'m'},b:{kurztext:'Schutzrohr für Kabel einziehen',me:'m'},max:60,label:'geteiltes "rohr" inflationiert nicht'}
@@ -5700,6 +5960,56 @@ function runMatchingSelfTest(showUI=false){
     ,{kind:'bad',a:{kurztext:'KDB PEHD liefern und verlegen',me:'m2'},b:{kurztext:'Boden lösen und laden',me:'m2'},max:55,label:'Abdichtung ist nicht Erdaushub'}
     // Komposita-Klassifikation (Schachtabdeckung→LEITUNGSBAU) gegen Erdaushub abgrenzen.
     ,{kind:'good',a:{kurztext:'Schachtabdeckung Klasse D 800 mm',me:'st'},b:{kurztext:'Schachtabdeckung BEGU Klasse D 400',me:'st'},min:55,label:'Schachtabdeckung ↔ Schachtabdeckung (LEITUNGSBAU-Komposita)'}
+    // Aus echten LVs gelernt (5 _looptest-D83s, 2026-06): Klassifikator-Coverage-Fixes absichern
+    // (SONSTIGES-Rate 21%→13%). Kategorien siehe positionCategory-Erweiterungen.
+    ,{kind:'good',a:{kurztext:'Oberbodenabtrag 30cm',me:'m2'},b:{kurztext:'Oberboden abtragen',me:'m2'},min:60,label:'Oberbodenabtrag ↔ Oberboden abtragen (Kompositum + Normalizer)'}
+    ,{kind:'good',a:{kurztext:'Wurzelstöcke roden',me:'st'},b:{kurztext:'Rodung Wurzelstöcke',me:'st'},min:60,label:'roden ↔ Rodung (RODUNG_FREIMACHUNG)'}
+    ,{kind:'good',a:{kurztext:'Proctorversuch DIN 18127',me:'st'},b:{kurztext:'Proctorversuche durchführen',me:'st'},min:50,label:'Proctorversuch-Kompositum (QUALITAET_PROBEFELD)'}
+    ,{kind:'good',a:{kurztext:'Asphaltbefestigung schneiden',me:'m'},b:{kurztext:'Asphaltdecke schneiden',me:'m'},min:55,label:'Asphalt-Komposita (STRASSENBAU-Prefix)'}
+    ,{kind:'good',a:{kurztext:'Verkehrsschilder liefern und montieren',me:'st'},b:{kurztext:'Hinweisschilder liefern und montieren',me:'st'},min:55,label:'Verkehrssicherungs-Schilder (BE)'}
+    ,{kind:'good',a:{kurztext:'Bauzaun auf- und abbauen',me:'m'},b:{kurztext:'Bauzaun liefern und aufstellen',me:'m'},min:75,label:'Bauzaun abbauen bleibt BE (kein ABBRUCH-Hijack durch "abbauen")'}
+    ,{kind:'good',a:{kurztext:'Heizwendelschweißmuffe da 180',me:'st'},b:{kurztext:'Elektroschweißmuffe d 180',me:'st'},min:55,label:'Schweißmuffen-Komposita (LEITUNGSBAU)'}
+    ,{kind:'good',a:{kurztext:'Baggerschürfe herstellen',me:'st'},b:{kurztext:'Schürfgrube herstellen',me:'st'},min:50,label:'Baggerschürfe ↔ Schürfgrube (ERDBAU)'}
+    ,{kind:'bad',a:{kurztext:'Wasserhaltungskonzept erstellen',me:'psch'},b:{kurztext:'Wasserhaltung betreiben',me:'psch'},max:50,label:'Konzept (DOKU) kapert nicht physische Wasserhaltung'}
+    ,{kind:'bad',a:{kurztext:'Entsorgungskonzept erstellen',me:'psch'},b:{kurztext:'Boden entsorgen BM-0',me:'t'},max:40,label:'Entsorgungskonzept (DOKU) != Entsorgung'}
+    // Fix 1: Bodeneinbau TRANSPORT→ERDBAU (Cross-LV 2026-06-12)
+    ,{kind:'good',a:{kurztext:'Bodeneinbau herstellen',me:'m3'},b:{kurztext:'Boden einbauen verdichten',me:'m3'},min:70,label:'Bodeneinbau=boden einbauen (ERDBAU, kein TRANSPORT)'}
+    ,{kind:'good',a:{kurztext:'Oberboden einbauen profilieren',me:'m3'},b:{kurztext:'Boden einbauen lagenweise',me:'m3'},min:35,label:'Boden einbauen Varianten (beide ERDBAU)'}
+    ,{kind:'bad',a:{kurztext:'Bodenaushub abfahren entsorgen',me:'m3'},b:{kurztext:'Bodeneinbau herstellen',me:'m3'},max:45,label:'Abtransport != Einbau'}
+    // Fix 2: Walzen-Komposita → GERÄTE
+    ,{kind:'good',a:{kurztext:'Stampffußwalze vorhalten',me:'h'},b:{kurztext:'Vibrationswalze vorhalten',me:'h'},min:70,label:'Stampffußwalze ↔ Vibrationswalze (beide GERÄTE)'}
+    ,{kind:'bad',a:{kurztext:'Walzasphalt einbauen',me:'t'},b:{kurztext:'Stampffußwalze vorhalten',me:'h'},max:45,label:'Walzasphalt (Material/STRASSENBAU) != Walze (GERÄTE)'}
+    // Fix 3: Verfüllen Schacht ERDBAU vs LEITUNGSBAU
+    ,{kind:'good',a:{kurztext:'Verfüllen Schacht mit Sand',me:'m3'},b:{kurztext:'Schacht verfüllen lagenweise',me:'m3'},min:70,label:'Verfüllen Schacht Reihenfolge egal (beide LEITUNGSBAU)'}
+    ,{kind:'bad',a:{kurztext:'Baugrube verfüllen hinterfüllen',me:'m3'},b:{kurztext:'Schacht verfüllen',me:'m3'},max:55,label:'Baugrube-Verfüllung (ERDBAU) != Schacht-Verfüllung (LEITUNGSBAU)'}
+    // Fix 4: antragen/andecken Synonym Oberboden
+    ,{kind:'good',a:{kurztext:'Oberboden andecken 20cm',me:'m2'},b:{kurztext:'Oberboden einbauen herstellen',me:'m2'},min:65,label:'andecken==einbauen Synonym (Oberboden, ERDBAU)'}
+    // Fix 5: Anschluss/Fuge → STRASSENBAU
+    ,{kind:'good',a:{kurztext:'Anschluss a. Fuge herstellen',me:'m'},b:{kurztext:'Fugenschnitt herstellen',me:'m'},min:50,label:'Fuge-Varianten beide STRASSENBAU'}
+    // Fix 6: Baustelle einrichten betreiben räumen → BE
+    ,{kind:'good',a:{kurztext:'Baustelle einrichten betreiben räumen',me:'psch'},b:{kurztext:'Baustelleneinrichtung einrichten betreiben räumen',me:'psch'},min:80,label:'Baustelle einrichten == Baustelleneinrichtung (BE)'}
+    ,{kind:'bad',a:{kurztext:'Baustelle einrichten betreiben räumen',me:'psch'},b:{kurztext:'Bauleitung übernehmen Projektsteuerung',me:'psch'},max:35,label:'BE != BAULEITUNG_PLANUNG'}
+    // Batch-2 2026-06-13: Bodenaustausch, Ausschachten, Entwässerungsrinne, Schutzplanke, disposalSig-Erweiterung
+    ,{kind:'good',a:{kurztext:'Bodenaustausch herstellen',me:'m3'},b:{kurztext:'Bodenaushub lösen und laden',me:'m3'},min:40,label:'Bodenaustausch → ERDBAU (TERM_NORM → bodenaushub)'}
+    ,{kind:'good',a:{kurztext:'Ausschachtungsarbeiten Baugrube',me:'m3'},b:{kurztext:'Boden für Baugrube lösen',me:'m3'},min:45,label:'Ausschachten → ERDBAU (TERM_NORM → bodenaushub)'}
+    ,{kind:'good',a:{kurztext:'Entwässerungsrinne liefern und verlegen',me:'m'},b:{kurztext:'Schlitzrinne mit Aufsatz einbauen',me:'m'},min:50,label:'Entwässerungsrinne ↔ Schlitzrinne (beide LEITUNGSBAU)'}
+    ,{kind:'good',a:{kurztext:'Schutzplanke liefern und aufstellen',me:'m'},b:{kurztext:'Leitplanke aufstellen und vorhalten',me:'m'},min:55,label:'Schutzplanke ↔ Leitplanke (beide BE)'}
+    ,{kind:'bad',a:{kurztext:'Schutzplanke liefern und aufstellen',me:'m'},b:{kurztext:'Bodenaushub lösen und laden',me:'m3'},max:30,label:'Schutzplanke (BE) != Bodenaushub (ERDBAU)'}
+    ,{kind:'good',a:{kurztext:'Vermessungsleistungen erbringen',me:'psch'},b:{kurztext:'Absteckung Achsen und Aufmaß',me:'psch'},min:35,label:'VERMESSUNG-Paar (Vermessung ↔ Absteckung)'}
+    // m2 vs m3: gleicher Text, unitCompat=0.3, Text dominiert → Score ~82; dokumentiert als known behavior
+    ,{kind:'bad',a:{kurztext:'Schottertragschicht herstellen',me:'m2'},b:{kurztext:'Schottertragschicht herstellen',me:'m3'},max:88,label:'Gleiche Leistung m2 vs m3 dokumentiert (unit 0.3, Text dominiert)'}
+    ,{kind:'bad',a:{kurztext:'Boden verwerten LAGA Z1',me:'t'},b:{kurztext:'Boden verwerten LAGA Z2',me:'t'},max:50,label:'LAGA Z1 != Z2 (EBV-Inkompatibilität)'}
+    ,{kind:'bad',a:{kurztext:'',me:''},b:{kurztext:'Boden lösen und laden',me:'m3'},max:10,label:'Leere Position darf nicht matchen'}
+    // Batch-3 2026-06-13: Spundwand, Grabenverbau, Entwässerungsrinne-Synonyme
+    ,{kind:'good',a:{kurztext:'Stahlspundwand einbauen',me:'m'},b:{kurztext:'Grabenverbau herstellen',me:'m'},min:50,label:'Stahlspundwand → grabenverbau → ERDBAU'}
+    ,{kind:'good',a:{kurztext:'Entwässerungsrinne DN200 einbauen',me:'m'},b:{kurztext:'Schlitzrinne mit Rost DN200',me:'m'},min:55,label:'Entwässerungsrinne ↔ Schlitzrinne (LEITUNGSBAU, Synonym)'}
+    ,{kind:'bad',a:{kurztext:'Stahlspundwand einbauen',me:'m'},b:{kurztext:'Boden lösen und laden',me:'m3'},max:52,label:'Spundwand/Verbau (ERDBAU) != Bodenaushub (ERDBAU andere Leistung, unit m vs m3)'}
+    ,{kind:'good',a:{kurztext:'Schutzplanke liefern und einbauen',me:'m'},b:{kurztext:'Leitplanke liefern und aufstellen',me:'m'},min:70,label:'delivery beidseitig → kein Mismatch (Schutzplanke/Leitplanke)'}
+    ,{kind:'bad',a:{kurztext:'Schutzplanke liefern frei Baustelle',me:'st'},b:{kurztext:'Schutzplanke einbauen und aufstellen',me:'st'},max:62,label:'Lieferung ohne Einbau != Einbau ohne Lieferung (delivery-Mismatch)'}
+    ,{kind:'good',a:{kurztext:'Sickerrohr DN200 verlegen',me:'m'},b:{kurztext:'Drainagerohr DN200 einbauen',me:'m'},min:60,label:'Rohrleitung DN200 ↔ DN200 (gleiche Nennweite, ok)'}
+    ,{kind:'bad',a:{kurztext:'Sickerrohr DN200 verlegen',me:'m'},b:{kurztext:'Sickerrohr DN400 verlegen',me:'m'},max:55,label:'DN200 != DN400 (Nennweiten-Mismatch)'}
+    ,{kind:'good',a:{kurztext:'Schacht herstellen DN1000',me:'st'},b:{kurztext:'Schacht einbauen Betonfertigteil DN1000',me:'st'},min:70,label:'Schacht DN1000 ↔ DN1000 (gleiche Nennweite, ok)'}
+    ,{kind:'bad',a:{kurztext:'Schacht herstellen DN1000',me:'st'},b:{kurztext:'Rohrleitung verlegen DN200',me:'m'},max:45,label:'LEITUNGSBAU Schacht != Rohrleitung (Subfamilien-Mismatch)'}
   ];
   const results=cases.map(c=>{
     const ev=calcScore(c.a,c.b,{isTextOnly:false});
@@ -5812,6 +6122,13 @@ function runStoredDecisionSelfTest(){
     check(result.accepted===true,'Top-Treffer muss automatisch uebernommen werden, wenn exportierbar');
 
     removeTopMatch(newPos,refB);
+    result={newPos,matches:[{pos:refA,kind:'CALC',score:90,debug:{hardCapsApplied:['Transport ohne Entsorgungsnachweis'],categoryScore:25,unitScore:45}}],sel:0,accepted:false};
+    recordTopMatch(newPos,refA);
+    applyStoredMatchDecisions(result);
+    check(result.accepted===false,'Riskanter Top-Treffer mit aktuellem Fachdeckel darf nicht automatisch uebernommen werden');
+
+    removeTopMatch(newPos,refB);
+    removeTopMatch(newPos,refA);
     result={newPos,matches:[{pos:refB,kind:'CALC',score:90}],sel:0,accepted:true};
     recordRejectedMatch(newPos,refB);
     applyStoredMatchDecisions(result);
@@ -6239,10 +6556,16 @@ function applyLayoutPolish(){
     const yellow=filterSel.querySelector('option[value="yellow"]');
     const orange=filterSel.querySelector('option[value="orange"]');
     const red=filterSel.querySelector('option[value="red"]');
+    const risk=filterSel.querySelector('option[value="risk"]');
+    const calc=filterSel.querySelector('option[value="calc"]');
+    const textonly=filterSel.querySelector('option[value="textonly"]');
     if(green)green.textContent='🟢 Grün ≥ 80%';
     if(yellow)yellow.textContent='🟡 Gelb 60-79%';
     if(orange)orange.textContent='🟠 Orange 40-59%';
     if(red)red.textContent='🔴 Rot ≤ 39%';
+    if(risk)risk.textContent='⚠ Prüfen / riskant';
+    if(calc)calc.textContent='📊 Nur Kalkulation';
+    if(textonly)textonly.textContent='📋 Nur D83-Texttreffer';
   }
   const sHighLabel=document.querySelector('#t3 #sHigh')?.nextElementSibling;
   const sMidLabel=document.querySelector('#t3 #sMid')?.nextElementSibling;
@@ -6271,6 +6594,8 @@ document.getElementById('fNew').onchange=e=>{if(e.target.files[0])loadNewLV(e.ta
 document.getElementById('fileExportRefXML').onchange=e=>{if(e.target.files[0])loadExportReferenceFile(e.target.files[0]);};
 document.getElementById('fileRefJSON').onchange=e=>{if(e.target.files[0])importRefFromJSON(e.target.files[0]);};
 document.getElementById('fileMatchMemoryJSON').onchange=e=>{if(e.target.files[0])importMatchMemoryJSON(e.target.files[0]);};
+// Gespeicherte Übernahme-Schwelle ins Eingabefeld laden
+{const _at=document.getElementById('acceptThresh');if(_at)_at.value=getAutoAcceptThreshold();}
 
 // Drag-Drop Zonen
 setupDrop2('dropD83','d83');
