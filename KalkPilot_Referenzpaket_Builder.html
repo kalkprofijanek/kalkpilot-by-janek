@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KalkPilot Referenzpaket Builder</title>
+<style>
+:root{--bg:#f6f7f9;--panel:#fff;--text:#17202a;--muted:#607080;--border:#d8dee6;--accent:#155eef;--ok:#16803c;--warn:#b56b00;--bad:#b42318;--soft:#eef4ff;--shadow:0 12px 30px rgba(17,24,39,.08)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;font-size:14px;line-height:1.45}
+header{background:#101828;color:white;padding:22px 28px;border-bottom:4px solid var(--accent)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+h1{font-size:24px;margin:0 0 4px;letter-spacing:0}
+.sub{color:#cbd5e1;font-size:13px}
+main{padding:22px 0 36px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow)}
+.panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.panel-h h2{font-size:16px;margin:0}
+.panel-b{padding:16px}
+.drop{border:2px dashed #9db5d7;border-radius:8px;background:#f8fbff;min-height:176px;display:flex;align-items:center;justify-content:center;text-align:center;padding:22px;cursor:pointer;transition:.15s}
+.drop:hover,.drop.drag{border-color:var(--accent);background:var(--soft)}
+.drop strong{display:block;font-size:17px;margin-bottom:6px}
+.note{color:var(--muted);font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+button{border:1px solid var(--border);background:white;color:var(--text);border-radius:7px;padding:9px 12px;font-weight:650;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:white}
+button:disabled{opacity:.45;cursor:not-allowed}
+input[type=file]{display:none}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{border:1px solid var(--border);border-radius:8px;padding:10px;background:#fbfcfe}
+.stat .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.stat .v{font-size:22px;font-weight:750;margin-top:2px}
+.status{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700}
+.complete{background:#dcfce7;color:#166534}
+.partial{background:#fef3c7;color:#92400e}
+.ambiguous{background:#fee2e2;color:#991b1b}
+.remove-btn{width:28px;height:28px;border-radius:50%;border:1px solid #fecaca;background:#fff5f5;color:#b42318;font-size:17px;line-height:1;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.remove-btn:hover{background:#fee2e2;border-color:#fca5a5}
+.keep-mark{color:var(--muted);font-size:12px}
+.empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:8px;background:#fbfcfe}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid var(--border);vertical-align:top;text-align:left}
+th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;background:#fbfcfe}
+td.small{font-size:12px;color:var(--muted)}
+.file-list{margin:4px 0 0;padding:0;list-style:none;color:var(--muted);font-size:12px}
+.file-list li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.log{font-family:Cascadia Code,Consolas,monospace;font-size:12px;background:#0b1220;color:#c7d2fe;border-radius:8px;padding:12px;min-height:110px;max-height:230px;overflow:auto;white-space:pre-wrap}
+.quality{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{border:1px solid var(--border);border-radius:999px;padding:5px 8px;font-size:12px;background:#fff}
+.right-note{margin-top:12px;color:var(--muted);font-size:12px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){header{padding:18px 0}.panel-h{display:block}.stats{grid-template-columns:1fr}th:nth-child(4),td:nth-child(4){display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>KalkPilot Referenzpaket Builder</h1>
+    <div class="sub">D83/P83/X83 + Kalkulations-XML lokal einlesen und als eine KalkPilot-Referenzdatenbank exportieren.</div>
+  </div>
+</header>
+<main class="wrap">
+  <div class="grid">
+    <section class="panel">
+      <div class="panel-h">
+        <h2>Dateien sammeln</h2>
+        <div class="note">Keine Daten werden hochgeladen. Alles laeuft im Browser.</div>
+      </div>
+      <div class="panel-b">
+        <div class="drop" id="dropZone">
+          <div>
+            <strong>Projektordner oder Dateien hier ablegen</strong>
+            <div class="note">Akzeptiert .D83, .P83, .X83 und .XML. Fuer mehrere Projekte bitte den Oberordner oder Projektordner verwenden.</div>
+            <div class="actions" style="justify-content:center">
+              <button id="pickFolderBtn" type="button">Ordner auswaehlen</button>
+              <button id="pickFilesBtn" type="button">Dateien auswaehlen</button>
+            </div>
+          </div>
+        </div>
+        <input id="folderInput" type="file" webkitdirectory directory multiple>
+        <input id="fileInput" type="file" accept=".d83,.D83,.p83,.P83,.x83,.X83,.xml,.XML" multiple>
+        <div class="actions">
+          <button class="primary" id="buildBtn" type="button" disabled>Referenzpaket erzeugen</button>
+          <button id="downloadBtn" type="button" disabled>JSON herunterladen</button>
+          <button id="clearBtn" type="button" disabled>Leeren</button>
+        </div>
+        <div class="quality" id="qualityPills"></div>
+      </div>
+    </section>
+    <aside class="panel">
+      <div class="panel-h"><h2>Uebersicht</h2></div>
+      <div class="panel-b">
+        <div class="stats">
+          <div class="stat"><div class="k">Dateien</div><div class="v" id="statFiles">0</div></div>
+          <div class="stat"><div class="k">Projekte</div><div class="v" id="statProjects">0</div></div>
+          <div class="stat"><div class="k">Positionen</div><div class="v" id="statPositions">0</div></div>
+          <div class="stat"><div class="k">Mit Kalk.</div><div class="v" id="statCosts">0</div></div>
+        </div>
+        <div class="right-note">Vollstaendige Projekte enthalten mindestens eine LV-Datei und eine Kalkulations-XML. Teilprojekte werden trotzdem exportiert, aber im KalkPilot ggf. nur als Texttreffer genutzt.</div>
+      </div>
+    </aside>
+  </div>
+  <section class="panel" style="margin-top:16px">
+    <div class="panel-h">
+      <h2>Projektpruefung</h2>
+      <div class="note" id="reviewHint">Noch keine Dateien geladen.</div>
+    </div>
+    <div class="panel-b" id="reviewBox">
+      <div class="empty">Waehle einen Ordner oder lege Dateien ab. Danach erscheint hier die Projektliste.</div>
+    </div>
+  </section>
+  <section class="panel" style="margin-top:16px">
+    <div class="panel-h"><h2>Protokoll</h2></div>
+    <div class="panel-b"><div class="log" id="logBox">Bereit.</div></div>
+  </section>
+</main>
+
+<!-- BUILDER_SCRIPT_START -->
+<script>
+(function(){
+  'use strict';
+
+  const state={files:[],groups:[],projects:[],payload:null};
+  const supportedRe=/\.(d83|p83|x83|xml)$/i;
+  const lvRe=/\.(d83|p83|x83)$/i;
+  const xmlRe=/\.xml$/i;
+
+  function h(value){
+    return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  }
+
+  function norm(value){
+    return String(value??'').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+      .replace(/[^a-z0-9]+/g,' ').trim();
+  }
+
+  function canonOZ(value){
+    return String(value??'').replace(/\s+/g,'').replace(/[^\dA-Za-z]/g,'').toUpperCase();
+  }
+
+  function ozLookupKeys(value){
+    const raw=String(value??'').trim();
+    const compact=canonOZ(raw);
+    const noZeros=compact.replace(/^0+/,'');
+    const digits=raw.split(/\D+/).filter(Boolean).join('');
+    return [...new Set([raw,compact,noZeros,digits,digits.replace(/^0+/,'')].filter(Boolean))];
+  }
+
+  function parseNumber(value,fallback=0){
+    const parsed=Number.parseFloat(String(value??'').replace(/\./g,'').replace(',','.'));
+    return Number.isFinite(parsed)?parsed:fallback;
+  }
+
+  function cleanPosition(pos){
+    return {
+      oz:String(pos.oz||'').trim(),
+      ozCanon:canonOZ(pos.oz||pos.ozCanon),
+      kurztext:String(pos.kurztext||'').replace(/\s+/g,' ').trim(),
+      langtext:String(pos.langtext||'').replace(/\s+/g,' ').trim(),
+      outlineSpecs:String(pos.outlineSpecs||pos.langtext||pos.kurztext||'').replace(/\s+/g,' ').trim(),
+      menge:Number(pos.menge)||0,
+      me:String(pos.me||'').trim(),
+      kosten:Array.isArray(pos.kosten)?pos.kosten:[],
+      ep:Number(pos.ep)||0,
+      source:String(pos.source||''),
+      isFixedPriceItem:!!pos.isFixedPriceItem,
+      isNoMarkup:!!pos.isNoMarkup,
+      spPhase:pos.spPhase||'Tender',
+      originalXref:pos.originalXref||null,
+      rawWBSItemXml:pos.rawWBSItemXml||null,
+      rawItem:pos.rawItem||null,
+      sub:pos.sub||null,
+      subItems:pos.subItems||[],
+      matchedD83:!!pos.matchedD83,
+      matchedXML:!!pos.matchedXML,
+      linkedD83:pos.linkedD83||null,
+      linkedD83Signature:pos.linkedD83Signature||null
+    };
+  }
+
+  function classCoC(name,descr,unit){
+    const t=norm([name,descr,unit].join(' '));
+    if(/\b(lohn|arbeiter|polier|kolonne|stunden|facharbeiter)\b/.test(t))return 'L';
+    if(/\b(geraet|bagger|lader|walze|maschine|miete|transport|lkw)\b/.test(t))return 'G';
+    if(/\b(material|kies|sand|schotter|beton|rohr|boden)\b/.test(t))return 'M';
+    if(/\b(nachunternehmer|fremd|sub|entsorgung|deponie|annahme|gebuehr)\b/.test(t))return 'N';
+    return 'S';
+  }
+
+  function decodeBuffer(buffer,ext){
+    const utf8=new TextDecoder('utf-8',{fatal:false}).decode(buffer).replace(/^\uFEFF/,'');
+    if(ext==='XML'){
+      const decl=(utf8.match(/<\?xml[^>]*encoding=['"]([^'"]+)['"]/i)?.[1]||'').toUpperCase();
+      if(decl.includes('1252')||decl.includes('ANSI'))return new TextDecoder('windows-1252',{fatal:false}).decode(buffer);
+      return utf8;
+    }
+    if(ext==='X83'&&(utf8.trim().startsWith('<?xml')||utf8.includes('<GAEB')))return utf8;
+    return new TextDecoder('windows-1252',{fatal:false}).decode(buffer);
+  }
+
+  async function readFileText(file){
+    const ext=(file.name.split('.').pop()||'').toUpperCase();
+    const buffer=await file.arrayBuffer();
+    return decodeBuffer(buffer,ext);
+  }
+
+  function parseD83(text,source){
+    const lines=String(text||'').split(/\r?\n/);
+    const out=[];
+    let cur=null;
+    let shortLines=0;
+    lines.forEach(line=>{
+      if(line.length<2)return;
+      const rt=line.slice(0,2);
+      if(rt==='21'){
+        const oz=line.slice(2,10).trim();
+        const rest=line.slice(10).padEnd(80,' ');
+        const qtyUnit=rest.match(/(\d{6,11})\s*([A-Za-zÄÖÜäöüß0-9²³\/.%]+)/);
+        cur={oz,kurztext:'',langtext:'',menge:0,me:'',kosten:[],ep:0,source,matchedD83:true,matchedXML:false};
+        if(qtyUnit){
+          cur.menge=Number.parseInt(qtyUnit[1],10)/1000;
+          cur.me=qtyUnit[2].trim();
+        }
+        shortLines=0;
+        out.push(cur);
+      }else if(rt==='25'&&cur){
+        const part=line.slice(2,Math.min(line.length,42)).trim();
+        if(shortLines===0)cur.kurztext=part;
+        else if(shortLines===1)cur.kurztext=(cur.kurztext+' '+part).trim();
+        shortLines+=1;
+      }else if(rt==='26'&&cur){
+        const part=line.slice(2,Math.min(line.length,67)).trim();
+        if(part)cur.langtext=(cur.langtext+' '+part).trim();
+      }else if((rt==='31'||rt==='32')&&cur){
+        const ep=parseNumber(line.slice(2,18),0);
+        if(ep>0&&!cur.ep){
+          cur.ep=ep;
+          cur.isFixedPriceItem=true;
+          cur.kosten=[fixedPriceCost(ep)];
+        }
+      }
+    });
+    return out.filter(p=>p.kurztext.length>1).map(p=>cleanPosition({...p,outlineSpecs:p.langtext||p.kurztext}));
+  }
+
+  function parseP83(text,source){
+    const lines=String(text||'').split(/\r?\n/);
+    const out=[];
+    let cur=null;
+    let inDesc=false;
+    function finish(){
+      if(cur&&cur.kurztext.length>1)out.push(cleanPosition({...cur,ozCanon:canonOZ(cur.oz),outlineSpecs:cur.langtext||cur.kurztext}));
+      cur=null;
+      inDesc=false;
+    }
+    function readValue(raw,i){
+      let value=raw;
+      while(!value.endsWith('[end]')&&i+1<lines.length){
+        i+=1;
+        value+=' '+lines[i].trim();
+      }
+      return {value:value.replace(/\[end\]$/,'').trim(),index:i};
+    }
+    for(let i=0;i<lines.length;i+=1){
+      const line=lines[i].trim();
+      if(line==='#begin[Position]'){
+        finish();
+        cur={oz:'',kurztext:'',langtext:'',menge:0,me:'',kosten:[],ep:0,source,matchedD83:true,matchedXML:false};
+        continue;
+      }
+      if(line==='#end[Position]'){finish();continue;}
+      if(!cur)continue;
+      if(line==='#begin[Beschreibung]'){inDesc=true;continue;}
+      if(line==='#end[Beschreibung]'){inDesc=false;continue;}
+      const kv=line.match(/^\[([^\]]+)\]([\s\S]*?)\[end\]$/);
+      if(kv){
+        const key=kv[1],value=kv[2].trim();
+        if(key==='OZ')cur.oz=value;
+        if(key==='ME')cur.me=value;
+        if(key==='Menge')cur.menge=parseNumber(value,0);
+        if(key==='EP'||key==='Ep'){
+          cur.ep=parseNumber(value,0);
+          if(cur.ep>0){cur.isFixedPriceItem=true;cur.kosten=[fixedPriceCost(cur.ep)];}
+        }
+      }
+      if(inDesc&&line.startsWith('[Kurztext]')){
+        const r=readValue(line.slice(10),i);cur.kurztext=r.value;i=r.index;
+      }else if(inDesc&&line.startsWith('[Langtext]')){
+        const r=readValue(line.slice(10),i);cur.langtext=r.value;i=r.index;
+      }
+    }
+    finish();
+    return out;
+  }
+
+  function fixedPriceCost(price){
+    return {typ:'S',descr:'Gesamtpreis',menge:1,einheit:'psch',preis:Number(price)||0,nameCoC:'Festpreis',identifyKey:null,xref:null,factor:1,costFactor:1,cFactorCoC:1,qFactorCoC:1,sItemDisabled:0,curCoC:'EUR'};
+  }
+
+  function localText(node,localName){
+    const hit=[...node.getElementsByTagName('*')].find(el=>el.localName===localName);
+    return hit?.textContent?.trim()||'';
+  }
+
+  function parseGAEBXML(text,source){
+    const out=[];
+    const doc=new DOMParser().parseFromString(String(text||''),'text/xml');
+    if(doc.querySelector('parsererror'))throw new Error('GAEB XML konnte nicht gelesen werden');
+    [...doc.getElementsByTagName('*')].filter(el=>el.localName==='Item').forEach(item=>{
+      const parts=[];
+      let parent=item.parentElement;
+      while(parent){
+        if(parent.localName==='BoQCtgy'){
+          const part=parent.getAttribute('RNoPart')?.trim();
+          if(part)parts.unshift(part);
+        }
+        parent=parent.parentElement;
+      }
+      const own=item.getAttribute('RNoPart')?.trim();
+      if(own)parts.push(own);
+      const oz=parts.join(' ');
+      const kurztext=localText(item,'OutlineText')||localText(item,'ShortText')||localText(item,'DetailTxt').slice(0,80);
+      const langtext=localText(item,'DetailTxt')||kurztext;
+      if(!kurztext)return;
+      out.push(cleanPosition({
+        oz,kurztext,langtext,outlineSpecs:langtext,menge:parseNumber(localText(item,'Qty'),0),me:localText(item,'QU'),
+        kosten:[],ep:0,source,originalXref:item.getAttribute('ID')||null,matchedD83:true,matchedXML:false
+      }));
+    });
+    return out;
+  }
+
+  function directText(node,selector,fallback=''){
+    return node.querySelector(selector)?.textContent?.trim()??fallback;
+  }
+
+  function directNumber(node,selector,fallback=0){
+    return parseNumber(directText(node,selector,''),fallback);
+  }
+
+  function extractXmlSubItemData(sub){
+    const subText=directText(sub,':scope > Text','');
+    const subMe=directText(sub,':scope > UnitOfMeasure','');
+    const subQty=directNumber(sub,':scope > Quantity',1);
+    const subKosten=[];
+    const rawEstimateDetails=[];
+    sub.querySelectorAll(':scope > EstDetails > CoCDetail').forEach(c=>{
+      if(directText(c,':scope > SItemDisabled','0')==='1')return;
+      const name=directText(c,':scope > NameCoC','');
+      const descr=directText(c,':scope > DescrCoC',name);
+      const einheit=directText(c,':scope > UnitOfMeasure','');
+      const cost={
+        typ:classCoC(name,descr,einheit),
+        descr:descr||name,
+        menge:directNumber(c,':scope > Quantity',0),
+        einheit,
+        preis:directNumber(c,':scope > URValue',0),
+        nameCoC:name,
+        identifyKey:directText(c,':scope > IdentifyKey','')||null,
+        xref:c.getAttribute('Xref')||null,
+        factor:directNumber(c,':scope > Factor',1),
+        costFactor:directNumber(c,':scope > CostFactor',1),
+        cFactorCoC:directNumber(c,':scope > CFactorCoC',1),
+        qFactorCoC:directNumber(c,':scope > QFactorCoC',1),
+        sItemDisabled:0,
+        curCoC:directText(c,':scope > CurCoC','EUR')
+      };
+      subKosten.push(cost);
+      rawEstimateDetails.push(cost);
+    });
+    return {text:subText,me:subMe,qty:subQty,kosten:subKosten,rawEstimateDetails};
+  }
+
+  function parseXML(text,source){
+    const doc=new DOMParser().parseFromString(String(text||''),'text/xml');
+    if(doc.querySelector('parsererror'))throw new Error('XML konnte nicht gelesen werden');
+    if(doc.documentElement?.localName==='GAEB')return parseGAEBXML(text,source);
+    const serializer=new XMLSerializer();
+    const out=[];
+    doc.querySelectorAll('WBSItem').forEach(item=>{
+      const oz=directText(item,':scope > NameWBSItem','');
+      const subs=[...item.querySelectorAll(':scope > EstDetails > SubItem')];
+      if(!oz||!subs.length)return;
+      const parsedSubs=subs.map(extractXmlSubItemData).filter(s=>s.text||s.kosten.length);
+      const primary=parsedSubs.find(s=>s.text)||parsedSubs[0];
+      if(!primary)return;
+      const kosten=parsedSubs.flatMap(s=>s.kosten);
+      if(!kosten.length)return;
+      const outlineSpecs=directText(item,':scope > OutlineSpecs','');
+      const ep=kosten.reduce((sum,k)=>sum+(Number(k.menge)||0)*(Number(k.preis)||0),0);
+      out.push(cleanPosition({
+        oz,kurztext:primary.text||outlineSpecs,langtext:outlineSpecs,outlineSpecs,menge:primary.qty,me:primary.me,
+        kosten,ep:Math.round(ep*100)/100,source,
+        isFixedPriceItem:directText(item,':scope > IsFixedPriceItem','0')==='1',
+        isNoMarkup:directText(item,':scope > IsNoMarkup','0')==='1',
+        spPhase:directText(item,':scope > SPPhase','Tender'),
+        originalXref:item.getAttribute('Xref')||null,
+        rawWBSItemXml:serializer.serializeToString(item),
+        rawItem:{isFixedPriceItem:directNumber(item,':scope > IsFixedPriceItem',0),isNoMarkup:directNumber(item,':scope > IsNoMarkup',0),spPhase:directText(item,':scope > SPPhase','Tender')},
+        sub:primary?{text:primary.text,me:primary.me,qty:primary.qty,rawEstimateDetails:parsedSubs.flatMap(s=>s.rawEstimateDetails)}:null,
+        subItems:parsedSubs.map(s=>({text:s.text,me:s.me,qty:s.qty})),
+        matchedD83:false,matchedXML:true
+      }));
+    });
+    return out;
+  }
+
+  function mergeD83andXML(d83Pos,xmlPos,projectName){
+    if(!d83Pos.length&&!xmlPos.length)return [];
+    if(!d83Pos.length)return xmlPos.map(p=>cleanPosition({...p,source:projectName,matchedXML:true}));
+    if(!xmlPos.length)return d83Pos.map(p=>cleanPosition({...p,source:projectName,matchedD83:true}));
+    const xmlByOz=new Map();
+    xmlPos.forEach(pos=>ozLookupKeys(pos.oz||pos.ozCanon).forEach(key=>{if(key&&!xmlByOz.has(key))xmlByOz.set(key,pos);}));
+    const xmlByText=new Map();
+    xmlPos.forEach(pos=>{const key=norm(pos.kurztext).slice(0,34);if(key&&!xmlByText.has(key))xmlByText.set(key,pos);});
+    const used=new Set();
+    const merged=[];
+    d83Pos.forEach(dp=>{
+      const byOz=ozLookupKeys(dp.oz||dp.ozCanon).map(key=>xmlByOz.get(key)).find(Boolean);
+      const byText=xmlByText.get(norm(dp.kurztext).slice(0,34));
+      const xp=(byOz&&!used.has(byOz))?byOz:((byText&&!used.has(byText))?byText:null);
+      if(xp){
+        used.add(xp);
+        merged.push(cleanPosition({
+          ...xp,source:projectName,matchedD83:true,matchedXML:true,
+          linkedD83:{oz:dp.oz,ozCanon:dp.ozCanon,kurztext:dp.kurztext,langtext:dp.langtext,menge:dp.menge,me:dp.me},
+          linkedD83Signature:[dp.ozCanon,norm(dp.kurztext),norm(dp.me)].join('|')
+        }));
+      }else{
+        merged.push(cleanPosition({...dp,source:projectName,matchedD83:true,matchedXML:false}));
+      }
+    });
+    xmlPos.forEach(xp=>{if(!used.has(xp))merged.push(cleanPosition({...xp,source:projectName,matchedD83:false,matchedXML:true}));});
+    return merged;
+  }
+
+  function calculateProjectStats(positions){
+    const rows=Array.isArray(positions)?positions:[];
+    return {
+      total:rows.length,
+      matched:rows.filter(p=>p.matchedD83&&p.matchedXML).length,
+      withCosts:rows.filter(p=>(p.kosten||[]).some(k=>k.typ!=='S'||Number(k.preis)>0)).length,
+      d83Only:rows.filter(p=>p.matchedD83&&!p.matchedXML).length,
+      xmlOnly:rows.filter(p=>!p.matchedD83&&p.matchedXML).length,
+      hasD83:rows.some(p=>p.matchedD83),
+      hasXML:rows.some(p=>p.matchedXML)
+    };
+  }
+
+  function getProjectKey(file){
+    const rel=String(file.webkitRelativePath||file.relativePath||file.name||'');
+    const parts=rel.split(/[\\/]+/).filter(Boolean);
+    if(parts.length>1)return parts.slice(0,-1).join('/');
+    return String(file.name||'').replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').trim()||'Einzeldateien';
+  }
+
+  function buildProjectName(key){
+    const parts=String(key||'').split(/[\\/]+/).filter(Boolean);
+    const last=parts[parts.length-1]||key||'Referenzprojekt';
+    return String(last).replace(/[_-]+/g,' ').trim()||'Referenzprojekt';
+  }
+
+  function xmlRank(file){
+    const name=norm(file.name);
+    if(/\b(kalk|kalkulation|estimate|itwo|rib|kosten)\b/.test(name))return 0;
+    if(/\b(export|kalkpilot)\b/.test(name))return 1;
+    return 2;
+  }
+
+  function stripFileExtension(name){
+    return String(name||'').replace(/\.[^.]+$/,'');
+  }
+
+  function normalizeProjectStem(file){
+    return norm(stripFileExtension(file?.name||''))
+      .replace(/\b(gaeb|geab|d83|p83|x83|xml|kalk|kalkulation|estimate|itwo|rib|voll|test|export|lv|leistungsverzeichnis|langtext)\b/g,' ')
+      .replace(/\b\d+\b/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function displayStem(file){
+    return stripFileExtension(file?.name||'')
+      .replace(/[_-]+/g,' ')
+      .replace(/\b(gaeb|geab|d83|p83|x83|xml|kalk|kalkulation|estimate|itwo|rib|voll|test|export|lv|leistungsverzeichnis|langtext)\b/gi,' ')
+      .replace(/\b\d+\b/g,' ')
+      .replace(/[()]+/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function displayProjectNameFromStem(stem,fallback){
+    const cleaned=String(stem||'').trim();
+    if(cleaned){
+      return cleaned.split(/\s+/).map(part=>part.charAt(0).toUpperCase()+part.slice(1)).join(' ');
+    }
+    return buildProjectName(fallback);
+  }
+
+  function displayProjectNameFromFiles(lvFile,xmlFile,fallback){
+    const lvStem=displayStem(lvFile);
+    const xmlStem=displayStem(xmlFile);
+    const chosen=xmlStem&&xmlStem.length>=3?xmlStem:lvStem;
+    return displayProjectNameFromStem(chosen||lvStem,fallback);
+  }
+
+  function bigrams(value){
+    const s=String(value||'').replace(/\s+/g,'');
+    if(s.length<2)return s?[s]:[];
+    const out=[];
+    for(let i=0;i<s.length-1;i+=1)out.push(s.slice(i,i+2));
+    return out;
+  }
+
+  function nameSimilarity(a,b){
+    const left=String(a||'').trim();
+    const right=String(b||'').trim();
+    if(!left||!right)return 0;
+    if(left===right)return 1;
+    if(left.includes(right)||right.includes(left))return Math.min(left.length,right.length)/Math.max(left.length,right.length);
+    const aBigrams=bigrams(left);
+    const bBigrams=bigrams(right);
+    if(!aBigrams.length||!bBigrams.length)return 0;
+    const used=new Set();
+    let hits=0;
+    aBigrams.forEach(bg=>{
+      const idx=bBigrams.findIndex((candidate,i)=>candidate===bg&&!used.has(i));
+      if(idx>=0){used.add(idx);hits+=1;}
+    });
+    return (2*hits)/(aBigrams.length+bBigrams.length);
+  }
+
+  function pairScore(lvFile,xmlFile){
+    const lvStem=normalizeProjectStem(lvFile);
+    const xmlStem=normalizeProjectStem(xmlFile);
+    let score=nameSimilarity(lvStem,xmlStem);
+    const lvRaw=norm(stripFileExtension(lvFile?.name||''));
+    const xmlRaw=norm(stripFileExtension(xmlFile?.name||''));
+    if(lvRaw.includes(xmlStem)||xmlRaw.includes(lvStem))score=Math.max(score,.92);
+    return score;
+  }
+
+  function makeProjectGroup(base,lvFiles,xmlFiles,name){
+    const sortedLv=[...lvFiles].sort((a,b)=>String(a.name).localeCompare(String(b.name),'de'));
+    const sortedXml=[...xmlFiles].sort((a,b)=>xmlRank(a)-xmlRank(b)||String(a.name).localeCompare(String(b.name),'de'));
+    const complete=sortedLv.length>0&&sortedXml.length>0;
+    const ambiguous=complete&&(sortedLv.length>1||sortedXml.length>1);
+    const keySuffix=name&&name!==buildProjectName(base.key)?`/${name}`:'';
+    return {
+      key:base.key+keySuffix,
+      name:name||buildProjectName(base.key),
+      files:[...sortedLv,...sortedXml],
+      lvFiles:sortedLv,
+      xmlFiles:sortedXml,
+      primaryLV:sortedLv[0]||null,
+      primaryXML:sortedXml[0]||null,
+      d83Name:sortedLv[0]?.name||null,
+      xmlName:sortedXml[0]?.name||null,
+      status:complete?(ambiguous?'ambiguous':'complete'):'partial'
+    };
+  }
+
+  function commonRestName(files,fallback){
+    const stems=files.map(displayStem).filter(Boolean);
+    if(!stems.length)return buildProjectName(fallback);
+    const firstToken=stems[0].split(/\s+/)[0]||stems[0];
+    const shared=stems.every(stem=>stem.split(/\s+/)[0]===firstToken);
+    return displayProjectNameFromStem(shared?firstToken:stems[0],fallback);
+  }
+
+  function expandFolderGroup(project){
+    const lvFiles=[...project.lvFiles].sort((a,b)=>String(a.name).localeCompare(String(b.name),'de'));
+    const xmlFiles=[...project.xmlFiles].sort((a,b)=>xmlRank(a)-xmlRank(b)||String(a.name).localeCompare(String(b.name),'de'));
+    if(lvFiles.length<=1&&xmlFiles.length<=1){
+      return [makeProjectGroup(project,lvFiles,xmlFiles,buildProjectName(project.key))];
+    }
+    if(!lvFiles.length||!xmlFiles.length){
+      return [makeProjectGroup(project,lvFiles,xmlFiles,commonRestName([...lvFiles,...xmlFiles],project.key))];
+    }
+    const candidates=[];
+    lvFiles.forEach(lv=>xmlFiles.forEach(xml=>candidates.push({lv,xml,score:pairScore(lv,xml)})));
+    candidates.sort((a,b)=>b.score-a.score||xmlRank(a.xml)-xmlRank(b.xml)||String(a.lv.name).localeCompare(String(b.lv.name),'de'));
+    const usedLv=new Set();
+    const usedXml=new Set();
+    const pairs=[];
+    candidates.forEach(candidate=>{
+      if(candidate.score<.55)return;
+      if(usedLv.has(candidate.lv)||usedXml.has(candidate.xml))return;
+      usedLv.add(candidate.lv);
+      usedXml.add(candidate.xml);
+      pairs.push(candidate);
+    });
+    if(!pairs.length)return [makeProjectGroup(project,lvFiles,xmlFiles,buildProjectName(project.key))];
+    const groups=pairs.map(pair=>makeProjectGroup(project,[pair.lv],[pair.xml],displayProjectNameFromFiles(pair.lv,pair.xml,project.key)));
+    const restLv=lvFiles.filter(file=>!usedLv.has(file));
+    const restXml=xmlFiles.filter(file=>!usedXml.has(file));
+    if(restLv.length||restXml.length){
+      groups.push(makeProjectGroup(project,restLv,restXml,commonRestName([...restLv,...restXml],project.key)));
+    }
+    return groups;
+  }
+
+  function groupFilesByProject(files){
+    const map=new Map();
+    Array.from(files||[]).filter(file=>supportedRe.test(file.name||'')).forEach(file=>{
+      const key=getProjectKey(file);
+      if(!map.has(key))map.set(key,{key,name:buildProjectName(key),files:[],lvFiles:[],xmlFiles:[],primaryLV:null,primaryXML:null,status:'partial'});
+      const project=map.get(key);
+      project.files.push(file);
+      if(lvRe.test(file.name||''))project.lvFiles.push(file);
+      if(xmlRe.test(file.name||''))project.xmlFiles.push(file);
+    });
+    return [...map.values()].flatMap(expandFolderGroup).sort((a,b)=>a.key.localeCompare(b.key,'de'));
+  }
+
+  function removeGroupByKey(groups,key){
+    return Array.from(groups||[]).filter(group=>group.key!==key);
+  }
+
+  async function parseLVFile(file){
+    const text=await readFileText(file);
+    const ext=(file.name.split('.').pop()||'').toUpperCase();
+    if(ext==='D83')return parseD83(text,file.name);
+    if(ext==='P83')return parseP83(text,file.name);
+    if(ext==='X83')return text.trim().startsWith('<?xml')||text.includes('<GAEB')?parseGAEBXML(text,file.name):parseD83(text,file.name);
+    if(ext==='XML')return parseXML(text,file.name);
+    return [];
+  }
+
+  async function buildProjectFromGroup(group){
+    const d83Pos=group.primaryLV?await parseLVFile(group.primaryLV):[];
+    const xmlPos=group.primaryXML?await parseLVFile(group.primaryXML):[];
+    const positions=mergeD83andXML(d83Pos,xmlPos,group.name);
+    const stats=calculateProjectStats(positions);
+    return {
+      groupKey:group.key,
+      name:group.name,
+      active:true,
+      d83Name:group.primaryLV?.name||null,
+      xmlName:group.primaryXML?.name||null,
+      positions,
+      stats
+    };
+  }
+
+  function buildReferencePayload(projects){
+    return {
+      schema:'kalkpilot.reference-database',
+      version:1,
+      generatedAt:new Date().toISOString(),
+      generator:'KalkPilot Referenzpaket Builder',
+      containsSecrets:false,
+      refProjects:Array.isArray(projects)?projects:[]
+    };
+  }
+
+  function downloadText(text,fileName,mime){
+    const blob=new Blob([text],{type:mime});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=fileName;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }
+
+  function log(message){
+    const box=document.getElementById('logBox');
+    if(!box)return;
+    const stamp=new Date().toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    box.textContent+=(box.textContent==='Bereit.'?'':'\n')+`[${stamp}] ${message}`;
+    box.scrollTop=box.scrollHeight;
+  }
+
+  function setText(id,value){
+    const el=document.getElementById(id);
+    if(el)el.textContent=String(value);
+  }
+
+  function renderStats(){
+    setText('statFiles',state.files.length.toLocaleString('de-DE'));
+    setText('statProjects',state.groups.length.toLocaleString('de-DE'));
+    const positions=state.projects.reduce((sum,p)=>sum+(p.positions?.length||0),0);
+    const costs=state.projects.reduce((sum,p)=>sum+(p.stats?.withCosts||0),0);
+    setText('statPositions',positions.toLocaleString('de-DE'));
+    setText('statCosts',costs.toLocaleString('de-DE'));
+  }
+
+  function renderPills(){
+    const complete=state.groups.filter(g=>g.status==='complete').length;
+    const ambiguous=state.groups.filter(g=>g.status==='ambiguous').length;
+    const partial=state.groups.filter(g=>g.status==='partial').length;
+    const box=document.getElementById('qualityPills');
+    if(!box)return;
+    box.innerHTML=[
+      `<span class="pill">${complete} vollstaendig</span>`,
+      `<span class="pill">${ambiguous} zu pruefen</span>`,
+      `<span class="pill">${partial} unvollstaendig</span>`
+    ].join('');
+  }
+
+  function renderReview(){
+    const box=document.getElementById('reviewBox');
+    const hint=document.getElementById('reviewHint');
+    if(!box)return;
+    if(!state.groups.length){
+      box.innerHTML='<div class="empty">Waehle einen Ordner oder lege Dateien ab. Danach erscheint hier die Projektliste.</div>';
+      if(hint)hint.textContent='Noch keine Dateien geladen.';
+      return;
+    }
+    if(hint)hint.textContent=`${state.groups.length} Projektgruppen erkannt. Mehrfachtreffer bitte kurz pruefen.`;
+    box.innerHTML=`<table>
+      <thead><tr><th>Status</th><th>Projekt</th><th>LV-Dateien</th><th>Kalk-XML</th><th>Ergebnis</th><th>Aktion</th></tr></thead>
+      <tbody>${state.groups.map(group=>{
+        const project=state.projects.find(p=>p.name===group.name);
+        const stats=project?.stats;
+        const statusText=group.status==='complete'?'vollstaendig':group.status==='ambiguous'?'zu pruefen':'unvollstaendig';
+        const canRemove=group.status!=='complete';
+        const action=canRemove
+          ?`<button class="remove-btn" type="button" data-remove-key="${h(group.key)}" title="Eintrag aus dem Referenzpaket entfernen">×</button>`
+          :'<span class="keep-mark">bleibt</span>';
+        return `<tr>
+          <td><span class="status ${group.status}">${statusText}</span></td>
+          <td><strong>${h(group.name)}</strong><div class="note">${h(group.key)}</div></td>
+          <td class="small">${fileList(group.lvFiles,group.primaryLV)}</td>
+          <td class="small">${fileList(group.xmlFiles,group.primaryXML)}</td>
+          <td class="small">${stats?`${stats.total.toLocaleString('de-DE')} Pos., ${stats.withCosts.toLocaleString('de-DE')} mit Kalkulation, ${stats.matched.toLocaleString('de-DE')} verknuepft`:'Noch nicht erzeugt'}</td>
+          <td>${action}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  }
+
+  function fileList(files,primary){
+    if(!files?.length)return '<span class="note">keine Datei</span>';
+    return `<ul class="file-list">${files.map(file=>`<li>${file===primary?'<strong>aktiv:</strong> ':''}${h(file.name)}</li>`).join('')}</ul>`;
+  }
+
+  function setFiles(files){
+    state.files=Array.from(files||[]).filter(file=>supportedRe.test(file.name||''));
+    state.groups=groupFilesByProject(state.files);
+    state.projects=[];
+    state.payload=null;
+    document.getElementById('buildBtn').disabled=!state.files.length;
+    document.getElementById('downloadBtn').disabled=true;
+    document.getElementById('clearBtn').disabled=!state.files.length;
+    renderStats();
+    renderPills();
+    renderReview();
+    log(`${state.files.length} passende Dateien erkannt.`);
+    if(state.files.length>2&&!state.files.some(file=>file.webkitRelativePath||file.relativePath)){
+      log('Hinweis: Ohne Ordnerstruktur koennen mehrere Projekte nicht sicher gepaart werden. Bitte den Oberordner auswaehlen oder Projektordner ablegen.');
+    }
+  }
+
+  function removeGroup(key){
+    const before=state.groups.length;
+    const removed=state.groups.find(group=>group.key===key);
+    state.groups=removeGroupByKey(state.groups,key);
+    state.projects=state.projects.filter(project=>project.groupKey!==key);
+    state.payload=null;
+    document.getElementById('downloadBtn').disabled=true;
+    renderStats();
+    renderPills();
+    renderReview();
+    if(removed&&state.groups.length<before)log(`${removed.name} aus dem Referenzpaket entfernt.`);
+  }
+
+  function attachRelativePath(file,relativePath){
+    const clean=String(relativePath||file.webkitRelativePath||file.name||'').replace(/^\/+/,'');
+    if(!clean)return file;
+    try{
+      Object.defineProperty(file,'relativePath',{value:clean,configurable:true});
+    }catch(_){
+      try{file.relativePath=clean;}catch(__){}
+    }
+    return file;
+  }
+
+  function readEntryFile(entry,relativePath){
+    return new Promise((resolve,reject)=>{
+      entry.file(file=>resolve(attachRelativePath(file,relativePath||entry.fullPath||file.name)),reject);
+    });
+  }
+
+  function readDirectoryBatch(reader){
+    return new Promise(resolve=>reader.readEntries(resolve));
+  }
+
+  async function readAllDirectoryEntries(directoryEntry){
+    const reader=directoryEntry.createReader();
+    const entries=[];
+    while(true){
+      const batch=await readDirectoryBatch(reader);
+      if(!batch.length)break;
+      entries.push(...batch);
+    }
+    return entries;
+  }
+
+  async function collectFilesFromEntry(entry,parentPath=''){
+    if(!entry)return [];
+    const fallbackPath=[parentPath,entry.name].filter(Boolean).join('/');
+    const relPath=String(entry.fullPath||fallbackPath).replace(/^\/+/,'');
+    if(entry.isFile)return [await readEntryFile(entry,relPath)];
+    if(!entry.isDirectory)return [];
+    const children=await readAllDirectoryEntries(entry);
+    const nested=await Promise.all(children.map(child=>collectFilesFromEntry(child,relPath)));
+    return nested.flat();
+  }
+
+  async function collectDroppedFiles(dataTransfer){
+    const items=Array.from(dataTransfer?.items||[]);
+    const entryItems=items
+      .map(item=>typeof item.webkitGetAsEntry==='function'?item.webkitGetAsEntry():null)
+      .filter(Boolean);
+    if(entryItems.length){
+      const nested=await Promise.all(entryItems.map(entry=>collectFilesFromEntry(entry,'')));
+      return nested.flat().filter(file=>supportedRe.test(file.name||''));
+    }
+    return Array.from(dataTransfer?.files||[]).filter(file=>supportedRe.test(file.name||''));
+  }
+
+  async function buildPackage(){
+    if(!state.groups.length)return;
+    const buildBtn=document.getElementById('buildBtn');
+    const downloadBtn=document.getElementById('downloadBtn');
+    buildBtn.disabled=true;
+    downloadBtn.disabled=true;
+    state.projects=[];
+    log('Referenzpaket wird erzeugt...');
+    for(const group of state.groups){
+      try{
+        const project=await buildProjectFromGroup(group);
+        state.projects.push(project);
+        log(`${group.name}: ${project.positions.length} Positionen, ${project.stats.withCosts} mit Kalkulation.`);
+      }catch(error){
+        state.projects.push({name:group.name,active:false,d83Name:group.primaryLV?.name||null,xmlName:group.primaryXML?.name||null,positions:[],stats:calculateProjectStats([]),error:String(error.message||error)});
+        log(`${group.name}: Fehler beim Lesen - ${error.message||error}`);
+      }
+      renderStats();
+      renderReview();
+    }
+    state.payload=buildReferencePayload(state.projects);
+    downloadBtn.disabled=!state.projects.length;
+    buildBtn.disabled=false;
+    log(`Fertig: ${state.projects.length} Projekte fuer den KalkPilot-Import vorbereitet.`);
+  }
+
+  function downloadPackage(){
+    if(!state.payload)return;
+    const name=`KalkPilot_Referenzdatenbank_${new Date().toISOString().slice(0,10)}.json`;
+    downloadText(JSON.stringify(state.payload,null,2),name,'application/json;charset=utf-8');
+    log(`${name} heruntergeladen.`);
+  }
+
+  function clearAll(){
+    state.files=[];
+    state.groups=[];
+    state.projects=[];
+    state.payload=null;
+    const fileInput=document.getElementById('fileInput');
+    const folderInput=document.getElementById('folderInput');
+    if(fileInput)fileInput.value='';
+    if(folderInput)folderInput.value='';
+    document.getElementById('buildBtn').disabled=true;
+    document.getElementById('downloadBtn').disabled=true;
+    document.getElementById('clearBtn').disabled=true;
+    renderStats();
+    renderPills();
+    renderReview();
+    log('Auswahl geleert.');
+  }
+
+  function setupUI(){
+    document.documentElement.dataset.builderReady='true';
+    const drop=document.getElementById('dropZone');
+    const reviewBox=document.getElementById('reviewBox');
+    const fileInput=document.getElementById('fileInput');
+    const folderInput=document.getElementById('folderInput');
+    document.getElementById('pickFilesBtn')?.addEventListener('click',()=>fileInput?.click());
+    document.getElementById('pickFolderBtn')?.addEventListener('click',()=>folderInput?.click());
+    document.getElementById('buildBtn')?.addEventListener('click',buildPackage);
+    document.getElementById('downloadBtn')?.addEventListener('click',downloadPackage);
+    document.getElementById('clearBtn')?.addEventListener('click',clearAll);
+    reviewBox?.addEventListener('click',event=>{
+      const btn=event.target.closest?.('[data-remove-key]');
+      if(btn)removeGroup(btn.getAttribute('data-remove-key'));
+    });
+    fileInput?.addEventListener('change',event=>setFiles(event.target.files));
+    folderInput?.addEventListener('change',event=>setFiles(event.target.files));
+    drop?.addEventListener('dragover',event=>{event.preventDefault();drop.classList.add('drag');});
+    drop?.addEventListener('dragleave',()=>drop.classList.remove('drag'));
+    drop?.addEventListener('drop',async event=>{
+      event.preventDefault();
+      drop.classList.remove('drag');
+      try{
+        const files=await collectDroppedFiles(event.dataTransfer);
+        setFiles(files);
+      }catch(error){
+        log(`Ordner konnte nicht gelesen werden: ${error.message||error}`);
+        setFiles(event.dataTransfer.files);
+      }
+    });
+  }
+
+  window.KalkPilotReferenceBuilder={
+    groupFilesByProject,
+    removeGroupByKey,
+    collectDroppedFiles,
+    buildProjectName,
+    buildReferencePayload,
+    buildProjectFromGroup,
+    calculateProjectStats,
+    mergeD83andXML,
+    parseD83,
+    parseP83,
+    parseGAEBXML,
+    parseXML
+  };
+
+  if(document?.addEventListener)document.addEventListener('DOMContentLoaded',setupUI);
+})();
+</script>
+<!-- BUILDER_SCRIPT_END -->
+</body>
+</html>
