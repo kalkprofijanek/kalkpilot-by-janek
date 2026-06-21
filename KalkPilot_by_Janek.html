@@ -492,6 +492,23 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       <button class="btn btn-s btn-sm" onclick="openReviewModal()">🤖 Testbericht für ChatGPT erzeugen</button>
       <button class="btn btn-s btn-sm" onclick="runDiagnosticsSelfTest(true,true)">🧪 Diagnose ausführen</button>
       <span id="accStat" style="font-size:11px;color:var(--muted);margin-left:4px"></span>
+      <!-- KI-Reranking Section -->
+      <span style="border-left:1px solid var(--border);padding-left:8px;display:flex;gap:6px;align-items:center">
+        <input type="password" id="llmApiKey" placeholder="Anthropic API-Key"
+          style="width:180px;padding:2px 6px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:var(--surface)"
+          oninput="onLlmKeyChange()"
+          title="Key wird in localStorage gespeichert. Direkter Browser-Zugriff auf Anthropic-API (anthropic-dangerous-direct-browser-access). Nur für Einzelnutzer mit eigenem Key geeignet.">
+        <select id="llmModel" style="font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface)">
+          <option value="claude-sonnet-4-6">Sonnet</option>
+          <option value="claude-opus-4-8">Opus</option>
+        </select>
+        <button class="btn btn-s btn-sm" id="llmRerankBtn" disabled onclick="onLlmRerankClick()"
+          title="Nur Graubereich-Positionen (Score 50–82%) werden an die Anthropic-API gesendet">
+          🤖 KI-Prüfung
+        </button>
+        <button class="btn btn-s btn-sm" id="llmKeyClearBtn" style="display:none" onclick="onLlmKeyClear()"
+          title="API-Key aus localStorage löschen">🗑</button>
+      </span>
     </div>
     <div id="diagSummary" class="diag-grid">
       <div class="diag-card"><div class="diag-k">Trefferlage</div><div class="diag-v">-</div><div class="diag-s">Nach dem Lauf erscheint hier die Kurzdiagnose.</div></div>
@@ -1653,6 +1670,36 @@ function getCategoryProjectPreference(results, category){
   const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
   if(!ranked.length)return null;
   return {project:ranked[0][0],count:ranked[0][1]};
+}
+function collectAutoRecallCandidates(np,npProf,fullPool,currentPool,limit=40){
+  if(!np||!fullPool?.length)return[];
+  const seen=new WeakSet();
+  (currentPool||[]).forEach(rp=>{if(rp)seen.add(rp);});
+  const query=norm([np.oz,np.kurztext].filter(Boolean).join(' '));
+  const queryTokens=query?[...new Set(tokenizeForMatch(query))]:[];
+  const rows=[];
+  for(const rp of fullPool){
+    if(!rp||seen.has(rp))continue;
+    const rpProf=getMatchProfile(rp);
+    const direct=linkedD83MatchScore(np,rp);
+    const f=manualHayFields(rp);
+    const searchScore=query?scoreManualSearch(query,queryTokens,f):0;
+    const quickScore=candidateQuickScore(npProf,rpProf);
+    const plausible=isPlausibleCandidate(npProf,rpProf);
+    const remembered=isTopMatch(np,rp);
+    const shouldRecall=
+      direct>=0.98||
+      remembered||
+      searchScore>=0.32||
+      (searchScore>=0.18&&(plausible||quickScore>=6));
+    if(!shouldRecall)continue;
+    rows.push({
+      rp,
+      rank:(direct>=0.98?100:0)+(remembered?35:0)+(searchScore*30)+quickScore
+    });
+  }
+  rows.sort((a,b)=>b.rank-a.rank);
+  return rows.slice(0,limit).map(x=>x.rp);
 }
 function collectDiagnosticSignals(){
   const results=S.results||[];
@@ -4666,6 +4713,11 @@ async function runMatch(){
         .map(x=>x.rp);
       if(rankedWindow.length>=20)candidatePool=rankedWindow;
     }
+    const recallCandidates=collectAutoRecallCandidates(np,npProf,fullPool,candidatePool,40);
+    if(recallCandidates.length){
+      const seen=new WeakSet(candidatePool);
+      recallCandidates.forEach(rp=>{if(!seen.has(rp)){seen.add(rp);candidatePool.push(rp);}});
+    }
     if(!candidatePool.length){
       nextResults.push({newPos:np,matches:[],sel:0,accepted:false});
     }else{
@@ -4752,6 +4804,13 @@ async function runMatch(){
     document.getElementById('hAcc').textContent=S.results.filter(r=>r.accepted).length;
     S.lastReferenceSelfTest=runReferenceLinkSelfTest(false,false);
     renderManualMatch();
+    // KI-Reranking ist ein separater manueller Schritt (kein Auto-Aufruf hier):
+    // nur den Button aktivieren, falls ein API-Key gespeichert ist.
+    {
+      const llmKey=localStorage.getItem('kp_anthropic_key_v1');
+      const llmBtn=document.getElementById('llmRerankBtn');
+      if(llmBtn)llmBtn.disabled=!llmKey||!S.results?.length;
+    }
     setMatchingProgress({
       active:true,
       total:S.newLV.length,
@@ -4765,6 +4824,145 @@ async function runMatch(){
     S.matching=false;
     checkRunBtn();
   }
+}
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// KI-RERANKING (optional, Anthropic API)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+async function llmRerankMatches(results,{apiKey,model='claude-sonnet-4-6'}){
+  if(!apiKey||!results?.length)return;
+
+  // ── Phase 1: Unsicherheits-Erkennung (lokal, billig) ─────────────────────
+  const uncertain=results.filter(r=>{
+    if(!r.matches?.length)return false;
+    const best=r.matches[0];
+    const second=r.matches[1];
+    const score=best?.score??0;
+    const isGrey=score>=50&&score<=82;
+    const isClose=second&&(score-(second.score??0))<8;
+    const hasCap=(best?.debug?.hardCapsApplied?.length??0)>0;
+    const capNearThresh=hasCap&&score>=70&&score<=85;
+    return isGrey||isClose||capNearThresh;
+  });
+
+  if(!uncertain.length){
+    setMatchingProgress({active:true,total:1,done:1,
+      label:'KI-Prüfung: keine Graubereich-Positionen gefunden',
+      current:'Alle Treffer haben eindeutigen Score',etaText:'100%'});
+    setTimeout(()=>setMatchingProgress({active:false}),2000);
+    return;
+  }
+
+  // ── Phase 2: LLM-Calls (ein Call pro unsicherer Position) ─────────────────
+  const llmBtn=document.getElementById('llmRerankBtn');
+  if(llmBtn){llmBtn.disabled=true;llmBtn.textContent='⏳ KI läuft...';}
+
+  let done=0;
+  for(const r of uncertain){
+    const np=r.newPos;
+    const candidates=r.matches.slice(0,Math.min(5,r.matches.length));
+
+    setMatchingProgress({
+      active:true,
+      total:uncertain.length,
+      done,
+      label:`KI-Prüfung läuft... (${done}/${uncertain.length})`,
+      current:`${np.oz||''} ${np.kurztext||''}`.trim(),
+      etaText:`${Math.round(done/uncertain.length*100)}%`
+    });
+
+    const systemPrompt=`Du bist ein Experte für Baukalkulation im Erdbau und Tiefbau.
+Du bewertest, welcher Referenz-Kandidat am besten zu einer neuen LV-Position passt.
+Antworte NUR mit validem JSON im Format:
+{"bestIndex": <0-basierter Index>, "confidence": <0-100>, "verdict": "HIGH"|"MED"|"LOW", "reason": "<max 80 Zeichen, deutsch>"}`;
+
+    const userPrompt=`NEUE POSITION:
+OZ: ${np.oz||'–'} | Einheit: ${np.einheit||np.me||'–'} | Menge: ${np.menge||'–'}
+Kurztext: ${np.kurztext||''}
+Langtext: ${(np.langtext||'').slice(0,400)}
+
+KANDIDATEN (regelbasierter Score in Klammern):
+${candidates.map((m,i)=>{
+  const p=m.pos||{};
+  return `[${i}] Score:${m.score}% | ${p.einheit||p.me||'?'} | ${p.kurztext||''}\n    ${(p.langtext||'').slice(0,200)}`;
+}).join('\n\n')}
+
+Welcher Kandidat (Index 0–${candidates.length-1}) passt am besten? Gib bestIndex, confidence (0-100), verdict und reason zurück.`;
+
+    try{
+      const resp=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'x-api-key':apiKey,
+          'anthropic-version':'2023-06-01',
+          'anthropic-dangerous-direct-browser-access':'true'
+        },
+        body:JSON.stringify({
+          model,
+          max_tokens:150,
+          system:systemPrompt,
+          messages:[{role:'user',content:userPrompt}]
+        })
+      });
+
+      if(!resp.ok)throw new Error(`HTTP ${resp.status}`);
+      const data=await resp.json();
+      const raw=data?.content?.[0]?.text||'{}';
+      // robust gegen ```json-Fences: erstes JSON-Objekt extrahieren
+      const jsonMatch=raw.match(/\{[\s\S]*\}/);
+      const parsed=JSON.parse(jsonMatch?jsonMatch[0]:raw);
+
+      const bestIdx=Math.max(0,Math.min(candidates.length-1,parsed.bestIndex??0));
+      const llmConfidence=Math.max(0,Math.min(100,parsed.confidence??50));
+      const ruleScore=candidates[bestIdx]?.score??50;
+
+      // Begrenzung: LLM darf Regelscore max. ±25 Punkte verschieben
+      const blendedScore=Math.round(
+        Math.max(ruleScore-25,Math.min(ruleScore+25,
+          ruleScore*0.5+llmConfidence*0.5
+        ))
+      );
+
+      // Reranking: bestIdx nach vorne, Score anpassen
+      if(bestIdx!==0){
+        const [winner]=r.matches.splice(bestIdx,1);
+        r.matches.unshift(winner);
+      }
+      r.matches[0]={
+        ...r.matches[0],
+        score:blendedScore,
+        llmVerdict:parsed.verdict||'MED',
+        llmReason:parsed.reason||'',
+        llmReranked:true
+      };
+      r.sel=0;
+
+    }catch(e){
+      console.warn('llmRerank Fehler bei',np.oz,e.message);
+      // Position überspringen, kein Abbruch
+    }
+
+    done++;
+    await new Promise(resolve=>setTimeout(resolve,0)); // UI yield
+  }
+
+  // ── Phase 3: Re-Render ────────────────────────────────────────────────────
+  S.results=applyStoredMatchDecisionsToResults(S.results);
+  renderMatch();
+  updateExport();
+  document.getElementById('matchSum').innerHTML=summarizeBadges();
+
+  if(llmBtn){
+    llmBtn.disabled=false;
+    llmBtn.textContent=`🤖 KI-Prüfung (${done} geprüft)`;
+  }
+  setMatchingProgress({
+    active:true,total:uncertain.length,done:uncertain.length,
+    label:`KI-Prüfung abgeschlossen – ${done} Positionen neu bewertet`,
+    current:'',etaText:'100%'
+  });
+  setTimeout(()=>setMatchingProgress({active:false}),2000);
 }
 
 function summarizeBadges(){
@@ -4790,6 +4988,26 @@ function toggleSort(col){
 function onUnitToggle(){
   document.getElementById('unitLbl').classList.toggle('on',document.getElementById('unitFilter').checked);
   renderMatch();
+}
+// ── KI-Reranking: UI-Event-Handler ─────────────────────────────────────────
+function onLlmKeyChange(){
+  const key=document.getElementById('llmApiKey').value.trim();
+  if(key)localStorage.setItem('kp_anthropic_key_v1',key);
+  document.getElementById('llmKeyClearBtn').style.display=key?'':'none';
+  const llmBtn=document.getElementById('llmRerankBtn');
+  if(llmBtn)llmBtn.disabled=!key||!S.results?.length;
+}
+function onLlmKeyClear(){
+  localStorage.removeItem('kp_anthropic_key_v1');
+  document.getElementById('llmApiKey').value='';
+  document.getElementById('llmKeyClearBtn').style.display='none';
+  document.getElementById('llmRerankBtn').disabled=true;
+}
+function onLlmRerankClick(){
+  const key=localStorage.getItem('kp_anthropic_key_v1');
+  const model=document.getElementById('llmModel')?.value||'claude-sonnet-4-6';
+  if(!key)return;
+  llmRerankMatches(S.results,{apiKey:key,model});
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -4958,7 +5176,7 @@ function renderMatch(){
           <div class="lt">${h((r.newPos.langtext||'').substring(0,55))}${(r.newPos.langtext||'').length>55?'...':''}</div>
           ${(r.newPos.langtext||'').trim()?`<button class="info-btn" style="margin-top:3px;font-size:10px;padding:2px 6px" onclick="openManualTargetLang(${idx},event)" title="Vollständigen Langtext anzeigen">📄 Langtext</button>`:''}</td>
       <td style="white-space:nowrap;font-size:11px">${r.newPos.menge>0?`<b>${r.newPos.menge.toLocaleString('de-DE',{maximumFractionDigits:3})}</b> ${h(newMe)}`:'-'}</td>
-      <td>${sc>0?`<span class="badge ${bc}">${sc}%</span>`:`<span style="color:var(--muted);font-size:10px">-</span>`}</td>
+      <td>${sc>0?`<span class="badge ${bc}">${sc}%</span>`:`<span style="color:var(--muted);font-size:10px">-</span>`}${best?.llmReranked?`<span title="KI-geprüft: ${h(best.llmReason||'')}" style="font-size:10px;padding:1px 4px;margin-left:3px;background:rgba(99,102,241,.15);color:#818cf8;border-radius:3px;cursor:help">🤖</span>`:''}</td>
       <td style="min-width:185px">${best?`
         <div style="display:flex;align-items:flex-start;gap:5px">
           <div style="flex:1">
@@ -6596,6 +6814,15 @@ document.getElementById('fileRefJSON').onchange=e=>{if(e.target.files[0])importR
 document.getElementById('fileMatchMemoryJSON').onchange=e=>{if(e.target.files[0])importMatchMemoryJSON(e.target.files[0]);};
 // Gespeicherte Übernahme-Schwelle ins Eingabefeld laden
 {const _at=document.getElementById('acceptThresh');if(_at)_at.value=getAutoAcceptThreshold();}
+// Gespeicherten Anthropic-API-Key ins Eingabefeld laden (Skript läuft am Body-Ende,
+// daher inline statt DOMContentLoaded – das Event ist hier ggf. schon gefeuert)
+{const _savedKey=localStorage.getItem('kp_anthropic_key_v1');
+ if(_savedKey){
+   const _f=document.getElementById('llmApiKey');
+   if(_f)_f.value=_savedKey;
+   const _clr=document.getElementById('llmKeyClearBtn');
+   if(_clr)_clr.style.display='';
+ }}
 
 // Drag-Drop Zonen
 setupDrop2('dropD83','d83');
