@@ -52,10 +52,10 @@ Codespaces-Vorschau und GitHub Pages haben unterschiedliche Website-Ursprünge. 
 
 Das Repository verwendet bereits GitHub Pages aus `main` und der Repository-Wurzel. Ein Feature-Branch/PR veröffentlicht die neuen Änderungen noch nicht. Nach Review und Merge das vollständige statische Verzeichnis einschließlich `js/` und `vendor/` prüfen; es ist kein App-Build oder API-Backend erforderlich.
 
-Codex/Claude für die Entwicklung und ChatGPT für die fachliche Datei-Prüfung sind unterschiedliche Abläufe. Die KalkPilot-App ruft keine produktive KI-API auf. Das BETA-Prüfpaket wird bewusst heruntergeladen und im gewünschten freigegebenen KI-Browser hochgeladen; Antworten müssen fachlich geprüft werden.
+Codex/Claude Code kann sowohl das Repository entwickeln als auch als LLM selbst das fachliche Matching ausführen. Das Cloud-Werkzeug startet die echte Browser-App, bereitet den Auftrag vor und prüft die Antwort. Die LLM trifft die semantischen Entscheidungen dazwischen. Die öffentliche App importiert die konkreten Zuordnungen und ruft keine produktive KI-API auf. [Anleitung und Agenten-Auftrag](LLM_MATCHING.md).
 
 ## Was tatsächlich geprüft wurde
 
 Die Skripte werden in der vorhandenen Codex-Cloud-Maschine ausgeführt. Die Regressionen prüfen den Entwicklungsserver auch aus einem anderen Arbeitsverzeichnis, tatsächliche Inhalte und die lokale Browser-Anwendung. Shell-Syntax, JSON und die offizielle Devcontainer-Spezifikation werden geprüft. Ein neuer Codespace, Claude-Code-Web-Zugang und die Portvorschau am tatsächlichen Firmenrechner wurden hier nicht gestartet bzw. extern verifiziert.
 
-Aktuelle Ergebnisse: Cloud-Setup zweimal erfolgreich ausgeführt; alle **18 Regressionstests** bestanden (15 Browserprüfungen und drei Prüfungen des Cloud-Startservers). Die Devcontainer-JSON wurde gegen die offizielle Basisspezifikation validiert. Der Healthcheck bestätigt sieben tatsächliche Inhalte statt nur einen offenen Port.
+Aktuelle Ergebnisse: Cloud-Setup zweimal erfolgreich ausgeführt; alle **25 Regressionstests** bestanden (21 Browserprüfungen, drei Cloud-Server-Prüfungen und ein Cloud-LLM-Ablauf). Die Devcontainer-JSON wurde gegen die offizielle Basisspezifikation validiert. Der Healthcheck bestätigt acht tatsächliche Inhalte statt nur einen offenen Port.

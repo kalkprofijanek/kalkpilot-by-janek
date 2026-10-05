@@ -424,6 +424,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         <div style="font-size:11px;margin-top:4px">.D83 .P83 .X83 .xml</div>
       </div>
       <input type="file" id="fNew" accept=".d83,.D83,.p83,.P83,.x83,.X83,.xml,.XML">
+      <div class="section-note" id="lvImportStatus" role="status"></div>
       <div class="lv-loaded" id="lvLoaded">
         <span style="font-size:16px">✅</span>
         <span id="lvLoadedTxt">LV geladen</span>
@@ -431,7 +432,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
     </div>
     <div class="card">
       <div class="section-copy" style="margin-bottom:10px">
-        <div class="ctitle" style="margin-bottom:0">Matching-Parameter</div>
+        <div class="ctitle" style="margin-bottom:0">Regelvergleich · optional</div>
         <div class="section-note">Die Punktzahl beschreibt Ähnlichkeit, keine Wahrscheinlichkeit. Fachliche Konflikte und offene Preise separat prüfen.</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
@@ -453,7 +454,20 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
           <input type="range" min="45" max="100" value="45" id="thresh" oninput="document.getElementById('thrV').textContent=this.value+'%'">
           <span class="rng-val" id="thrV">45%</span>
         </div>
-        <button class="btn btn-p" id="runBtn" disabled onclick="runMatch()">▶ KalkPilot starten - Matching durchführen</button>
+        <button class="btn btn-p" id="runBtn" disabled onclick="runMatch()">▶ Regelvergleich starten (optional)</button>
+        <div class="section-note" id="matchStartStatus" role="status">Neues GAEB-LV und aktive Referenzen laden.</div>
+        <div id="matchStartHelp" style="display:none;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-s btn-sm" onclick="document.getElementById('fileRefJSON').click()">📂 Referenzdatenbank laden</button>
+          <button class="btn btn-s btn-sm" onclick="switchTab('t1')">Referenzprojekte öffnen</button>
+        </div>
+        <div class="ctitle" style="margin:8px 0 0">LLM-Matching mit Codex / Claude Code · BETA</div>
+        <div class="section-note">Paket in Codex oder Claude Code hochladen und die LLM Referenzen zuordnen lassen. Danach die Antwort-JSON hier laden. Der Import ersetzt die Vorschläge und setzt alle Positionen zur fachlichen Prüfung.</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-p btn-sm" id="llmRequestBtn" disabled onclick="downloadLLMMatchingRequest()">📤 LLM-Matching-Paket</button>
+          <button class="btn btn-s btn-sm" onclick="document.getElementById('fileLLMMatches').click()">📥 LLM-Zuordnungen laden</button>
+          <input type="file" id="fileLLMMatches" accept=".json" onchange="if(this.files[0])importLLMMatches(this.files[0]);this.value=''">
+        </div>
+        <div class="section-note" id="llmMatchingStatus" role="status"></div>
       </div>
     </div>
       </div>
@@ -692,8 +706,9 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 <script src="js/reference-store.js"></script>
 <script src="js/gaeb-encoding.js"></script>
 <script src="js/browser-review.js"></script>
+<script src="js/llm-matching.js"></script>
 <script>
-const APP_VERSION='1.1.1-beta';
+const APP_VERSION='1.2.0-beta';
 const APP_BUILD_DATE='2026-10-05T00:00:00+02:00';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -2432,8 +2447,8 @@ async function readUploadedText(file,ext){
     const ansi=decodeText(buf,'windows-1252');
     const decl=(utf8.match(/<\?xml[^>]*encoding=['"]([^'"]+)['"]/i)?.[1]||ansi.match(/<\?xml[^>]*encoding=['"]([^'"]+)['"]/i)?.[1]||'').toUpperCase();
     if(decl.includes('1252')||decl.includes('ANSI'))return ansi;
-    // Wenn es KEIN XML zu sein scheint (kein <? und kein <GAEB), als ANSI behandeln
-    if(!utf8.trim().startsWith('<?xml')&&!utf8.includes('<GAEB')&&ext==='X83')return KPGaebEncoding.decode(buf,document.getElementById('importEncoding')?.value||'auto');
+    // Text-X83 ohne öffnendes XML-Zeichen über die GAEB-Textcodierung lesen
+    if(!utf8.trimStart().startsWith('<')&&ext==='X83')return KPGaebEncoding.decode(buf,document.getElementById('importEncoding')?.value||'auto');
     return scoreDecodedText(ansi)>scoreDecodedText(utf8)?ansi:utf8;
   }
   return KPGaebEncoding.decode(buf,document.getElementById('importEncoding')?.value||'auto');
@@ -3137,7 +3152,7 @@ async function loadPendingFile(file,type){
     const txt=await readUploadedText(file,ext);
     let pos=[];
     if(ext==='D83')pos=parseD83(txt,file.name);
-    else if(ext==='X83')pos=txt.trim().startsWith('<?xml')||txt.includes('<GAEB')?parseGAEBXML(txt,file.name):parseD83(txt,file.name);
+    else if(ext==='X83')pos=txt.trimStart().startsWith('<')?parseGAEBXML(txt,file.name):parseD83(txt,file.name);
     else if(ext==='P83')pos=parseP83(txt,file.name);
     else if(ext==='XML')pos=parseXML(txt,file.name);
 
@@ -4594,13 +4609,16 @@ async function importRefFromJSON(file){
 
 async function loadNewLV(file){
   const ext=file.name.split('.').pop().toUpperCase();
+  const status=document.getElementById('lvImportStatus');
+  if(status)status.textContent='LV wird eingelesen …';
   try{
     const txt=await readUploadedText(file,ext);
     let pos=[];
     if(ext==='D83')pos=parseD83(txt,file.name);
-    else if(ext==='X83')pos=txt.trim().startsWith('<?xml')||txt.includes('<GAEB')?parseGAEBXML(txt,file.name):parseD83(txt,file.name);
+    else if(ext==='X83')pos=txt.trimStart().startsWith('<')?parseGAEBXML(txt,file.name):parseD83(txt,file.name);
     else if(ext==='P83')pos=parseP83(txt,file.name);
     else if(ext==='XML')pos=parseXML(txt,file.name);
+    else throw new Error('Unterstützte LV-Dateien: D83, P83, X83 oder XML.');
     if(pos.length){
       S.newLV=pos;
       document.getElementById('hNew').textContent=pos.length;
@@ -4609,15 +4627,45 @@ async function loadNewLV(file){
       checkRunBtn();
       log(`✓ Neues LV: ${pos.length} Positionen aus "${file.name}"`,'s');
       switchTab('t2');
-    }else log(`⚠ ${file.name}: Keine Positionen gefunden`,'w');
+      if(status)status.textContent='';
+    }else{
+      const message=`${file.name}: Keine LV-Positionen erkannt. Dateiformat und Inhalt prüfen.${S.newLV.length?' Das bisherige LV bleibt geladen.':''}`;
+      if(status)status.textContent=message;
+      log('⚠ '+message,'w');
+    }
   }catch(err){
+    if(status)status.textContent=`${file.name}: ${err.message}${S.newLV.length?' Das bisherige LV bleibt geladen.':''}`;
     log(`⚠ ${file.name}: ${err.message}`,'w');
   }
 }
 
+function getMatchingReferencePools(){
+  const activeRefs=getActiveRef();
+  const calc=activeRefs.filter(rp=>(rp.kosten||[]).some(k=>k.typ!=='S'));
+  const calcKeys=new Set(calc.map(rp=>JSON.stringify([rp.ozCanon,rp.source])));
+  const text=activeRefs.filter(rp=>rp.matchedD83&&!rp.matchedXML&&rp.kurztext?.length>3&&
+    !rp.isFixedPriceItem&&!calcKeys.has(JSON.stringify([rp.ozCanon,rp.source])));
+  return{calc,text};
+}
 function checkRunBtn(){
-  const hasRef=getActiveRef().some(rp=>rp.kosten&&rp.kosten.length>0&&!rp.kosten.every(k=>k.typ==='S'));
+  const pools=getMatchingReferencePools();
+  const includeText=!!document.getElementById('d83RefFilter')?.checked;
+  const hasRef=pools.calc.length>0||(includeText&&pools.text.length>0);
   document.getElementById('runBtn').disabled=S.matching||!(S.newLV.length&&hasRef);
+  let message='Neues GAEB-LV laden, dann mit aktiven Referenzen vergleichen.';
+  if(S.matching)message='Matching läuft …';
+  else if(S.newLV.length){
+    if(hasRef)message=`Bereit: ${S.newLV.length} LV-Positionen · ${pools.calc.length} Kalkulationsreferenzen${includeText?` · ${pools.text.length} Textreferenzen`:''}.${!pools.calc.length?' Textvergleich ohne Preise; keine Kalkulation exportierbar.':''}`;
+    else if(S.refProjects.length&&!getActiveRefState().projects.length)message='Alle Referenzprojekte sind deaktiviert. Unter „Referenzprojekte“ mindestens ein Projekt aktivieren.';
+    else if(pools.text.length)message='Nur Textreferenzen vorhanden. „D83-Textrefs“ aktivieren oder eine Referenzkalkulation laden.';
+    else message='LV geladen. Zum Matching eine Referenzdatenbank oder ein Referenzprojekt laden. Das neue LV allein enthält keine Referenzpreise.';
+  }
+  const status=document.getElementById('matchStartStatus');
+  if(status)status.textContent=message;
+  const help=document.getElementById('matchStartHelp');
+  if(help)help.style.display=S.newLV.length&&!hasRef&&!S.matching?'flex':'none';
+  const llmButton=document.getElementById('llmRequestBtn');
+  if(llmButton)llmButton.disabled=S.matching||!S.newLV.length||!getActiveRef().length;
 }
 
 function setMatchingProgress(state={}){
@@ -4653,6 +4701,7 @@ function setMatchingProgress(state={}){
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function onD83RefToggle(){
   document.getElementById('d83RefLbl').classList.toggle('on',document.getElementById('d83RefFilter').checked);
+  checkRunBtn();
 }
 async function runMatch(){
   if(S.matching)return;
@@ -4668,19 +4717,10 @@ async function runMatch(){
     const activeRefs=getActiveRef();
     activeRefs.forEach(getMatchProfile);
     S.newLV.forEach(getMatchProfile);
-    const refPool=activeRefs.filter(rp=>{
-      if(!rp.kosten||!rp.kosten.length)return false;
-      if(rp.kosten.every(k=>k.typ==='S'))return false;
-      return true;
-    });
-  // Erweiterter Pool: D83-only Positionen als Texttreffer (wenn Toggle an)
-  // Reine D83-Festpreise ohne XML-Kalkulation bleiben ausgeschlossen
-  const D83_THRESH=Math.max(thresh,50); // D83-Textrefs brauchen min. 50% um sinnvoll zu sein
-    const d83Pool=inclD83Refs?activeRefs.filter(rp=>
-      rp.matchedD83&&!rp.matchedXML&&rp.kurztext&&rp.kurztext.length>3&&
-      !rp.isFixedPriceItem&&
-      !refPool.some(r=>r.ozCanon===rp.ozCanon&&r.source===rp.source)
-    ):[];
+    const pools=getMatchingReferencePools();
+    const refPool=pools.calc;
+    const D83_THRESH=Math.max(thresh,50);
+    const d83Pool=inclD83Refs?pools.text:[];
     const fullPool=[...refPool,...d83Pool];
     const refBuckets=buildReferenceBuckets(fullPool);
     if(!fullPool.length){
@@ -4891,6 +4931,7 @@ function getMatchRiskReasons(result,match=result?.matches?.[result?.sel||0]){
   if(!match)return['kein Treffer'];
   const reasons=[];
   const debug=match.debug||calcScore(result?.newPos||{},match.pos||{},{isTextOnly:match.kind==='TEXT_ONLY'}).debug||{};
+  if(debug.llmMatched)reasons.push('LLM-Zuordnung: fachlich prüfen');
   const pos=match.pos||{};
   const bestScore=Number(match.score)||0;
   const secondScore=Number(result?.matches?.find(m=>m!==match)?.score)||0;
@@ -5035,6 +5076,7 @@ function renderMatch(){
       </td>
       <td class="oz">${h(r.newPos.oz)}</td>
       <td><div class="kt">${h(r.newPos.kurztext)}</div>
+          ${r.llmDecision?`<div class="section-note" title="${h(r.llmDecision.reason)}">LLM · ${h(r.llmDecision.status)} · ${h(r.llmDecision.confidence)}<br>${h(r.llmDecision.reason.slice(0,160))}</div>`:''}
           <div class="lt">${h((r.newPos.langtext||'').substring(0,55))}${(r.newPos.langtext||'').length>55?'...':''}</div>
           ${(r.newPos.langtext||'').trim()?`<button class="info-btn" style="margin-top:3px;font-size:10px;padding:2px 6px" onclick="openManualTargetLang(${idx},event)" title="Vollständigen Langtext anzeigen">📄 Langtext</button>`:''}</td>
       <td style="white-space:nowrap;font-size:11px">${r.newPos.menge>0?`<b>${r.newPos.menge.toLocaleString('de-DE',{maximumFractionDigits:3})}</b> ${h(newMe)}`:'-'}</td>
@@ -5865,6 +5907,59 @@ function generateChatGPTReviewPrompt(){
   return lines.join('\n');
 }
 
+async function getLLMMatchingContext(){
+  await referenceStorageReady;
+  const targets=S.newLV.slice(),references=getActiveRef().slice();
+  const request=await KPLLMMatching.buildRequest({version:APP_VERSION,targets,references});
+  return{request,targets,references};
+}
+async function downloadLLMMatchingRequest(){
+  const status=document.getElementById('llmMatchingStatus');
+  try{
+    if(S.matching)throw new Error('Bitte laufendes Matching zuerst abschließen lassen.');
+    const {request}=await getLLMMatchingContext();
+    dl(JSON.stringify(request,null,2),`KalkPilot_LLM_Matching_${request.requestId.slice(0,12)}.json`,'application/json');
+    status.textContent=`Paket: ${request.zielpositionen.length} Zielpositionen und ${request.referenzen.length} Referenzen. In Codex/Claude Code hochladen: „Führe den Matching-Auftrag aus und liefere die Antwort als JSON-Datei gemäß antwortformat.“`;
+  }catch(error){status.textContent=error.message;}
+}
+async function importLLMMatches(file){
+  const status=document.getElementById('llmMatchingStatus');
+  try{
+    if(S.matching)throw new Error('Bitte laufendes Matching zuerst abschließen lassen.');
+    if(file.size>10*1024*1024)throw new Error('LLM-Antwort ist größer als 10 MB.');
+    const response=JSON.parse(normalizeImportedJSONText(await file.text()));
+    const {request,targets,references}=await getLLMMatchingContext();
+    const decisions=KPLLMMatching.validateResponse(response,request);
+    const rows=new Map(decisions.map(row=>[row.targetId,row]));
+    const refMap=new Map(request.referenzen.map((p,i)=>[p.id,references[i]]));
+    const next=targets.map((np,i)=>{
+      const decision=rows.get(request.zielpositionen[i].id);
+      const matches=decision.referenceIds.map(id=>{
+        const pos=refMap.get(id);
+        const kind=(pos.kosten||[]).some(c=>c.typ!=='S')?'CALC':'TEXT_ONLY';
+        const evaluated=calcScore(np,pos,{isTextOnly:kind==='TEXT_ONLY'});
+        return{pos,kind,score:evaluated.score,debug:{...evaluated.debug,llmMatched:true,
+          llmConfidence:decision.confidence,
+          reasonText:`LLM: ${decision.reason} Unterschiede: ${decision.differences.join(' · ')||'-'}. Fehlende Angaben: ${decision.missingInformation.join(' · ')||'-'}. Regelprüfung: ${evaluated.debug.reasonText||''}`}};
+      });
+      return{newPos:np,matches,sel:0,accepted:false,llmDecision:decision};
+    });
+    const current=getActiveRef();
+    if(S.matching||S.newLV.length!==targets.length||S.newLV.some((p,i)=>p!==targets[i])||
+      current.length!==references.length||current.some((p,i)=>p!==references[i])){
+      throw new Error('Daten haben sich während des Imports geändert. Bitte erneut versuchen.');
+    }
+    // All rows and IDs have been validated before the first state mutation.
+    S.results=next;
+    resetManualCache();renderMatch();updateExport();renderManualMatch();
+    document.getElementById('matchSum').innerHTML=summarizeBadges();
+    status.textContent=`${next.length} LLM-Zuordnungen eingelesen; ${next.filter(r=>r.matches.length).length} mit Vorschlägen. Alle stehen zur Prüfung. Die angezeigten Punkte stammen aus der Regelprüfung, nicht aus einer LLM-Wahrscheinlichkeit.`;
+    switchTab('t2');
+  }catch(error){
+    status.textContent=`LLM-Ergebnis nicht übernommen: ${error.message}`;
+    log(status.textContent,'w');
+  }
+}
 function downloadBrowserReview(){
   if(!S.newLV.length&&!S.results.length){alert('Bitte zuerst ein neues Leistungsverzeichnis laden.');return;}
   const payload=KPBrowserReview.build({version:APP_VERSION,results:S.results,newLV:S.newLV,riskReasons:getMatchRiskReasons,reviewTrace:getMatchReviewTrace});

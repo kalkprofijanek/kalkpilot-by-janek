@@ -1,6 +1,6 @@
 # Browser-Umbau und Kalkulations-BETA
 
-Stand: 5. Oktober 2026. Ziel: KalkPilot auf einem Firmenrechner als statische Browser-App verwenden, mit manuellen Datei-Uploads in ChatGPT. Kein lokales Programm, API-Zugang oder Server für die Kalkulationsdaten erforderlich.
+Stand: 5. Oktober 2026. Ziel: KalkPilot auf einem Firmenrechner als statische Browser-App verwenden, mit fachlichem LLM-Matching durch Codex/Claude Code in der Cloud. Kein lokales Programm, API-Zugang oder Server für die Kalkulationsdaten erforderlich.
 
 ## GitHub-Recherche und Entscheidungen
 
@@ -28,9 +28,14 @@ Die GitHub-Suche nach GAEB/JavaScript ergab in den zugänglichen Ergebnissen kei
 - Unaufgelöste Assembly-Preise als Risiko anzeigen und automatische Übernahme unterbinden.
 - Direkte Anthropic-API-Anbindung entfernen. Ein manuell herunterladbares JSON-Prüfpaket enthält Zielpositionen, Kandidaten, historische Ansätze, Faktoren, Risiken und klare BETA-Kennzeichnung. Es setzt weder Preise noch Übernahmen automatisch.
 - Browsermodule für Speicherung, Encoding und Prüfpaket auslagern; Regressionen und GitHub-Actions-Prüfung ergänzen.
+- Startbedingungen und Matching verwenden denselben Referenzpool. Reine D83-Textreferenzen schalten den Start bei aktiviertem Textvergleich frei; fehlende Voraussetzungen und fehlgeschlagene LV-Imports werden sichtbar erklärt. X83-XML mit Namespace-Präfix ohne XML-Deklaration wird erkannt.
 - Matching-Punktzahlen einheitlich abschließen: erkannte Fachdeckel können weder durch verknüpfte D83-Treffer noch durch Projektboni überschritten werden, auch in der manuellen Suche. Angezeigte Endpunktzahl und Debugdaten stimmen überein.
 - Prüfschritte und Datenqualität in Detailansicht und ChatGPT-Paket anzeigen; fehlende/ungültige Kostenwerte melden. Historische Preise, Preisstand und Region gelten weiterhin als nicht bestätigt.
 - [Öffentliche App](https://kalkprofijanek.github.io/kalkpilot-by-janek/) über den getesteten Pages-Workflow veröffentlichen; Link und [Release-Anleitung](VEROEFFENTLICHUNG.md) ergänzen.
+
+## Echtes LLM-Matching in der Cloud
+
+Codex/Claude Code ordnet Zielpositionen selbst konkreten Referenzen zu. Ein Matching-Paket enthält den gesamten aktiven Referenzbestand; eine geprüfte Antwort-JSON übernimmt konkrete IDs und Begründungen in die App. Alle Zuordnungen starten zur fachlichen Prüfung. Das Cloud-Werkzeug startet die echte Browser-App, bereitet den Auftrag vor und validiert die Antwort; die LLM trifft die semantischen Entscheidungen zwischen diesen Schritten. [Ablauf und Agenten-Auftrag](LLM_MATCHING.md).
 
 ## Ergänzung aus der ChatGPT-Info
 
@@ -42,7 +47,7 @@ Der [Architekturabgleich](ARCHITEKTURABGLEICH.md) prüft die vorgeschlagene Open
 - Historische Daten um versionierte Herkunft, bestätigten Preisstand/Region und Review-Entscheidungen erweitern. Nullpreise und fehlende Metadaten bleiben ungeklärt; Preis-Ausreißer nur unter wirklich vergleichbaren vollständigen Ansätzen beurteilen.
 - Bestehendes GitHub Pages beibehalten: Der Workflow Publish browser app prüft und veröffentlicht main über GitHub Actions. Ein anderer Hostinganbieter ist derzeit nicht erforderlich. Codespaces und Produktionsseite teilen wegen verschiedener Website-Ursprünge keinen lokalen Referenzspeicher.
 
-OpenConstructionERP ist AGPL-3.0. Sein Quellcode wird nicht übernommen; es dient als geprüfte Architektur-Referenz. Produktive Provider-APIs und Vektordatenbanken bleiben optionale spätere Entscheidungen. Der festgelegte manuelle ChatGPT-Upload-Workflow bleibt die aktuelle Zielarchitektur.
+OpenConstructionERP ist AGPL-3.0. Sein Quellcode wird nicht übernommen; es dient als geprüfte Architektur-Referenz. Produktive Provider-APIs und Vektordatenbanken bleiben optionale spätere Entscheidungen. Der aktuelle Zielweg lässt Codex/Claude Code konkrete Referenzen auswählen; die Browser-App importiert und prüft die Zuordnungen. Das zusätzliche ChatGPT-Prüfpaket bleibt als Review-Weg verfügbar.
 
 Die konkreten Befehle und der Cloud-/Codespaces-Ablauf stehen in der [Cloud-Anleitung](CLOUD_ENTWICKLUNG.md). Alle Installationen laufen auf der Cloud-Maschine; die Anwendung bleibt statisch und API-frei. Neue Codespaces und die tatsächliche Firmenbrowser-Vorschau sind separate Abnahmen.
 
@@ -96,4 +101,4 @@ Zusätzlich werden die 26 bereitgestellten Originaldateien lokal gegen die Impor
 
 ### Ergebnisse des Cloud-Nachtrags
 
-Die neuen Cloud-Skripte sind in der bestehenden Codex-Maschine getestet; das Setup ist wiederholbar. Alle 18 Regressionstests bestehen, einschließlich drei neuer Prüfungen für Start/Healthcheck/Dateibereitstellung. Die Devcontainer-Konfiguration wurde gegen die offizielle Basisspezifikation validiert. Neue Codespaces und der externe Firmenbrowser bleiben separat zu prüfen; produktive API-Aufrufe werden durch den Nachtrag nicht eingeführt.
+Die neuen Cloud-Skripte sind in der bestehenden Codex-Maschine getestet; das Setup ist wiederholbar. Alle 25 Regressionstests bestehen, einschließlich drei neuer Prüfungen für Start/Healthcheck/Dateibereitstellung. Die Devcontainer-Konfiguration wurde gegen die offizielle Basisspezifikation validiert. Neue Codespaces und der externe Firmenbrowser bleiben separat zu prüfen; produktive API-Aufrufe werden durch den Nachtrag nicht eingeführt.

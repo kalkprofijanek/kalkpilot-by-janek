@@ -128,6 +128,61 @@ class BrowserRegression(unittest.TestCase):
         self.assertIn('BM-F3', result['b'])
         self.assertTrue(result['caps'], result)
 
+    def test_uploaded_lv_enables_start_after_reference_import(self):
+        self.page.locator('#fNew').set_input_files({
+            'name': 'new.d83', 'mimeType': 'application/octet-stream',
+            'buffer': b'2101 01   1NNN         00000001000psch\n25Baustelle einrichten\n'})
+        self.page.wait_for_function('S.newLV.length === 1')
+        self.assertTrue(self.page.locator('#runBtn').is_disabled())
+        self.assertIn('Referenzdatenbank', self.page.locator('#matchStartStatus').inner_text())
+        self.assertTrue(self.page.locator('#matchStartHelp').is_visible())
+        self.import_projects([{'name': 'Synthetic', 'active': True, 'positions': [
+            {'oz': '01.001', 'kurztext': 'Baustelle einrichten', 'menge': 1, 'me': 'psch',
+             'kosten': [{'typ': 'L', 'menge': 1, 'preis': 12}]}]}])
+        self.assertTrue(self.page.locator('#runBtn').is_enabled())
+        self.page.locator('#runBtn').click()
+        self.page.wait_for_function('!S.matching && S.results.length === 1')
+        self.assertGreater(self.page.evaluate('S.results[0].matches.length'), 0)
+        self.page.evaluate('selectAllProj(false)')
+        self.page.wait_for_function('getActiveRef().length === 0')
+        self.assertTrue(self.page.locator('#runBtn').is_disabled())
+        self.assertIn('deaktiviert', self.page.locator('#matchStartStatus').inner_text())
+
+    def test_active_text_references_enable_start_when_toggled(self):
+        payload = {'name': 'synthetic.d83', 'mimeType': 'application/octet-stream',
+                   'buffer': b'2101 01   1NNN         00000001000psch\n25Baustelle einrichten\n'}
+        self.page.locator('#fileD83').set_input_files(payload)
+        self.page.wait_for_function('P.d83Pos.length === 1')
+        self.page.locator('#addProjBtn').click()
+        self.page.wait_for_function('getActiveRef().length === 1')
+        self.page.locator('#fNew').set_input_files(payload)
+        self.page.wait_for_function('S.newLV.length === 1')
+        self.page.locator('#d83RefFilter').uncheck()
+        self.assertTrue(self.page.locator('#runBtn').is_disabled())
+        self.assertIn('Textreferenzen', self.page.locator('#matchStartStatus').inner_text())
+        self.page.locator('#d83RefFilter').check()
+        self.assertTrue(self.page.locator('#runBtn').is_enabled())
+        self.assertIn('ohne Preise', self.page.locator('#matchStartStatus').inner_text())
+        self.page.locator('#runBtn').click()
+        self.page.wait_for_function('!S.matching && S.results.length === 1')
+        self.assertEqual(self.page.evaluate('S.results[0].matches[0].kind'), 'TEXT_ONLY')
+        self.assertFalse(self.page.evaluate('S.results[0].accepted'))
+
+    def test_prefixed_x83_upload_without_xml_declaration(self):
+        xml = ('<g:GAEB xmlns:g="http://www.gaeb.de/GAEB_DA_XML/DA83/3.3">'
+               '<g:BoQCtgy RNoPart="01"><g:Item RNoPart="010"><g:Qty>12.5</g:Qty>'
+               '<g:QU>m3</g:QU><g:Description><g:S>Boden ausheben</g:S>'
+               '</g:Description></g:Item></g:BoQCtgy></g:GAEB>')
+        self.page.locator('#fNew').set_input_files({
+            'name': 'prefix.x83', 'mimeType': 'application/xml', 'buffer': xml.encode()})
+        self.page.wait_for_function('S.newLV.length === 1')
+        self.assertIn('1 Positionen', self.page.locator('#lvLoadedTxt').inner_text())
+        self.page.locator('#fNew').set_input_files({
+            'name': 'empty.x83', 'mimeType': 'application/xml', 'buffer': b'<GAEB/>'})
+        self.page.wait_for_function("document.getElementById('lvImportStatus').textContent.includes('Keine LV-Positionen')")
+        self.assertIn('bisherige LV', self.page.locator('#lvImportStatus').inner_text())
+        self.assertEqual(self.page.evaluate('S.newLV[0].menge'), 12.5)
+
     def test_large_references_survive_reload(self):
         # More than localStorage's practical quota; exercises real IndexedDB persistence.
         projects = [{'name': 'Synthetic', 'active': True, 'positions': [
@@ -261,6 +316,81 @@ class BrowserRegression(unittest.TestCase):
         self.assertEqual(payload['positionen'][0]['ziel']['menge'], 12)
         self.assertEqual(payload['positionen'][0]['kandidaten'], [])
         self.assertEqual(self.page.locator('#llmApiKey').count(), 0)
+
+    def prepare_llm_case(self):
+        self.import_projects([{'name': 'Synthetic', 'active': True, 'positions': [
+            {'oz': 'R.01', 'kurztext': 'Boden entsorgen', 'langtext': 'Entsorgung Boden BM-F3',
+             'menge': 10, 'me': 't', 'kosten': [{'typ': 'L', 'menge': 1, 'preis': 12}]},
+            {'oz': 'R.02', 'kurztext': 'Boden entsorgen', 'langtext': 'Entsorgung Boden BM-0',
+             'menge': 10, 'me': 't', 'kosten': [{'typ': 'L', 'menge': 1, 'preis': 20}]}]}])
+        self.page.evaluate('''() => {
+          S.newLV=[{oz:'N.01',kurztext:'Boden entsorgen',langtext:'Entsorgung Boden BM-0',menge:10,me:'t'}];
+          switchTab('t2');checkRunBtn();
+        }''')
+        with self.page.expect_download() as info:
+            self.page.locator('#llmRequestBtn').click()
+        request = json.loads(Path(info.value.path()).read_text())
+        self.assertEqual(request['schema'], 'kalkpilot.llm-matching-request')
+        self.assertEqual(len(request['referenzen']), 2)
+        return {'schema': 'kalkpilot.llm-matches', 'schemaVersion': 1,
+                'requestId': request['requestId'], 'matches': [
+                    {'targetId': 't1', 'status': 'matched', 'referenceIds': ['r2'],
+                     'confidence': 'high', 'reason': '<img src=x onerror=alert(1)> Die Materialklasse BM-0 passt.',
+                     'differences': [], 'missingInformation': [], 'preis': 999999}]}
+
+    def load_llm_response(self, response):
+        self.page.locator('#fileLLMMatches').set_input_files({
+            'name': 'llm.json', 'mimeType': 'application/json',
+            'buffer': json.dumps(response).encode()})
+        self.page.wait_for_function("document.getElementById('llmMatchingStatus').textContent.includes('eingelesen') || document.getElementById('llmMatchingStatus').textContent.includes('nicht übernommen')")
+
+    def test_llm_file_roundtrip_selects_reference_without_approving_price(self):
+        response = self.prepare_llm_case()
+        self.load_llm_response(response)
+        result = self.page.evaluate('''() => {const r=S.results[0],m=r.matches[0];
+          return {oz:m.pos.oz,ep:m.pos.ep,accepted:r.accepted,
+            auto:canAutoAcceptMatch(r,m),reason:m.debug.reasonText};}''')
+        self.assertEqual(result['oz'], 'R.02')
+        self.assertEqual(result['ep'], 20)
+        self.assertFalse(result['accepted'])
+        self.assertFalse(result['auto'])
+        self.assertIn('BM-0', result['reason'])
+        self.assertIn('LLM', self.page.locator('#mTbl').inner_text())
+        self.assertEqual(self.page.locator('#mTbl img').count(), 0)
+
+    def test_invalid_and_stale_llm_results_keep_previous_selection(self):
+        response = self.prepare_llm_case()
+        self.load_llm_response(response)
+        for variant in ('unknown_ref', 'duplicate_target', 'stale', 'changed_data'):
+            invalid = json.loads(json.dumps(response))
+            if variant == 'unknown_ref':
+                invalid['matches'][0]['referenceIds'] = ['invented']
+            elif variant == 'duplicate_target':
+                invalid['matches'] *= 2
+            elif variant == 'stale':
+                invalid['requestId'] = 'old'
+            else:
+                self.page.evaluate("S.newLV[0].langtext='Entsorgung Boden BM-F3'")
+            self.page.evaluate("document.getElementById('llmMatchingStatus').textContent='' ")
+            self.load_llm_response(invalid)
+            self.assertIn('nicht übernommen', self.page.locator('#llmMatchingStatus').inner_text())
+            self.assertEqual(self.page.evaluate('S.results[0].matches[0].pos.oz'), 'R.02')
+
+    def test_llm_choice_obeys_conflict_caps_and_no_match_has_visible_reason(self):
+        response = self.prepare_llm_case()
+        response['matches'][0]['referenceIds'] = ['r1']
+        self.load_llm_response(response)
+        result = self.page.evaluate('''() => ({score:S.results[0].matches[0].score,
+          caps:S.results[0].matches[0].debug.hardCapsApplied,
+          accepted:S.results[0].accepted})''')
+        self.assertLess(result['score'], 40)
+        self.assertTrue(result['caps'])
+        self.assertFalse(result['accepted'])
+        response['matches'][0].update(status='no_match', referenceIds=[], reason='Keine fachlich belastbare Referenz.')
+        self.page.evaluate("document.getElementById('llmMatchingStatus').textContent='' ")
+        self.load_llm_response(response)
+        self.assertEqual(self.page.evaluate('S.results[0].matches.length'), 0)
+        self.assertIn('Keine fachlich belastbare Referenz.', self.page.locator('#mTbl').inner_text())
 
 
 if __name__ == '__main__':
