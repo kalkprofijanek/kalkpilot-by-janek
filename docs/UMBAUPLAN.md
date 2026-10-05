@@ -30,7 +30,7 @@ Die GitHub-Suche nach GAEB/JavaScript ergab in den zugänglichen Ergebnissen kei
 - Browsermodule für Speicherung, Encoding und Prüfpaket auslagern; Regressionen und GitHub-Actions-Prüfung ergänzen.
 - Matching-Punktzahlen einheitlich abschließen: erkannte Fachdeckel können weder durch verknüpfte D83-Treffer noch durch Projektboni überschritten werden, auch in der manuellen Suche. Angezeigte Endpunktzahl und Debugdaten stimmen überein.
 - Prüfschritte und Datenqualität in Detailansicht und ChatGPT-Paket anzeigen; fehlende/ungültige Kostenwerte melden. Historische Preise, Preisstand und Region gelten weiterhin als nicht bestätigt.
-- [Öffentliche App](https://kalkprofijanek.github.io/kalkpilot-by-janek/) über den bestehenden Pages-Weg veröffentlichen; Link und [Release-Anleitung](VEROEFFENTLICHUNG.md) ergänzen.
+- [Öffentliche App](https://kalkprofijanek.github.io/kalkpilot-by-janek/) über den getesteten Pages-Workflow veröffentlichen; Link und [Release-Anleitung](VEROEFFENTLICHUNG.md) ergänzen.
 
 ## Ergänzung aus der ChatGPT-Info
 
@@ -40,7 +40,7 @@ Der [Architekturabgleich](ARCHITEKTURABGLEICH.md) prüft die vorgeschlagene Open
 - Kandidatensuche, Leistungs-/Einheitenprüfung und Preisplausibilität als nachvollziehbare Pässe planen. Exakte Treffer, Lern- und Projektboni dürfen fachliche Sperren für automatische Übernahmen nicht umgehen.
 - Ähnlichkeit, Datenvollständigkeit, fachliche Übertragbarkeit und Freigabe getrennt führen. HIGH/MEDIUM/LOW sind zunächst Prüfklassen, keine bewiesenen Wahrscheinlichkeiten oder Preisfreigaben.
 - Historische Daten um versionierte Herkunft, bestätigten Preisstand/Region und Review-Entscheidungen erweitern. Nullpreise und fehlende Metadaten bleiben ungeklärt; Preis-Ausreißer nur unter wirklich vergleichbaren vollständigen Ansätzen beurteilen.
-- Bestehendes GitHub Pages beibehalten: Quelle ist main / Repository-Wurzel. Ein anderer Hostinganbieter ist derzeit nicht erforderlich. Codespaces und Produktionsseite teilen wegen verschiedener Website-Ursprünge keinen lokalen Referenzspeicher.
+- Bestehendes GitHub Pages beibehalten: Der Workflow Publish browser app prüft und veröffentlicht main über GitHub Actions. Ein anderer Hostinganbieter ist derzeit nicht erforderlich. Codespaces und Produktionsseite teilen wegen verschiedener Website-Ursprünge keinen lokalen Referenzspeicher.
 
 OpenConstructionERP ist AGPL-3.0. Sein Quellcode wird nicht übernommen; es dient als geprüfte Architektur-Referenz. Produktive Provider-APIs und Vektordatenbanken bleiben optionale spätere Entscheidungen. Der festgelegte manuelle ChatGPT-Upload-Workflow bleibt die aktuelle Zielarchitektur.
 
