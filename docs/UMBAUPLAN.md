@@ -4,7 +4,7 @@ Stand: 5. Oktober 2026. Ziel: KalkPilot auf einem Firmenrechner als statische Br
 
 ## GitHub-Recherche und Entscheidungen
 
-Die öffentlichen Repository-READMEs, ausgewählte Lizenzdateien und npm-Paketmetadaten wurden direkt abgerufen. Die GitHub-API war in der Arbeitsumgebung gesperrt; deshalb ist der aktuelle GitHub-Commit-/Wartungsstand nicht abschließend geprüft. Versionen beziehen sich auf die abgerufenen Paketmetadaten, nicht auf automatisch übernommene zukünftige Releases.
+Die öffentlichen Repository-READMEs, ausgewählte Lizenzdateien und npm-Paketmetadaten wurden direkt abgerufen. Während der ersten Recherche war die GitHub-API gesperrt; sie ist inzwischen erreichbar. Die ursprünglichen Bibliotheksversionen beziehen sich auf die abgerufenen Paketmetadaten. OpenConstructionERP wurde ergänzend auf einem festen Commit untersucht; Quellen, Lizenzbewertung und konkrete Lücken stehen im [Architekturabgleich](ARCHITEKTURABGLEICH.md).
 
 | Projekt | Geprüfte Paketversion / Lizenz | Nutzen | Entscheidung |
 | --- | --- | --- | --- |
@@ -28,6 +28,20 @@ Die GitHub-Suche nach GAEB/JavaScript ergab in den zugänglichen Ergebnissen kei
 - Unaufgelöste Assembly-Preise als Risiko anzeigen und automatische Übernahme unterbinden.
 - Direkte Anthropic-API-Anbindung entfernen. Ein manuell herunterladbares JSON-Prüfpaket enthält Zielpositionen, Kandidaten, historische Ansätze, Faktoren, Risiken und klare BETA-Kennzeichnung. Es setzt weder Preise noch Übernahmen automatisch.
 - Browsermodule für Speicherung, Encoding und Prüfpaket auslagern; Regressionen und GitHub-Actions-Prüfung ergänzen.
+
+## Ergänzung aus der ChatGPT-Info
+
+Der [Architekturabgleich](ARCHITEKTURABGLEICH.md) prüft die vorgeschlagene OpenConstructionERP-Referenz, die aktuelle KalkPilot-Architektur und die Lücken. Bestätigte Ergänzungen:
+
+- Browserbasierte Entwicklung ausdrücklich zusätzlich zur Browserbedienung vorbereiten: Cloud-Start-/Prüfbefehle und eine GitHub-Codespaces-Devcontainer-Konfiguration sind im Nachtrag ergänzt. Der weitergeleitete Entwicklungsport soll privat bleiben. Auf dem Firmenrechner müssen keine Entwicklungswerkzeuge installiert werden.
+- Kandidatensuche, Leistungs-/Einheitenprüfung und Preisplausibilität als nachvollziehbare Pässe planen. Exakte Treffer, Lern- und Projektboni dürfen fachliche Sperren für automatische Übernahmen nicht umgehen.
+- Ähnlichkeit, Datenvollständigkeit, fachliche Übertragbarkeit und Freigabe getrennt führen. HIGH/MEDIUM/LOW sind zunächst Prüfklassen, keine bewiesenen Wahrscheinlichkeiten oder Preisfreigaben.
+- Historische Daten um versionierte Herkunft, bestätigten Preisstand/Region und Review-Entscheidungen erweitern. Nullpreise und fehlende Metadaten bleiben ungeklärt; Preis-Ausreißer nur unter wirklich vergleichbaren vollständigen Ansätzen beurteilen.
+- Bestehendes GitHub Pages beibehalten: Quelle ist main / Repository-Wurzel. Ein anderer Hostinganbieter ist derzeit nicht erforderlich. Codespaces und Produktionsseite teilen wegen verschiedener Website-Ursprünge keinen lokalen Referenzspeicher.
+
+OpenConstructionERP ist AGPL-3.0. Sein Quellcode wird nicht übernommen; es dient als geprüfte Architektur-Referenz. Produktive Provider-APIs und Vektordatenbanken bleiben optionale spätere Entscheidungen. Der festgelegte manuelle ChatGPT-Upload-Workflow bleibt die aktuelle Zielarchitektur.
+
+Die konkreten Befehle und der Cloud-/Codespaces-Ablauf stehen in der [Cloud-Anleitung](CLOUD_ENTWICKLUNG.md). Alle Installationen laufen auf der Cloud-Maschine; die Anwendung bleibt statisch und API-frei. Neue Codespaces und die tatsächliche Firmenbrowser-Vorschau sind separate Abnahmen.
 
 ## Nächste Ausbaustufen mit Abnahmekriterien
 
@@ -76,3 +90,7 @@ Zusätzlich werden die 26 bereitgestellten Originaldateien lokal gegen die Impor
 - Original-JSON: vier Projekte / 1.527 Positionen nach Import und erneut vier Projekte nach Neuladen; keine JavaScript-Seitenfehler. Importdauer in dieser Umgebung etwa 2,4 Sekunden.
 - Synthetischer Ranking-Test: 26/26 Top-1, kein Beleg für allgemeine Qualität auf neuen Projekten.
 - Der betriebliche Edge-/Chrome-Browser und ein iTWO-Reimport wurden nicht extern geprüft. Vollständige selbstständige Preisberechnung bleibt die oben beschriebene nächste Ausbaustufe.
+
+### Ergebnisse des Cloud-Nachtrags
+
+Die neuen Cloud-Skripte sind in der bestehenden Codex-Maschine getestet; das Setup ist wiederholbar. Alle 15 Regressionstests bestehen, einschließlich drei neuer Prüfungen für Start/Healthcheck/Dateibereitstellung. Die Devcontainer-Konfiguration wurde gegen die offizielle Basisspezifikation validiert. Neue Codespaces und der externe Firmenbrowser bleiben separat zu prüfen; produktive API-Aufrufe werden durch den Nachtrag nicht eingeführt.

@@ -16,20 +16,28 @@ Das Prüfpaket ist ein Referenzentwurf, keine geprüfte selbstständige Angebots
 
 Den vollständigen Repository-Inhalt als statische Website bereitstellen, einschließlich `js/` und `vendor/`. Es gibt keinen Buildschritt und keine Laufzeit-CDNs. Nur die einzelne HTML-Datei zu kopieren reicht für diese Version nicht mehr. Bei Veröffentlichung über GitHub Pages bleibt der relative Pfad zu den lokalen Skripten gültig. Die vorhandene Produktionsveröffentlichung wird durch einen Feature-Branch nicht geändert.
 
-## Entwicklung und Tests
+## Entwicklung und Tests in der Cloud
+
+Codex Cloud und Claude Code Web bearbeiten dieses Repository auf einem Branch. Alle folgenden Befehle laufen im **Cloud-Terminal**, nicht auf dem Firmenrechner:
 
 ```sh
-python3 -m http.server 8000 --directory .
+bash scripts/setup-cloud.sh
+python3 scripts/dev.py
 ```
 
-Browser-Regressionssuite mit synthetischen Daten:
+Das Setup richtet die Testwerkzeuge in `.venv` ein. Der zweite Befehl startet die statische App auf Port 8000; Host und Port können über `--host`/`--port` oder `KALKPILOT_HOST`/`KALKPILOT_PORT` angepasst werden. Start und Nutzung der App benötigen keine API-Schlüssel.
+
+In einem zweiten Cloud-Terminal:
 
 ```sh
-python3 -m pip install -r requirements-dev.txt
-python3 -m playwright install chromium
-python3 -m unittest discover -s tests -v
+python3 scripts/check_ready.py
+bash scripts/test-cloud.sh
 ```
 
-Eine bereits installierte Chromium-Version kann über `KALKPILOT_CHROMIUM=/usr/bin/chromium` gewählt werden. Die Tests betreiben ihren eigenen temporären Webserver. Kundenreferenzen und Original-LVs gehören nicht ins Repository.
+Der Healthcheck prüft tatsächliche App-Inhalte und lokale Skripte. Die Browser-Regressionssuite nutzt synthetische Daten und ihren eigenen temporären Webserver. Kundenreferenzen und Original-LVs gehören nicht ins Repository.
 
-[Umbauplan und geprüfte GitHub-Projekte](docs/UMBAUPLAN.md) · [Drittanbieter-Lizenzen](THIRD_PARTY_NOTICES.md)
+Für GitHub Codespaces ist `.devcontainer/devcontainer.json` enthalten: Das Cloud-Setup läuft automatisch; Port 8000 wird weitergeleitet. Im Codespace `python3 scripts/dev.py` starten und unter **Ports → 8000 → Im Browser öffnen** aufrufen. Der Port soll privat bleiben. Eine Vorschau hängt von der verwendeten Cloud-Oberfläche ab; wenn Codex/Claude keine Portvorschau anbietet, kann der gleiche Branch in Codespaces geöffnet werden.
+
+[Cloud-Anleitung](docs/CLOUD_ENTWICKLUNG.md)
+
+[Umbauplan und geprüfte GitHub-Projekte](docs/UMBAUPLAN.md) · [Architekturabgleich der Zusatzempfehlungen](docs/ARCHITEKTURABGLEICH.md) · [Drittanbieter-Lizenzen](THIRD_PARTY_NOTICES.md)
