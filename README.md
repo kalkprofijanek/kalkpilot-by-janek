@@ -1,6 +1,6 @@
 # KalkPilot by Janek
 
-**[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.2.1 BETA**
+**[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.3.0 BETA**
 
 **LLM-Matching:** Codex oder Claude Code kann in der Cloud das neue LV anhand eurer Referenzen zuordnen. Die App exportiert den Matching-Auftrag und importiert konkrete Referenz-IDs mit fachlicher Begründung. [Browser- und Cloud-Ablauf](docs/LLM_MATCHING.md).
 
@@ -53,3 +53,5 @@ Für GitHub Codespaces ist `.devcontainer/devcontainer.json` enthalten: Das Clou
 Referenzpreise erscheinen als **ungeprüfte Ansatzsummen**. Offene Bausteine, Faktoren und Pauschalansätze erfordern eine manuelle Prüfung. Im Positionsdetail lassen sich aktive Referenzen mit gleichem Text und gleicher Einheit vergleichen. Eine Referenzübernahme bestätigt keinen Angebotspreis.
 
 Details zur [Referenz- und Preisprüfung](docs/REFERENZPRUEFUNG.md).
+
+Die Positionsdetails zeigen jetzt berechenbare **Teilkosten**, offene Kostenzeilen und ausgeschlossene Ansätze. Nicht auflösbare Bausteine bleiben offen; Leistungsfaktoren und Pauschalen werden ohne bestätigte Rechenregel nicht geraten.

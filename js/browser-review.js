@@ -26,6 +26,44 @@
     if (costs.some(c => Number(c.sItemDisabled))) issues.push('Deaktivierte Kostenzeile: Summe prüfen');
     return issues;
   }
+  function calculateKnownCosts(position) {
+    const number = value => value == null || String(value).trim() === '' ? null :
+      (Number.isFinite(Number(value)) ? Number(value) : null);
+    const rows = (position?.kosten || []).map((cost, index) => {
+      const result = {index, description: cost.descr || cost.nameCoC || 'Kostenansatz', amount: null, reasons: []};
+      if (Number(cost.sItemDisabled)) return {...result, state: 'excluded', reasons: ['deaktiviert']};
+      const quantity = number(cost.menge), price = number(cost.preis);
+      if (quantity === 0) return {...result, state: 'excluded', reasons: ['Mengenansatz 0']};
+      if (quantity == null || price == null) result.reasons.push('Menge oder Preis fehlt/ist ungültig');
+      if (price === 0) result.reasons.push(cost.isAssembly || cost.entryType === 'AssemblyDetail' ?
+        'Bausteinpreis nicht auflösbar' : 'Nullpreis nicht als kostenlose Leistung bestätigt');
+      if (Number(cost.factorIsPerformanceFactor)) result.reasons.push('Leistungsfaktor: Rechenregel nicht bestätigt');
+      for (const key of ['factor', 'costFactor', 'cFactorCoC', 'qFactorCoC']) {
+        if (cost[key] != null && number(cost[key]) !== 1) result.reasons.push(key + ': Rechenregel nicht bestätigt');
+      }
+      if (cost.curCoC && String(cost.curCoC).toUpperCase() !== 'EUR') result.reasons.push('Andere Währung: keine Umrechnung');
+      if (result.reasons.length) return {...result, state: 'open'};
+      const amount = quantity * price;
+      if (!Number.isFinite(amount)) return {...result, state: 'open', reasons: ['Berechnung außerhalb des Zahlenbereichs']};
+      return {...result, state: 'known', amount};
+    });
+    const known = rows.filter(row => row.state === 'known');
+    const subtotal = known.reduce((sum, row) => sum + row.amount, 0);
+    const subs = [...(position?.subItems || []), ...(position?.sub ? [position.sub] : [])];
+    const basisReasons = [];
+    if (number(position?.menge) !== 1 || !String(position?.me || '').trim()) basisReasons.push('Bezugsmenge/-einheit nicht eindeutig eine Leistungseinheit');
+    if (subs.some(sub => Number(sub.sItemLSum) || Number(sub.sItemLSumAbs))) basisReasons.push('Pauschalansatz: Zuordnung zur LV-Menge offen');
+    if (subs.some(sub => Number(sub.sItemDisabled) || Number(sub.factorIsPerformanceFactor) ||
+        ['factor', 'costFactor'].some(key => sub[key] != null && number(sub[key]) !== 1) ||
+        sub.qty != null && number(sub.qty) !== 1)) basisReasons.push('Subitem-Mengen/Faktoren oder Deaktivierungen: Bezugsbasis offen');
+    const finite = Number.isFinite(subtotal);
+    if (!finite) basisReasons.push('Summe außerhalb des Zahlenbereichs');
+    const openCount = rows.filter(row => row.state === 'open').length;
+    return {rows, knownSubtotal: finite && known.length ? subtotal : null,
+      knownCount: known.length, openCount, excludedCount: rows.filter(row => row.state === 'excluded').length,
+      basisReasons, complete: rows.length > 0 && known.length > 0 && !openCount && !basisReasons.length,
+      priceApproved: false, unitPrice: null};
+  }
   function priceStatus(position) {
     const issues = calculationIssues(position);
     return {label: 'Preis ungeprüft', approved: false, issues,
@@ -52,6 +90,7 @@
     return {
       fehlendeLeistungsdaten: missing,
       kalkulationshinweise: calculationIssues(position),
+      teilkosten: calculateKnownCosts(position),
       preispruefung: 'Nicht bestätigt; historische vereinfachte Werte',
       metadatenpruefung: 'Preisstand und Region nicht bestätigt'
     };
@@ -104,5 +143,5 @@
       }))
     };
   }
-  window.KPBrowserReview = {build, calculationIssues, dataQuality, priceStatus, referencePeers};
+  window.KPBrowserReview = {build, calculationIssues, dataQuality, priceStatus, referencePeers, calculateKnownCosts};
 })();

@@ -293,6 +293,44 @@ class BrowserRegression(unittest.TestCase):
         self.assertEqual(self.page.evaluate('async () => (await KPReferenceStore.load())[0].name'), 'Legacy')
         self.assertIsNotNone(self.page.evaluate('key => localStorage.getItem(key)', key))
 
+    def test_partial_costs_keep_unresolved_and_factor_rows_open(self):
+        result = self.page.evaluate("""() => {
+          const pos={menge:1,me:'m2',kosten:[
+            {descr:'Vlies',menge:1.15,preis:.68},
+            {descr:'Lohn',menge:1,preis:54.79,factor:400,factorIsPerformanceFactor:1},
+            {descr:'Gerät',menge:1,preis:0,isAssembly:true},
+            {descr:'Nullpreis',menge:1,preis:0},
+            {descr:'deaktiviert',menge:100,preis:100,sItemDisabled:1},
+            {descr:'ungenutzt',menge:0,preis:0,isAssembly:true}
+          ]};
+          const before=JSON.stringify(pos);const result=KPBrowserReview.calculateKnownCosts(pos);
+          return {...result,unchanged:before===JSON.stringify(pos)};
+        }""")
+        self.assertAlmostEqual(result['knownSubtotal'], .782)
+        self.assertEqual(result['knownCount'], 1)
+        self.assertEqual(result['openCount'], 3)
+        self.assertEqual(result['excludedCount'], 2)
+        self.assertFalse(result['complete'])
+        self.assertFalse(result['priceApproved'])
+        self.assertIsNone(result['unitPrice'])
+        self.assertTrue(result['unchanged'])
+
+    def test_partial_costs_distinguish_simple_costs_from_lump_sum(self):
+        result = self.page.evaluate("""() => {
+          const basic={menge:1,me:'h',kosten:[{menge:2,preis:60},{menge:1,preis:-5}]};
+          const lump={...basic,subItems:[{sItemLSum:1}],linkedD83:{menge:1188,me:'m'}};
+          const invalid={...basic,kosten:[{menge:1,preis:null},{menge:1,preis:10,curCoC:'USD'}]};
+          return [basic,lump,invalid].map(p=>KPBrowserReview.calculateKnownCosts(p));
+        }""")
+        self.assertEqual(result[0]['knownSubtotal'], 115)
+        self.assertTrue(result[0]['complete'])
+        self.assertFalse(result[0]['priceApproved'])
+        self.assertFalse(result[1]['complete'])
+        self.assertTrue(result[1]['basisReasons'])
+        self.assertIsNone(result[1]['unitPrice'])
+        self.assertIsNone(result[2]['knownSubtotal'])
+        self.assertEqual(result[2]['openCount'], 2)
+
     def test_price_basis_risks_prevent_automatic_reference_acceptance(self):
         result = self.page.evaluate("""() => {
           return [
