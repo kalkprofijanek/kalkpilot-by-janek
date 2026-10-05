@@ -72,3 +72,9 @@ Die LLM soll diese Merkmale im Text bestätigen, Gegenargumente prüfen und wide
 Die unabhängige Regelprüfung deckelt eindeutige technische Widersprüche auf höchstens 45 Punkte und nicht bestätigte Zielanforderungen auf höchstens 68 Punkte. Das gilt auch bei identischem Kurztext und für LLM-Vorschläge. Die LLM bestimmt weiterhin Auswahl und Rangfolge; die technische Prüfung macht Widersprüche sichtbar. Die Mustererkennung ersetzt keine vollständige Auslegung komplexer Vorbemerkungen oder mehrdeutiger Leistungstexte.
 
 Ein gezielter synthetischer Vergleich zeigte zuvor 90–100 Punkte für sechs falsche Paare (Durchmesser, SDR, PE-Klasse, AVV/Gefahrklasse, Einbauverfahren). Nach der Änderung sind diese auf 45 Punkte begrenzt. Drei passende Kontrollpaare behielten ihre Werte. Das belegt die Korrektur dieser Fehlerbilder, keine allgemeine LLM-Trefferquote auf Originalprojekten. Dafür sind unabhängige fachliche Sollzuordnungen erforderlich.
+
+## Test am Firmenrechner
+
+Die Website benötigt einen Browser und Dateiuploads, keine lokale Installation oder API-Schlüssel. Unter „Matching & Übernahme“ stehen die KI-Schritte zuerst; der Regelvergleich ist optional eingeklappt. Ein kopierbarer Auftrag erklärt, wie die LLM die heruntergeladene Datei bearbeiten soll. Nach Import der Antwort sind alle Vorschläge weiterhin zu prüfen.
+
+Version 1.3.2-beta korrigiert außerdem die Verschachtelung und das Scrollverhalten des Matching-Bereichs, damit die KI-Schaltflächen auf Laptop-Bildschirmen nicht von der Ergebnistabelle verdeckt werden. Die Versionsnummer erscheint oben neben dem Standdatum. Sichtbarkeit und Erreichbarkeit werden bei 1366×768 und 1024×768 geprüft.
