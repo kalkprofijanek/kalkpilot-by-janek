@@ -403,7 +403,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       <span id="refPreviewCount" style="font-size:11px;color:var(--muted)"></span>
     </div>
     <div class="tbl-wrap">
-      <table><thead><tr><th>OZ</th><th>Kurztext</th><th>ME</th><th>Kostenstruktur</th><th>EP (€)</th><th>Projekt</th><th>Quelle</th><th></th></tr></thead>
+      <table><thead><tr><th>OZ</th><th>Kurztext</th><th>ME</th><th>Kostenstruktur</th><th>Ansatzsumme (€)<br><small>Preis ungeprüft</small></th><th>Projekt</th><th>Quelle</th><th></th></tr></thead>
       <tbody id="refTb"><tr><td colspan="8"><div class="empty" style="padding:10px"><div class="empty-i" style="font-size:20px">🗄</div>Keine Daten</div></td></tr></tbody></table>
     </div>
   </div>
@@ -542,7 +542,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
           <th class="sortable" onclick="toggleSort('score')">Ähnlichkeit <span id="siScore">↓</span></th>
           <th>Referenz-Treffer</th>
           <th>Kosten L·M·G·N·B·S</th>
-          <th>EP (€)</th>
+          <th>Ansatzsumme (€)<br><small>Preis ungeprüft</small></th>
         </tr></thead>
         <tbody id="matchTb">
           <tr><td colspan="8"><div class="empty"><div class="empty-i">🔍</div>Lade Referenzprojekte + neues LV, dann „KalkPilot starten“</div></td></tr>
@@ -708,7 +708,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 <script src="js/browser-review.js"></script>
 <script src="js/llm-matching.js"></script>
 <script>
-const APP_VERSION='1.2.0-beta';
+const APP_VERSION='1.2.1-beta';
 const APP_BUILD_DATE='2026-10-05T00:00:00+02:00';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -3324,7 +3324,7 @@ function updateRefUI(){
       </td>
       <td>${h(p.me)}</td>
       <td>${renderPills(p.kosten)}</td>
-      <td class="ep">${p.ep>0?p.ep.toFixed(2):'-'}</td>
+      <td class="ep">${p.ep>0?p.ep.toFixed(2):'-'}${renderPriceStatus(p)}</td>
       <td><span class="src">${h(p.source)}</span></td>
       <td style="font-size:10px;color:var(--muted)">${p.matchedD83&&p.matchedXML?'D83+XML':p.matchedXML?'nur XML':'nur D83'}</td>
       <td><button class="info-btn" onclick="showRefDetail(${i})" title="Kalkulationsdetail anzeigen">🔍</button></td>
@@ -4939,7 +4939,7 @@ function getMatchRiskReasons(result,match=result?.matches?.[result?.sel||0]){
   const rpProf=getMatchProfile(pos);
   if(match.kind!=='CALC')reasons.push('nur D83-Texttreffer, keine Kalkulation exportierbar');
   if(!(pos.kosten||[]).some(k=>k.typ!=='S'))reasons.push('keine belastbare L/M/G/N-Kostenstruktur');
-  reasons.push(...KPBrowserReview.calculationIssues(pos).filter(issue=>issue==='Bausteinpreis nicht aufgelöst'));
+  reasons.push(...KPBrowserReview.calculationIssues(pos));
   if((debug.hardCapsApplied||[]).length)reasons.push('fachlicher Deckel: '+debug.hardCapsApplied[0]);
   if(bestScore>=80&&secondScore>0&&(bestScore-secondScore)<8)reasons.push('knappes Top-1/Top-2-Rennen');
   if((debug.unitScore||0)<80)reasons.push('Einheit nicht sicher gleich');
@@ -5072,7 +5072,7 @@ function renderMatch(){
     const altLabel=hasAlt?`${selIdx+1}/${r.matches.length}`:'';
     return`<tr class="${r.accepted?'acc-row':''} ${topMarked?'match-top':''}">
       <td class="decision-col">
-        ${best?`<button class="btn btn-sm ${r.accepted?'btn-ok':'accept-btn off'}" onclick="setAccepted(${idx},${r.accepted?'false':'true'})" ${!exportable&&!r.accepted?'disabled':''}>${r.accepted?'Entfernen':'Übernehmen'}</button>`:'<span style="color:var(--muted);font-size:10px">-</span>'}
+        ${best?`<button class="btn btn-sm ${r.accepted?'btn-ok':'accept-btn off'}" onclick="setAccepted(${idx},${r.accepted?'false':'true'})" ${!exportable&&!r.accepted?'disabled':''}>${r.accepted?'Entfernen':'Referenz übernehmen'}</button>`:'<span style="color:var(--muted);font-size:10px">-</span>'}
       </td>
       <td class="oz">${h(r.newPos.oz)}</td>
       <td><div class="kt">${h(r.newPos.kurztext)}</div>
@@ -5100,7 +5100,7 @@ function renderMatch(){
           </div>
         </div>${riskHint}${!exportable?'<div style="margin-top:4px;font-size:10px;color:#fbbf24">Kein XML-Kalkulationsmatch - nicht exportierbar</div>':''}${(best.debug&&best.debug.scoreParts&&((best.debug.scoreParts.warnings||[]).length||(best.debug.scoreParts.reasons||[]).length))?`<div style="margin-top:3px;font-size:10px" title="Detail über 🔍">${(best.debug.scoreParts.warnings||[]).length?`<span style="color:#fbbf24">⚠ ${h(best.debug.scoreParts.warnings[0])}</span>`:`<span style="color:var(--muted)">✓ ${h(best.debug.scoreParts.reasons[0])}</span>`}</div>`:''}`:'<span style="color:var(--muted);font-size:10px">Kein Treffer</span>'}</td>
       <td>${renderPills(kosten)}</td>
-      <td class="ep" style="white-space:nowrap">${ep>0?ep.toFixed(2)+' €':'-'}</td>
+      <td class="ep" style="white-space:nowrap">${ep>0?ep.toFixed(2)+' €':'-'}${best?renderPriceStatus(best.pos):''}</td>
     </tr>`;
   }).join('');
   updateAccStat();
@@ -5109,7 +5109,27 @@ function renderMatch(){
 function renderPills(kosten){
   if(!kosten||!kosten.length)return'<span style="color:var(--muted);font-size:10px">-</span>';
   const by={};kosten.forEach(k=>{by[k.typ]=(by[k.typ]||0)+k.menge*k.preis;});
-  return'<div class="pills">'+Object.entries(by).map(([t,v])=>`<span class="pill p${h(t)}">${h(t)}: ${v>0?v.toFixed(0)+'€':'-'}</span>`).join('')+'</div>';
+  return'<div class="pills" title="Ungeprüfte Ansatzsummen ohne vollständige Faktor- und Bausteinberechnung">'+Object.entries(by).map(([t,v])=>`<span class="pill p${h(t)}">${h(t)}: ${v>0?v.toFixed(0)+'€':'-'}</span>`).join('')+'</div>';
+}
+
+function renderPriceStatus(position,expanded=false){
+  const status=KPBrowserReview.priceStatus(position);
+  return `<div class="section-note" title="${h(status.explanation+' '+status.issues.join(' · '))}"><b>${h(status.label)}</b>${expanded?`<br>${h(status.explanation)}${status.issues.length?'<br>⚠ '+h(status.issues.join(' · ')):''}`:''}</div>`;
+}
+function renderReferenceComparison(position){
+  const peers=KPBrowserReview.referencePeers(position,getActiveRef());
+  if(!peers.length)return '<div class="section-note">Referenzvergleich: keine weiteren aktiven Referenzen mit gleichem Text und gleicher Einheit gefunden.</div>';
+  const selected=[position,...peers.slice(0,9)];
+  return `<details style="margin-top:16px"><summary>Referenzen vergleichen (${peers.length} weitere Textkandidaten)</summary>
+    <p class="section-note">Gleicher Text und gleiche Einheit sind Vergleichskandidaten. Leistungsumfang, Preisstand und Mengenbasis fachlich prüfen. Die Werte werden nicht gemittelt; Referenzübernahme ist keine Preisfreigabe.</p>
+    <table class="cost-tbl"><thead><tr><th>Projekt / OZ</th><th>Leistung / Mengenbasis</th><th>Ansatzsumme · ungeprüft</th><th>Prüfhinweise</th></tr></thead><tbody>
+    ${selected.map((p,i)=>`<tr><td>${i===0?'<b>Ausgewählte Referenz</b><br>':''}${h(p.source||'')}<br>${h(p.oz||'')}</td>
+      <td>${h(p.kurztext||'')}<br>XML: ${h(p.menge??'-')} ${h(p.me||'')}${p.linkedD83?`<br>LV: ${h(p.linkedD83.menge??'-')} ${h(p.linkedD83.me||'')}`:''}
+      <details><summary>Leistung und Kostenansätze</summary><div style="white-space:pre-wrap">${h(p.linkedD83?.langtext||p.langtext||p.outlineSpecs||'')}</div>
+      ${(p.kosten||[]).map(k=>`<div>${h(k.descr||'')} · ${h(k.menge??'-')} × ${h(k.preis??'-')} · ${h(formatLeistungsansatz(k))}</div>`).join('')}</details></td>
+      <td>${Number.isFinite(Number(p.ep))?Number(p.ep).toFixed(2)+' €':'-'}<br>Preis ungeprüft</td>
+      <td>${h(KPBrowserReview.calculationIssues(p).join(' · ')||'Keine strukturellen Auffälligkeiten; Preisstand und Umfang prüfen.')}</td></tr>`).join('')}
+    </tbody></table>${peers.length>9?'<p class="section-note">Anzeige auf neun weitere Kandidaten begrenzt.</p>':''}</details>`;
 }
 
 function formatLeistungsansatz(detail){
@@ -5120,6 +5140,10 @@ function formatLeistungsansatz(detail){
   const parts=[];
   if(Number.isFinite(factor)&&factor!==1)parts.push(`${perf===1?'Faktor':'Ansatz'} ${factor}`);
   if(Number.isFinite(costFactor)&&costFactor!==1)parts.push(`Divisor ${costFactor}`);
+  for(const key of ['cFactorCoC','qFactorCoC']){
+    const value=Number(detail[key]);if(detail[key]!=null&&Number.isFinite(value)&&value!==1)parts.push(`${key} ${value}`);
+  }
+  if(Number(detail.sItemDisabled))parts.push('deaktiviert');
   return parts.length?parts.join(' · '):'-';
 }
 
@@ -5144,7 +5168,7 @@ function showRefDetail(idx){
       ${rp.rawWBSItemXml?'<span class="detail-lbl">Export:</span><span class="detail-val" style="color:var(--green);font-size:11px">✓ 1:1 Rohkopie gespeichert</span>':''}
     </div>
     <div>
-      <div class="ctitle" style="margin-bottom:8px">Kalkulationsaufgliederung (aus XML-Referenz)</div>
+      <div class="ctitle" style="margin-bottom:8px">Kalkulationsaufgliederung (aus XML-Referenz)</div>${renderPriceStatus(rp,true)}
       ${(rp.kosten||[]).length?`
       <table class="cost-tbl">
         <thead><tr><th>Typ</th><th>Name</th><th>Beschreibung</th><th>Ansatz</th><th style="text-align:right">Menge</th><th style="text-align:right">UR-Preis</th><th>Einh.</th><th style="text-align:right">Wert</th></tr></thead>
@@ -5158,9 +5182,10 @@ function showRefDetail(idx){
           <td>${h(k.einheit||'')}</td>
           <td style="text-align:right;font-weight:600">${typeof k.preis==='number'?(k.menge*k.preis).toFixed(2)+' €':'-'}</td>
         </tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="7" style="text-align:right">Gesamt EP:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
+        <tfoot><tr><td colspan="7" style="text-align:right">Ansatzsumme · ungeprüft:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
       </table>`:'<div style="color:var(--muted);font-size:11px">Keine Kalkulationsdaten vorhanden.</div>'}
     </div>`;
+  document.getElementById('dBody').insertAdjacentHTML('beforeend',renderReferenceComparison(rp));
   document.getElementById('detailModal').classList.add('open');
 }
 
@@ -5201,7 +5226,7 @@ function showDetail(idx){
       ${rp.rawWBSItemXml?'<span class="detail-lbl">Export:</span><span class="detail-val" style="color:var(--green);font-size:11px">✓ 1:1 Rohkopie aus Referenz-XML</span>':'<span class="detail-lbl">Export:</span><span class="detail-val" style="color:var(--yellow);font-size:11px">⚠ Rekonstruiert (keine Rohkopie)</span>'}
     </div>
     <div>
-      <div class="ctitle" style="margin-bottom:8px">Kalkulationsaufgliederung (aus XML-Referenz)</div>
+      <div class="ctitle" style="margin-bottom:8px">Kalkulationsaufgliederung (aus XML-Referenz)</div>${renderPriceStatus(rp,true)}
       ${rp.kosten.length?`
       <table class="cost-tbl">
         <thead><tr><th>Typ</th><th>Name</th><th>Beschreibung</th><th>Ansatz</th><th style="text-align:right">Menge</th><th style="text-align:right">UR-Preis</th><th>Einh.</th><th style="text-align:right">Wert</th></tr></thead>
@@ -5215,9 +5240,10 @@ function showDetail(idx){
           <td>${h(k.einheit||'')}</td>
           <td style="text-align:right;font-weight:600">${typeof k.preis==='number'?(k.menge*k.preis).toFixed(2)+' €':'-'}</td>
         </tr>`).join('')}</tbody>
-        <tfoot><tr><td colspan="7" style="text-align:right">Gesamt EP:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
+        <tfoot><tr><td colspan="7" style="text-align:right">Ansatzsumme · ungeprüft:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
       </table>`:'<div style="color:var(--muted);font-size:11px">Keine Kalkulationsdaten (nur D83-Position ohne XML-Match).</div>'}
     </div>`;
+  document.getElementById('dBody').insertAdjacentHTML('beforeend',renderReferenceComparison(rp));
   document.getElementById('detailModal').classList.add('open');
 }
 function closeDetail(){document.getElementById('detailModal').classList.remove('open');}
@@ -5787,8 +5813,8 @@ function doExportCSV(){
   const name=document.getElementById('projName').value||'Export';
   requestDonationBeforeExport(()=>{
     const head=['OZ Neu','Kurztext Neu','ME Neu','Menge Neu','Score%',
-                'OZ Ref','Kurztext Ref','Projekt','EP (€)',
-                'L (€)','M (€)','G (€)','N (€)','B (€)','S (€)'];
+                'OZ Ref','Kurztext Ref','Projekt','Ansatzsumme ungeprüft (€)','Preisstatus','Kalkulationshinweise',
+                'L Ansatzsumme (€)','M Ansatzsumme (€)','G Ansatzsumme (€)','N Ansatzsumme (€)','B Ansatzsumme (€)','S Ansatzsumme (€)'];
     const rows=[head];
     S.results.filter(r=>r.accepted).forEach(r=>{
       const best=r.matches[r.sel];
@@ -5798,7 +5824,7 @@ function doExportCSV(){
         np.oz,np.kurztext,np.me||'',
         np.menge>0?np.menge.toLocaleString('de-DE',{maximumFractionDigits:3}):'',
         best?.score||'',rp.oz||'',rp.kurztext||'',rp.source||'',
-        (rp.ep||0).toFixed(2),
+        (rp.ep||0).toFixed(2),KPBrowserReview.priceStatus(rp).label,KPBrowserReview.calculationIssues(rp).join(' | '),
         (by.L||0).toFixed(2),(by.M||0).toFixed(2),(by.G||0).toFixed(2),
         (by.N||0).toFixed(2),(by.B||0).toFixed(2),(by.S||0).toFixed(2)
       ]);
@@ -6291,8 +6317,8 @@ function runStoredDecisionSelfTest(){
   const failures=[];
   const check=(cond,msg)=>{if(!cond)failures.push(msg);};
   const newPos={kurztext:'Bodentransport abfahren',me:'m3',menge:10};
-  const refA={kurztext:'Boden entsorgen Deponie DK I',me:'t',menge:10,source:'A',kosten:[{typ:'L',betrag:1}]};
-  const refB={kurztext:'Boden transportieren',me:'m3',menge:10,source:'B',kosten:[{typ:'L',betrag:1}]};
+  const refA={kurztext:'Boden entsorgen Deponie DK I',me:'t',menge:10,source:'A',kosten:[{typ:'L',menge:1,preis:1}]};
+  const refB={kurztext:'Boden transportieren',me:'m3',menge:10,source:'B',kosten:[{typ:'L',menge:1,preis:1}]};
   const refText={kurztext:'Boden transportieren D83',me:'m3',menge:10,source:'TXT',kosten:[]};
   try{
     keys.forEach(k=>localStorage.removeItem(k));

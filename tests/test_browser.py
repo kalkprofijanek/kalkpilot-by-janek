@@ -293,6 +293,44 @@ class BrowserRegression(unittest.TestCase):
         self.assertEqual(self.page.evaluate('async () => (await KPReferenceStore.load())[0].name'), 'Legacy')
         self.assertIsNotNone(self.page.evaluate('key => localStorage.getItem(key)', key))
 
+    def test_price_basis_risks_prevent_automatic_reference_acceptance(self):
+        result = self.page.evaluate("""() => {
+          return [
+            {kosten:[{typ:'L',menge:1,preis:50,factor:400,factorIsPerformanceFactor:1}]},
+            {kosten:[{typ:'M',menge:1,preis:0}]},
+            {kosten:[{typ:'G',menge:1,preis:100}],subItems:[{sItemLSum:1}]}
+          ].map(data=>{
+            const pos={kurztext:'Boden lösen',me:'m3',...data};
+            const match={pos,score:100,kind:'CALC',debug:{unitScore:100,categoryScore:100}};
+            const row={newPos:{kurztext:'Boden lösen',me:'m3'},matches:[match],sel:0};
+            return {auto:canAutoAcceptMatch(row,match),risks:getMatchRiskReasons(row,match),status:KPBrowserReview.priceStatus(pos)};
+          });
+        }""")
+        for row in result:
+            self.assertFalse(row['auto'])
+            self.assertTrue(row['risks'])
+            self.assertFalse(row['status']['approved'])
+
+    def test_reference_comparison_shows_price_basis_without_changing_prices(self):
+        result = self.page.evaluate("""() => {
+          const a={oz:'1',source:'A',kurztext:'Baufacharbeiter',langtext:'Baufacharbeiter',me:'h',menge:1,ep:60,kosten:[{typ:'L',menge:1,preis:60}]};
+          const b={...a,oz:'2',source:'<img src=x onerror=alert(1)>',me:'Std',ep:75,kosten:[{typ:'L',menge:1,preis:75}]};
+          const bad={...a,oz:'3',me:'m3',ep:900};
+          S.refProjects=[{name:'A',active:true,positions:[a,b,bad]}];
+          _refPreviewCache=[a];showRefDetail(0);
+          const peers=KPBrowserReview.referencePeers(a,getActiveRef());
+          return {peers:peers.map(p=>p.oz),text:document.getElementById('dBody').textContent,
+            injected:document.querySelector('#dBody img')!==null,prices:[a.ep,b.ep],costs:[a.kosten[0].preis,b.kosten[0].preis]};
+        }""")
+        self.assertEqual(result['peers'], ['2'])
+        self.assertIn('Preis ungeprüft', result['text'])
+        self.assertIn('Referenzen vergleichen', result['text'])
+        self.assertIn('60.00', result['text'])
+        self.assertIn('75.00', result['text'])
+        self.assertFalse(result['injected'])
+        self.assertEqual(result['prices'], [60, 75])
+        self.assertEqual(result['costs'], [60, 75])
+
     def test_unresolved_assembly_prevents_auto_accept(self):
         result = self.page.evaluate('''() => {
           const pos={kurztext:'Boden lösen',me:'m3',kosten:[{typ:'B',isAssembly:true,menge:1,preis:0}]};

@@ -19,7 +19,28 @@
     ) || Number(c.factorIsPerformanceFactor))) {
       issues.push('Faktoren/Leistungsansätze: vereinfachte Preisanzeige nicht vollständig');
     }
+    const subs = [...(position?.subItems || []), ...(position?.sub ? [position.sub] : [])];
+    if (subs.some(sub => Number(sub.sItemLSum) || Number(sub.sItemLSumAbs))) {
+      issues.push('Pauschalansatz: Mengenbasis prüfen');
+    }
+    if (costs.some(c => Number(c.sItemDisabled))) issues.push('Deaktivierte Kostenzeile: Summe prüfen');
     return issues;
+  }
+  function priceStatus(position) {
+    const issues = calculationIssues(position);
+    return {label: 'Preis ungeprüft', approved: false, issues,
+      explanation: 'Historische Ansatzsumme; Faktoren, Pauschalen und offene Bausteine sind nicht vollständig berechnet. Referenzübernahme ist keine Preisfreigabe.'};
+  }
+  // Exact text groups are review candidates, not proof of identical scope or price basis.
+  function referencePeers(position, references) {
+    const normalize = value => String(value || '').toLowerCase().replace(/\s+/g, ' ').trim();
+    const unit = value => ({'std':'h','std.':'h','m²':'m2','m³':'m3'}[normalize(value)] || normalize(value));
+    const text = p => normalize(p?.linkedD83?.langtext || p?.langtext || p?.outlineSpecs);
+    const short = normalize(position?.kurztext), full = text(position);
+    const me = unit(position?.linkedD83?.me || position?.me);
+    if (!me) return [];
+    return references.filter(p => p !== position && unit(p?.linkedD83?.me || p?.me) === me &&
+      ((short.length >= 10 && normalize(p.kurztext) === short) || (full.length >= 30 && text(p) === full)));
   }
   function dataQuality(position) {
     const data = positionData(position);
@@ -83,5 +104,5 @@
       }))
     };
   }
-  window.KPBrowserReview = {build, calculationIssues, dataQuality};
+  window.KPBrowserReview = {build, calculationIssues, dataQuality, priceStatus, referencePeers};
 })();
