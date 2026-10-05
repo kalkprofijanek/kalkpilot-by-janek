@@ -1,6 +1,6 @@
 # Browser-Umbau und Kalkulations-BETA
 
-Stand: 5. Oktober 2026. Ziel: KalkPilot auf einem Firmenrechner als statische Browser-App verwenden, mit manuellen Datei-Uploads in ChatGPT. Kein lokales Programm, API-Zugang oder Server für die Kalkulationsdaten erforderlich.
+Stand: 5. Oktober 2026. Ziel: KalkPilot auf einem Firmenrechner als statische Browser-App verwenden, mit fachlichem LLM-Matching durch Codex/Claude Code in der Cloud. Kein lokales Programm, API-Zugang oder Server für die Kalkulationsdaten erforderlich.
 
 ## GitHub-Recherche und Entscheidungen
 
@@ -47,7 +47,7 @@ Der [Architekturabgleich](ARCHITEKTURABGLEICH.md) prüft die vorgeschlagene Open
 - Historische Daten um versionierte Herkunft, bestätigten Preisstand/Region und Review-Entscheidungen erweitern. Nullpreise und fehlende Metadaten bleiben ungeklärt; Preis-Ausreißer nur unter wirklich vergleichbaren vollständigen Ansätzen beurteilen.
 - Bestehendes GitHub Pages beibehalten: Der Workflow Publish browser app prüft und veröffentlicht main über GitHub Actions. Ein anderer Hostinganbieter ist derzeit nicht erforderlich. Codespaces und Produktionsseite teilen wegen verschiedener Website-Ursprünge keinen lokalen Referenzspeicher.
 
-OpenConstructionERP ist AGPL-3.0. Sein Quellcode wird nicht übernommen; es dient als geprüfte Architektur-Referenz. Produktive Provider-APIs und Vektordatenbanken bleiben optionale spätere Entscheidungen. Der festgelegte manuelle ChatGPT-Upload-Workflow bleibt die aktuelle Zielarchitektur.
+OpenConstructionERP ist AGPL-3.0. Sein Quellcode wird nicht übernommen; es dient als geprüfte Architektur-Referenz. Produktive Provider-APIs und Vektordatenbanken bleiben optionale spätere Entscheidungen. Der aktuelle Zielweg lässt Codex/Claude Code konkrete Referenzen auswählen; die Browser-App importiert und prüft die Zuordnungen. Das zusätzliche ChatGPT-Prüfpaket bleibt als Review-Weg verfügbar.
 
 Die konkreten Befehle und der Cloud-/Codespaces-Ablauf stehen in der [Cloud-Anleitung](CLOUD_ENTWICKLUNG.md). Alle Installationen laufen auf der Cloud-Maschine; die Anwendung bleibt statisch und API-frei. Neue Codespaces und die tatsächliche Firmenbrowser-Vorschau sind separate Abnahmen.
 
