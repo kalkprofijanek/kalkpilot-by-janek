@@ -12,6 +12,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      pages_enabled: ${{ steps.pages.outputs.enabled }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
@@ -19,6 +24,18 @@ jobs:
           python-version: '3.12'
       - run: bash scripts/setup-cloud.sh --browser-deps
       - run: bash scripts/test-cloud.sh
+      - name: Check Pages publishing source
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          source_type=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq '.build_type')
+          if [ "$source_type" = workflow ]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::Deployment skipped: set Settings > Pages > Source to GitHub Actions, then run this workflow again.'
+          fi
       - name: Stage public application files
         run: |
           mkdir .pages-site
@@ -30,6 +47,7 @@ jobs:
           path: .pages-site
   deploy:
     needs: build
+    if: needs.build.outputs.pages_enabled == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

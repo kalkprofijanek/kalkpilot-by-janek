@@ -9,7 +9,7 @@ Die App läuft als statische Website auf GitHub Pages. Auf dem Firmenrechner gen
 1. Änderungen auf einem Branch bearbeiten; Original-LVs und Referenzdaten außerhalb des Repositorys behalten.
 2. `bash scripts/test-cloud.sh` ausführen und Pull Request pushen. Die GitHub-Actions-Browserprüfung muss erfolgreich sein.
 3. Den geprüften Pull Request nach `main` mergen. Unter **Settings → Pages → Build and deployment → Source** ist **GitHub Actions** eingestellt. Der Workflow **Publish browser app** prüft den Stand erneut und veröffentlicht automatisch. Bei Bedarf kann derselbe Workflow unter Actions manuell gestartet werden.
-4. In GitHub unter **Actions** und **Settings → Pages** den erfolgreichen Build prüfen. Die App am obigen Link öffnen; Version kontrollieren und testweise ein LV sowie Referenzen laden.
+4. In GitHub unter **Actions** und **Settings → Pages** den erfolgreichen **Deploy-Schritt** prüfen. Ein erfolgreicher Build mit übersprungenem Deploy-Schritt veröffentlicht nichts. Solange Pages auf der alten Branch-Quelle steht, meldet der Workflow die erforderliche Umstellung und überspringt das Deployment. Nach der Umstellung den Workflow einmal manuell starten. Die App am obigen Link öffnen; Version kontrollieren und testweise ein LV sowie Referenzen laden.
 
 Im Cloud-Terminal kann der tatsächlich veröffentlichte Commit geprüft werden:
 
