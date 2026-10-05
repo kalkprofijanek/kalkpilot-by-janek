@@ -140,6 +140,7 @@ class BrowserRegression(unittest.TestCase):
             {'oz': '01.001', 'kurztext': 'Baustelle einrichten', 'menge': 1, 'me': 'psch',
              'kosten': [{'typ': 'L', 'menge': 1, 'preis': 12}]}]}])
         self.assertTrue(self.page.locator('#runBtn').is_enabled())
+        self.page.locator('#ruleComparisonOptions > summary').click()
         self.page.locator('#runBtn').click()
         self.page.wait_for_function('!S.matching && S.results.length === 1')
         self.assertGreater(self.page.evaluate('S.results[0].matches.length'), 0)
@@ -163,6 +164,7 @@ class BrowserRegression(unittest.TestCase):
         self.page.locator('#d83RefFilter').check()
         self.assertTrue(self.page.locator('#runBtn').is_enabled())
         self.assertIn('ohne Preise', self.page.locator('#matchStartStatus').inner_text())
+        self.page.locator('#ruleComparisonOptions > summary').click()
         self.page.locator('#runBtn').click()
         self.page.wait_for_function('!S.matching && S.results.length === 1')
         self.assertEqual(self.page.evaluate('S.results[0].matches[0].kind'), 'TEXT_ONLY')
@@ -292,6 +294,20 @@ class BrowserRegression(unittest.TestCase):
         self.assertEqual(self.page.evaluate('S.refProjects[0].name'), 'Legacy')
         self.assertEqual(self.page.evaluate('async () => (await KPReferenceStore.load())[0].name'), 'Legacy')
         self.assertIsNotNone(self.page.evaluate('key => localStorage.getItem(key)', key))
+
+    def test_llm_buttons_are_accessible_on_work_laptop_screen(self):
+        self.page.evaluate("switchTab('t2')")
+        for width in (1366, 1024):
+            self.page.set_viewport_size({'width': width, 'height': 768})
+            result = self.page.evaluate("""() => {
+              const button=document.getElementById('llmRequestBtn');const rect=button.getBoundingClientRect();
+              const hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
+              return {visible:rect.y>=0&&rect.bottom<=innerHeight,hit:hit===button||button.contains(hit),
+                optional:document.getElementById('ruleComparisonOptions').open};
+            }""")
+            self.assertTrue(result['visible'])
+            self.assertTrue(result['hit'])
+            self.assertFalse(result['optional'])
 
     def test_technical_conflicts_override_identical_short_text(self):
         result = self.page.evaluate("""() => {

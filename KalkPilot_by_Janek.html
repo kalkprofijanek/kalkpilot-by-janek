@@ -155,12 +155,12 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 .match-progress-strong{color:var(--text);font-weight:600}
 .match-progress-bar{height:8px;border-radius:999px;background:rgba(255,255,255,.06);overflow:hidden}
 .match-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#4f8ef7,#22c55e);transition:width .15s ease}
-.match-layout{display:grid;grid-template-rows:minmax(170px,var(--match-top-height)) minmax(260px,1fr);gap:0;flex:1;min-height:0}
-.match-top-area{min-height:0;overflow:auto;padding-right:2px}
+.match-layout{display:flex;flex-direction:column;gap:12px;flex:1;min-height:0;overflow:auto}
+.match-top-area{min-height:0;overflow:visible;padding-right:2px;flex-shrink:0}
 .match-splitter{position:relative;cursor:row-resize;display:flex;align-items:center;justify-content:stretch}
 .match-splitter::before{content:'';height:2px;border-radius:999px;background:rgba(79,142,247,.22);margin:0 10px;flex:1;transition:background .15s ease,height .15s ease}
 .match-splitter:hover::before,.match-splitter.dragging::before{background:rgba(79,142,247,.65);height:4px}
-.match-results-card{overflow:hidden}
+.match-results-card{overflow:hidden;flex:1 0 400px;min-height:400px!important}
 .match-table-wrap{flex:1;min-height:0}
 .manual-layout{display:grid;grid-template-columns:minmax(260px,var(--manual-left-width)) 10px minmax(320px,1fr);gap:0;flex:1;min-height:0}
 .manual-list,.manual-results{background:var(--card);border:1px solid var(--border);border-radius:8px;min-height:0;display:flex;flex-direction:column}
@@ -431,6 +431,30 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       </div>
     </div>
     <div class="card">
+        <div class="ctitle" style="margin:8px 0 0">KI-Matching im Browser · BETA</div>
+        <ol class="section-note" style="padding-left:20px;margin:4px 0;line-height:1.7">
+          <li>Referenzdatenbank laden und Projekte aktivieren; neues GAEB-LV laden.</li>
+          <li>Matching-Auftrag herunterladen. Datei und den Auftrag unten in Codex oder Claude hochladen.</li>
+          <li>Die von der KI erzeugte Antwort-JSON hier importieren und Zuordnungen prüfen.</li>
+        </ol>
+        <div class="section-note">Die KI arbeitet im separaten Codex-/Claude-Browserfenster. Diese Website verbindet sich nicht automatisch mit deinem KI-Konto. „Referenz übernehmen“ gibt keinen Preis frei.</div>
+        <details><summary style="cursor:pointer;font-size:12px">Auftrag für Codex / Claude anzeigen</summary>
+          <label for="llmAgentPrompt" class="section-note">Diesen Text zusammen mit der heruntergeladenen Datei verwenden:</label>
+          <textarea id="llmAgentPrompt" readonly rows="5" style="width:100%;box-sizing:border-box;margin:5px 0">Führe den Matching-Auftrag aus der hochgeladenen KalkPilot-Datei aus. Ordne als LLM alle Zielpositionen passenden Referenzen aus dem gesamten Bestand zu. Prüfe die Langtexte und technischen Anforderungen, auch Gegenargumente. Erfinde keine Referenzen oder Preise. Verwende ambiguous für nur teilweise passende Ansätze und no_match, wenn kein belastbarer Treffer vorliegt. Liefere eine herunterladbare JSON-Datei gemäß antwortformat mit unveränderter requestId und genau einem Ergebnis pro Zielposition.</textarea>
+          <button class="btn btn-s btn-sm" onclick="copyLLMAgentPrompt(this)">Auftrag kopieren</button>
+        </details>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-p btn-sm" id="llmRequestBtn" disabled onclick="downloadLLMMatchingRequest()">1. Matching-Auftrag herunterladen</button>
+          <button class="btn btn-s btn-sm" onclick="document.getElementById('fileLLMMatches').click()">2. KI-Antwort importieren</button>
+          <input type="file" id="fileLLMMatches" accept=".json" onchange="if(this.files[0])importLLMMatches(this.files[0]);this.value=''">
+        </div>
+        <div class="section-note" id="llmMatchingStatus" role="status"></div>
+        <div class="section-note" id="matchStartStatus" role="status">Neues GAEB-LV und aktive Referenzen laden.</div>
+        <div id="matchStartHelp" style="display:none;gap:5px;flex-wrap:wrap">
+          <button class="btn btn-s btn-sm" onclick="document.getElementById('fileRefJSON').click()">📂 Referenzdatenbank laden</button>
+          <button class="btn btn-s btn-sm" onclick="switchTab('t1')">Referenzprojekte öffnen</button>
+        </div>
+        <details id="ruleComparisonOptions" style="margin-top:12px"><summary style="cursor:pointer">Optional: Regelvergleich ohne KI</summary>
       <div class="section-copy" style="margin-bottom:10px">
         <div class="ctitle" style="margin-bottom:0">Regelvergleich · optional</div>
         <div class="section-note">Die Punktzahl beschreibt Ähnlichkeit, keine Wahrscheinlichkeit. Fachliche Konflikte und offene Preise separat prüfen.</div>
@@ -455,23 +479,12 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
           <span class="rng-val" id="thrV">45%</span>
         </div>
         <button class="btn btn-p" id="runBtn" disabled onclick="runMatch()">▶ Regelvergleich starten (optional)</button>
-        <div class="section-note" id="matchStartStatus" role="status">Neues GAEB-LV und aktive Referenzen laden.</div>
-        <div id="matchStartHelp" style="display:none;gap:5px;flex-wrap:wrap">
-          <button class="btn btn-s btn-sm" onclick="document.getElementById('fileRefJSON').click()">📂 Referenzdatenbank laden</button>
-          <button class="btn btn-s btn-sm" onclick="switchTab('t1')">Referenzprojekte öffnen</button>
-        </div>
-        <div class="ctitle" style="margin:8px 0 0">LLM-Matching mit Codex / Claude Code · BETA</div>
-        <div class="section-note">Paket in Codex oder Claude Code hochladen und die LLM Referenzen zuordnen lassen. Danach die Antwort-JSON hier laden. Der Import ersetzt die Vorschläge und setzt alle Positionen zur fachlichen Prüfung.</div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          <button class="btn btn-p btn-sm" id="llmRequestBtn" disabled onclick="downloadLLMMatchingRequest()">📤 LLM-Matching-Paket</button>
-          <button class="btn btn-s btn-sm" onclick="document.getElementById('fileLLMMatches').click()">📥 LLM-Zuordnungen laden</button>
-          <input type="file" id="fileLLMMatches" accept=".json" onchange="if(this.files[0])importLLMMatches(this.files[0]);this.value=''">
-        </div>
-        <div class="section-note" id="llmMatchingStatus" role="status"></div>
+
+
+        </details>
       </div>
     </div>
       </div>
-    </div>
 
     <div class="card match-results-card" style="display:flex;flex-direction:column;gap:8px;min-height:0">
     <div class="toolbar toolbar-band">
@@ -708,7 +721,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 <script src="js/browser-review.js"></script>
 <script src="js/llm-matching.js"></script>
 <script>
-const APP_VERSION='1.3.1-beta';
+const APP_VERSION='1.3.2-beta';
 const APP_BUILD_DATE='2026-10-05T00:00:00+02:00';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -5956,6 +5969,11 @@ async function getLLMMatchingContext(){
   const request=await KPLLMMatching.buildRequest({version:APP_VERSION,targets,references});
   return{request,targets,references};
 }
+async function copyLLMAgentPrompt(button){
+  const field=document.getElementById('llmAgentPrompt');
+  try{await navigator.clipboard.writeText(field.value);button.textContent='Auftrag kopiert';}
+  catch(error){field.focus();field.select();button.textContent='Text markiert – mit Strg+C kopieren';}
+}
 async function downloadLLMMatchingRequest(){
   const status=document.getElementById('llmMatchingStatus');
   try{
@@ -6807,7 +6825,7 @@ function applyLayoutPolish(){
   // document.lastModified spiegelt immer den letzten Speicherzeitpunkt wider
   const lm=new Date(document.lastModified);
   const stamp=(!isNaN(lm.getTime())&&lm.getFullYear()>2000)?lm.toISOString():APP_BUILD_DATE;
-  document.getElementById('buildStamp').textContent='Stand: '+formatBuildStamp(stamp);
+  document.getElementById('buildStamp').textContent=APP_VERSION+' · Stand: '+formatBuildStamp(stamp);
 })();
 document.getElementById('siScore').textContent='↓';
 
