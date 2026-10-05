@@ -293,6 +293,41 @@ class BrowserRegression(unittest.TestCase):
         self.assertEqual(self.page.evaluate('async () => (await KPReferenceStore.load())[0].name'), 'Legacy')
         self.assertIsNotNone(self.page.evaluate('key => localStorage.getItem(key)', key))
 
+    def test_technical_conflicts_override_identical_short_text(self):
+        result = self.page.evaluate("""() => {
+          const pair=(text,a,b,unit='m')=>({a:{kurztext:text,langtext:a,me:unit},b:{kurztext:text,langtext:b,me:unit}});
+          return [
+            pair('PE100 Rohr liefern und einbauen','PE100 da 75 SDR 11','PE100 da 315 SDR 11'),
+            pair('PE100 Rohr liefern und einbauen','PE100 da 75 SDR 11','PE100 da 75 SDR 17'),
+            pair('Kunststoffrohr liefern und einbauen','Rohr PE100 da 75','Rohr PE80 da 75'),
+            pair('Altholz entsorgen','AVV 170204* Altholz A IV','AVV 170201 nicht gefährliches Altholz','t'),
+            pair('Abfälle entsorgen','AVV 170204*','AVV 170204','t'),
+            pair('Kiessand einbauen','Unterhalb der Grundwasseroberfläche einbauen','Trocken oberhalb des Grundwassers einbauen','m3')
+          ].map(p=>calcScore(p.a,p.b));
+        }""")
+        for row in result:
+            self.assertLessEqual(row['score'], 45)
+            self.assertTrue(row['debug']['technicalCheck']['conflicts'])
+
+    def test_llm_request_contains_requirements_and_unknown_is_not_equal(self):
+        result = self.page.evaluate("""async () => {
+          const a={kurztext:'PE100 Rohr liefern und einbauen',langtext:'PE100 da 75 SDR 11',me:'m'};
+          const b={...a,langtext:'PE 100 Außendurchmesser 75 mm SDR11'};
+          const unknown={kurztext:'Rohr liefern und einbauen',me:'m'};
+          const dn={...a,langtext:'PE100 DN 75 SDR 11'};
+          const request=await KPLLMMatching.buildRequest({version:APP_VERSION,targets:[a],references:[b]});
+          return {request,positive:KPLLMMatching.compareRequirements(a,b),unknown:calcScore(a,unknown),
+            dn:KPLLMMatching.compareRequirements(a,dn)};
+        }""")
+        self.assertEqual(result['request']['zielpositionen'][0]['fachmerkmale']['aussendurchmesser'], ['75'])
+        self.assertEqual(result['request']['referenzen'][0]['fachmerkmale']['sdr'], ['11'])
+        self.assertEqual(result['positive']['conflicts'], [])
+        self.assertEqual(result['positive']['missing'], [])
+        self.assertLessEqual(result['unknown']['score'], 68)
+        self.assertTrue(result['unknown']['debug']['technicalCheck']['missing'])
+        self.assertEqual(result['dn']['conflicts'], [])
+        self.assertTrue(result['dn']['missing'])
+
     def test_partial_costs_keep_unresolved_and_factor_rows_open(self):
         result = self.page.evaluate("""() => {
           const pos={menge:1,me:'m2',kosten:[

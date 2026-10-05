@@ -1,6 +1,6 @@
 # KalkPilot by Janek
 
-**[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.3.0 BETA**
+**[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.3.1 BETA**
 
 **LLM-Matching:** Codex oder Claude Code kann in der Cloud das neue LV anhand eurer Referenzen zuordnen. Die App exportiert den Matching-Auftrag und importiert konkrete Referenz-IDs mit fachlicher Begründung. [Browser- und Cloud-Ablauf](docs/LLM_MATCHING.md).
 
@@ -55,3 +55,5 @@ Referenzpreise erscheinen als **ungeprüfte Ansatzsummen**. Offene Bausteine, Fa
 Details zur [Referenz- und Preisprüfung](docs/REFERENZPRUEFUNG.md).
 
 Die Positionsdetails zeigen jetzt berechenbare **Teilkosten**, offene Kostenzeilen und ausgeschlossene Ansätze. Nicht auflösbare Bausteine bleiben offen; Leistungsfaktoren und Pauschalen werden ohne bestätigte Rechenregel nicht geraten.
+
+Das LLM-Matching-Paket enthält technische Fachmerkmale (Rohrdurchmesser, SDR, PE-Klasse, AVV und Einbauverfahren). Widersprüche und fehlende Anforderungen bleiben auch bei identischem Kurztext sichtbar.
