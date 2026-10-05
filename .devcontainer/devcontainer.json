@@ -1,0 +1,19 @@
+{
+  "name": "KalkPilot Browser Development",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.12-bookworm",
+  "remoteUser": "vscode",
+  "postCreateCommand": "bash scripts/setup-cloud.sh --browser-deps",
+  "forwardPorts": [
+    8000
+  ],
+  "portsAttributes": {
+    "8000": {
+      "label": "KalkPilot",
+      "onAutoForward": "notify"
+    }
+  },
+  "remoteEnv": {
+    "KALKPILOT_HOST": "0.0.0.0",
+    "KALKPILOT_PORT": "8000"
+  }
+}
