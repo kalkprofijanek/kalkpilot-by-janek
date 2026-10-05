@@ -1,5 +1,7 @@
 # KalkPilot by Janek
 
+**[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.1.1 BETA**
+
 Statische Browser-App für den Vergleich von Leistungsverzeichnissen mit Referenzkalkulationen. Die Startseite leitet auf `KalkPilot_by_Janek.html` weiter. Auf einem Firmenrechner genügt ein aktueller Edge- oder Chrome-Browser; es werden keine Programme oder API-Schlüssel benötigt.
 
 ## Verwendung im Browser
@@ -14,7 +16,9 @@ Das Prüfpaket ist ein Referenzentwurf, keine geprüfte selbstständige Angebots
 
 ## Bereitstellung
 
-Den vollständigen Repository-Inhalt als statische Website bereitstellen, einschließlich `js/` und `vendor/`. Es gibt keinen Buildschritt und keine Laufzeit-CDNs. Nur die einzelne HTML-Datei zu kopieren reicht für diese Version nicht mehr. Bei Veröffentlichung über GitHub Pages bleibt der relative Pfad zu den lokalen Skripten gültig. Die vorhandene Produktionsveröffentlichung wird durch einen Feature-Branch nicht geändert.
+GitHub Pages veröffentlicht automatisch den Branch **main**, Ordner **/ (Repository-Wurzel)**. Der öffentliche App-Link lautet https://kalkprofijanek.github.io/kalkpilot-by-janek/. Änderungen werden nach erfolgreichen Browser-Tests per Pull Request nach main gemergt; danach muss der Pages-Build erfolgreich abgeschlossen sein. Ein Feature-Branch allein ändert die Veröffentlichung nicht.
+
+Den vollständigen Repository-Inhalt als statische Website bereitstellen, einschließlich `js/` und `vendor/`. Es gibt keinen Buildschritt und keine Laufzeit-CDNs. Nur die einzelne HTML-Datei zu kopieren reicht für diese Version nicht mehr. [Veröffentlichung und Prüfung](docs/VEROEFFENTLICHUNG.md).
 
 ## Entwicklung und Tests in der Cloud
 

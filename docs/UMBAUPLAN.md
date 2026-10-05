@@ -16,7 +16,7 @@ Die öffentlichen Repository-READMEs, ausgewählte Lizenzdateien und npm-Paketme
 
 Die GitHub-Suche nach GAEB/JavaScript ergab in den zugänglichen Ergebnissen keinen geprüften Kandidaten, der die beobachteten D83-, X83- und iTWO-Probleme nachweislich vollständig löst. Deshalb wird kein unbekannter Parser übernommen. Das ist keine Aussage, dass solche Projekte grundsätzlich nicht existieren.
 
-## In diesem Branch umgesetzt
+## Umgesetzt
 
 - Große Referenzen atomar in IndexedDB speichern; vorhandene Daten bei ungültigem Import oder fehlgeschlagenem Speichern erhalten. Alte localStorage-Daten werden übernommen, ohne die ursprünglichen Kopien zu löschen.
 - Speicherstatus sichtbar machen; portable JSON-Sicherung beibehalten. Alle Referenzmutationen warten auf die anfängliche Wiederherstellung.
@@ -28,6 +28,9 @@ Die GitHub-Suche nach GAEB/JavaScript ergab in den zugänglichen Ergebnissen kei
 - Unaufgelöste Assembly-Preise als Risiko anzeigen und automatische Übernahme unterbinden.
 - Direkte Anthropic-API-Anbindung entfernen. Ein manuell herunterladbares JSON-Prüfpaket enthält Zielpositionen, Kandidaten, historische Ansätze, Faktoren, Risiken und klare BETA-Kennzeichnung. Es setzt weder Preise noch Übernahmen automatisch.
 - Browsermodule für Speicherung, Encoding und Prüfpaket auslagern; Regressionen und GitHub-Actions-Prüfung ergänzen.
+- Matching-Punktzahlen einheitlich abschließen: erkannte Fachdeckel können weder durch verknüpfte D83-Treffer noch durch Projektboni überschritten werden, auch in der manuellen Suche. Angezeigte Endpunktzahl und Debugdaten stimmen überein.
+- Prüfschritte und Datenqualität in Detailansicht und ChatGPT-Paket anzeigen; fehlende/ungültige Kostenwerte melden. Historische Preise, Preisstand und Region gelten weiterhin als nicht bestätigt.
+- [Öffentliche App](https://kalkprofijanek.github.io/kalkpilot-by-janek/) über den bestehenden Pages-Weg veröffentlichen; Link und [Release-Anleitung](VEROEFFENTLICHUNG.md) ergänzen.
 
 ## Ergänzung aus der ChatGPT-Info
 
@@ -93,4 +96,4 @@ Zusätzlich werden die 26 bereitgestellten Originaldateien lokal gegen die Impor
 
 ### Ergebnisse des Cloud-Nachtrags
 
-Die neuen Cloud-Skripte sind in der bestehenden Codex-Maschine getestet; das Setup ist wiederholbar. Alle 15 Regressionstests bestehen, einschließlich drei neuer Prüfungen für Start/Healthcheck/Dateibereitstellung. Die Devcontainer-Konfiguration wurde gegen die offizielle Basisspezifikation validiert. Neue Codespaces und der externe Firmenbrowser bleiben separat zu prüfen; produktive API-Aufrufe werden durch den Nachtrag nicht eingeführt.
+Die neuen Cloud-Skripte sind in der bestehenden Codex-Maschine getestet; das Setup ist wiederholbar. Alle 18 Regressionstests bestehen, einschließlich drei neuer Prüfungen für Start/Healthcheck/Dateibereitstellung. Die Devcontainer-Konfiguration wurde gegen die offizielle Basisspezifikation validiert. Neue Codespaces und der externe Firmenbrowser bleiben separat zu prüfen; produktive API-Aufrufe werden durch den Nachtrag nicht eingeführt.

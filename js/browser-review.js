@@ -5,6 +5,9 @@
     const costs = position?.kosten || [];
     const issues = [];
     if (!costs.length) issues.push('Keine Kostenansätze vorhanden');
+    if (costs.some(c => ['menge', 'preis'].some(key =>
+      c[key] == null || String(c[key]).trim() === '' || !Number.isFinite(Number(c[key]))
+    ))) issues.push('Menge oder Preis im Ansatz fehlt oder ist ungültig');
     if (costs.some(c => (c.isAssembly || c.entryType === 'AssemblyDetail') && !Number(c.preis))) {
       issues.push('Bausteinpreis nicht aufgelöst');
     }
@@ -18,6 +21,20 @@
     }
     return issues;
   }
+  function dataQuality(position) {
+    const data = positionData(position);
+    const missing = [];
+    if (!data.kurztext.trim()) missing.push('Kurztext');
+    if (!data.langtext.trim()) missing.push('Langtext');
+    if (!data.einheit.trim()) missing.push('Einheit');
+    if (data.menge == null || !Number.isFinite(Number(data.menge))) missing.push('Menge');
+    return {
+      fehlendeLeistungsdaten: missing,
+      kalkulationshinweise: calculationIssues(position),
+      preispruefung: 'Nicht bestätigt; historische vereinfachte Werte',
+      metadatenpruefung: 'Preisstand und Region nicht bestätigt'
+    };
+  }
   function positionData(position) {
     return {
       oz: position?.oz || '',
@@ -27,7 +44,7 @@
       einheit: position?.linkedD83?.me || position?.me || ''
     };
   }
-  function build({version, results, newLV, riskReasons}) {
+  function build({version, results, newLV, riskReasons, reviewTrace}) {
     const rows = results.length ? results : newLV.map(newPos => ({newPos, matches: []}));
     return {
       schema: 'kalkpilot.browser-review', schemaVersion: 1, appVersion: version,
@@ -50,6 +67,8 @@
         kandidaten: (row.matches || []).map(match => ({
           referenz: {...positionData(match.pos), projekt: match.pos?.source || ''},
           aehnlichkeit: match.score, typ: match.kind,
+          datenqualitaet: dataQuality(match.pos),
+          pruefschritte: reviewTrace ? reviewTrace(row, match) : [],
           vereinfachterReferenzwert: Number.isFinite(match.pos?.ep) ? match.pos.ep : null,
           risiken: [...new Set([...riskReasons(row, match), ...calculationIssues(match.pos)])],
           kostenansaetze: (match.pos?.kosten || []).map(cost => ({
@@ -64,5 +83,5 @@
       }))
     };
   }
-  window.KPBrowserReview = {build, calculationIssues};
+  window.KPBrowserReview = {build, calculationIssues, dataQuality};
 })();
