@@ -139,6 +139,71 @@ class BrowserRegression(unittest.TestCase):
         result = self.page.evaluate('({count:S.refProjects[0].positions.length,last:S.refProjects[0].positions[1499].menge})')
         self.assertEqual(result, {'count': 1500, 'last': 1500})
 
+    def test_direct_link_preserves_disposal_cap_in_actual_matching(self):
+        result = self.page.evaluate('''async () => {
+          const np={oz:'01.001',kurztext:'Boden entsorgen',me:'t',menge:10,
+            langtext:'Entsorgung Boden BM-0 AVV 170504'};
+          const rp={...np,source:'Synthetic',matchedXML:true,matchedD83:true,
+            kosten:[{typ:'L',menge:1,preis:12}],ep:12,
+            linkedD83:{...np,langtext:'Entsorgung Boden BM-F0'}};
+          S.newLV=[np]; S.refProjects=[{name:'Synthetic',active:true,positions:[rp]}];
+          document.getElementById('thresh').value='35';
+          const evaluated=calcScore(np,rp);
+          await runMatch();
+          const row=S.results[0], match=row.matches[0];
+          showDetail(0);
+          return {base:evaluated.score,direct:linkedD83MatchScore(np,rp),
+            score:match.score,debug:match.debug,accepted:row.accepted,
+            details:document.getElementById('dBody').textContent};
+        }''')
+        self.assertEqual(result['direct'], 1)
+        self.assertTrue(result['debug']['hardCapsApplied'])
+        self.assertEqual(result['score'], result['base'])
+        self.assertEqual(result['debug']['finalScore'], result['score'])
+        self.assertFalse(result['accepted'])
+        self.assertIn('Prüfschritte · BETA', result['details'])
+        self.assertIn('keine Wahrscheinlichkeit', result['details'])
+
+    def test_project_bonus_preserves_caps_in_both_manual_searches(self):
+        result = self.page.evaluate('''() => {
+          const np={oz:'01',kurztext:'Boden entsorgen',me:'t',menge:10,
+            langtext:'Entsorgung Boden BM-0 AVV 170504'};
+          const rp={...np,source:'Synthetic',matchedXML:true,
+            langtext:'Entsorgung Boden BM-F3 AVV 170506',kosten:[{typ:'L',menge:1,preis:12}]};
+          const target={newPos:np,matches:[],sel:0,accepted:false};
+          S.refProjects=[{name:'Synthetic',active:true,positions:[rp]}];
+          S.results=[target,{newPos:np,matches:[{pos:rp,kind:'CALC',score:90}],accepted:true}];
+          resetManualCache();
+          const pool=getManualRefPool(true);
+          const sync=computeManualCandidateRowsSync(target,pool.refs,pool)[0];
+          const global=getGlobalManualSearchRows(target,true,'boden',['boden'])[0];
+          return {base:calcScore(np,rp).score,sync,global};
+        }''')
+        for path in ('sync', 'global'):
+            row = result[path]
+            self.assertGreater(row['debug']['requestedProjectBoost'], 0)
+            self.assertEqual(row['debug']['projectBoost'], 0)
+            self.assertEqual(row['score'], result['base'])
+            self.assertEqual(row['debug']['finalScore'], row['score'])
+
+    def test_review_package_reports_missing_prices_and_inspection_steps(self):
+        self.page.evaluate('''() => {
+          const np={oz:'01',kurztext:'Boden lösen',me:'m3',menge:12};
+          const pos={...np,source:'Synthetic',kosten:[{typ:'L',menge:1,preis:null}]};
+          S.newLV=[np]; S.results=[{newPos:np,matches:[{pos,score:90,kind:'CALC',
+            debug:{unitScore:100,categoryScore:100}}],sel:0,accepted:false}];
+        }''')
+        with self.page.expect_download() as info:
+            self.page.evaluate('downloadBrowserReview()')
+        payload = json.loads(Path(info.value.path()).read_text())
+        candidate = payload['positionen'][0]['kandidaten'][0]
+        quality = candidate['datenqualitaet']
+        self.assertIn('Langtext', quality['fehlendeLeistungsdaten'])
+        self.assertIn('Menge oder Preis im Ansatz fehlt oder ist ungültig', quality['kalkulationshinweise'])
+        self.assertEqual(len(candidate['pruefschritte']), 5)
+        self.assertIn('Nicht bestätigt', quality['preispruefung'])
+        self.assertIsNone(candidate['kostenansaetze'][0]['historischerPreis'])
+
     def test_invalid_import_keeps_existing_data(self):
         self.import_projects([{'name': 'Retain', 'positions': []}])
         self.page.on('dialog', lambda dialog: dialog.dismiss())

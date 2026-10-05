@@ -432,7 +432,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
     <div class="card">
       <div class="section-copy" style="margin-bottom:10px">
         <div class="ctitle" style="margin-bottom:0">Matching-Parameter</div>
-        <div class="section-note">Hier stellst du nur die Strenge des Abgleichs ein. Alles andere bleibt bewusst schlicht.</div>
+        <div class="section-note">Die Punktzahl beschreibt Ähnlichkeit, keine Wahrscheinlichkeit. Fachliche Konflikte und offene Preise separat prüfen.</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
         <div class="ref-notice show" id="matchMemoryBox" style="display:flex">
@@ -525,7 +525,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
           <th class="sortable" onclick="toggleSort('oz')">OZ <span id="siOZ"></span></th>
           <th>Neue Position</th>
           <th class="sortable" onclick="toggleSort('menge')">Menge / ME <span id="siMenge"></span></th>
-          <th class="sortable" onclick="toggleSort('score')">Match% <span id="siScore">↓</span></th>
+          <th class="sortable" onclick="toggleSort('score')">Ähnlichkeit <span id="siScore">↓</span></th>
           <th>Referenz-Treffer</th>
           <th>Kosten L·M·G·N·B·S</th>
           <th>EP (€)</th>
@@ -693,7 +693,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 <script src="js/gaeb-encoding.js"></script>
 <script src="js/browser-review.js"></script>
 <script>
-const APP_VERSION='1.1.0-beta';
+const APP_VERSION='1.1.1-beta';
 const APP_BUILD_DATE='2026-10-05T00:00:00+02:00';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -4732,22 +4732,8 @@ async function runMatch(){
         const evaluated=calcScore(np,rp,{isTextOnly:textOnly});
         const directLink=linkedD83MatchScore(np,rp);
         const projectBoost=(projectPref&&rp.source===projectPref.project)?Math.min(4,1+projectPref.count):0;
-        if(directLink>=0.98){
-          const kind=textOnly?'TEXT_ONLY':'CALC';
-          return{
-            pos:rp,
-            score:100,
-            kind,
-            debug:{
-              ...evaluated.debug,
-              projectBoost,
-              linkedReferenceBoost:100,
-              finalScore:100,
-              reasonText:`Direkt über verknüpfte Referenz-D83 erkannt. ${evaluated.debug.reasonText||''}`.trim()
-            }
-          };
-        }
-        return{pos:rp,score:Math.min(100,evaluated.score+projectBoost),kind:textOnly?'TEXT_ONLY':'CALC',debug:{...evaluated.debug,projectBoost,linkedReferenceBoost:0,finalScore:Math.min(100,evaluated.score+projectBoost),reasonText:(projectBoost>0?`Projektkonsistenz +${projectBoost}%. `:'')+(evaluated.debug.reasonText||'')}};
+        const finalized=finalizeCandidateScore(evaluated,{projectBoost,directLink});
+        return{pos:rp,kind:textOnly?'TEXT_ONLY':'CALC',...finalized};
       });
       scored.sort((a,b)=>b.score-a.score);
       const calcMatches=scored.filter(m=>m.kind==='CALC'&&m.score>=Math.max(35,thresh-10));
@@ -4865,6 +4851,41 @@ function getCostStructureScore(match){
   if([...types].some(t=>t!=='S')&&types.size>=2)return 100;
   if([...types].some(t=>t!=='S'))return 70;
   return 20;
+}
+// Retrieval bonuses must never raise a score already constrained by a fachlicher Deckel.
+function finalizeCandidateScore(evaluated,{projectBoost=0,directLink=0}={}){
+  const constrained=!!evaluated.debug?.hardCapsApplied?.length;
+  const bonus=constrained?0:projectBoost;
+  const direct=directLink>=0.98;
+  const score=direct&&!constrained?100:Math.min(100,evaluated.score+bonus);
+  const reason=[
+    direct?'Über verknüpfte Referenz-D83 gefunden.':'',
+    bonus?`Projektkonsistenz +${bonus} Punkte.`:'',
+    constrained&&(direct||projectBoost)?'Fachlicher Deckel bleibt wirksam; Treffer-/Projektbonus gesperrt.':'',
+    evaluated.debug?.reasonText||''
+  ].filter(Boolean).join(' ');
+  return{score,debug:{...evaluated.debug,projectBoost:bonus,requestedProjectBoost:projectBoost,
+    linkedReferenceBoost:direct&&!constrained?100:0,directReferenceLink:direct,
+    baseScore:evaluated.score,finalScore:score,reasonText:reason}};
+}
+function getMatchReviewTrace(result,match=result?.matches?.[result?.sel||0]){
+  if(!match)return[];
+  const debug=match.debug||{};
+  const quality=KPBrowserReview.dataQuality(match.pos);
+  const risks=getMatchRiskReasons(result,match);
+  return[
+    {schritt:'Referenz',status:debug.directReferenceLink?'Verknüpfter D83-Treffer':'Referenzvorschlag',
+      details:`${match.pos?.source||'Quelle unbekannt'} · OZ ${match.pos?.oz||'-'}`},
+    {schritt:'Ähnlichkeit',status:`${match.score} Punkte`,
+      details:'Heuristischer Vergleich; keine Wahrscheinlichkeit oder Preisfreigabe.'},
+    {schritt:'Fachprüfung',status:debug.hardCapsApplied?.length?'Konflikt':'Kein Fachdeckel erkannt',
+      details:(debug.hardCapsApplied||[]).join(' · ')||'Einheiten, Langtexte und Leistungsumfang fachlich prüfen.'},
+    {schritt:'Kalkulationsdaten',status:quality.kalkulationshinweise.length?'Offene Ansätze':'Ansätze vorhanden',
+      details:[...quality.fehlendeLeistungsdaten.map(x=>'Fehlt: '+x),...quality.kalkulationshinweise,
+        quality.preispruefung,quality.metadatenpruefung].join(' · ')},
+    {schritt:'Übernahmeprüfung',status:canAutoAcceptMatch(result,match)?'Referenz automatisch übernahmefähig':'Manuell prüfen',
+      details:risks.join(' · ')||'Eine Referenzübernahme bestätigt keinen neuen Angebotspreis.'}
+  ];
 }
 function getMatchRiskReasons(result,match=result?.matches?.[result?.sel||0]){
   if(!match)return['kein Treffer'];
@@ -5124,7 +5145,7 @@ function showDetail(idx){
       ${rp.outlineSpecs&&rp.outlineSpecs!==rp.kurztext?`<span class="detail-lbl">Langtext:</span><span class="detail-val detail-lt">${h(rp.outlineSpecs.trim())}</span>`:''}
       <span class="detail-lbl">Menge / ME (XML):</span><span class="detail-val">${rp.menge>0?rp.menge.toLocaleString('de-DE',{maximumFractionDigits:3})+' '+h(rp.me):'- / '+h(rp.me)}</span>
       ${rp.linkedD83?`<span class="detail-lbl">D83-Menge / ME:</span><span class="detail-val" style="color:var(--muted)">${rp.linkedD83.menge>0?rp.linkedD83.menge.toLocaleString('de-DE',{maximumFractionDigits:3})+' '+h(rp.linkedD83.me||''):'-'} <span style="font-size:10px">(nur Referenz)</span></span>`:''}
-      <span class="detail-lbl">Match-Score:</span><span class="detail-val"><span class="badge ${scoreBadge(best.score)}">${best.score}%</span> → OZ ${h(np.oz)} "${h(np.kurztext)}"</span>
+      <span class="detail-lbl">Ähnlichkeit:</span><span class="detail-val"><span class="badge ${scoreBadge(best.score)}">${best.score} Punkte</span> → OZ ${h(np.oz)} "${h(np.kurztext)}" · keine Wahrscheinlichkeit</span>
       <span class="detail-lbl">Kategorie:</span><span class="detail-val">${h(dbg.categoryNew||'-')} → ${h(dbg.categoryRef||'-')} (${dbg.categoryScore??0}%)</span>
       <span class="detail-lbl">Lernbonus / Top:</span><span class="detail-val">${dbg.learningBoost??0}% / ${dbg.topMatchBoost??0}%</span>
       <span class="detail-lbl">Kurz / Literal / Lang / Syn:</span><span class="detail-val">${dbg.shortScore??0}% / ${dbg.literalShortScore??0}% / ${dbg.longScore??0}% / ${dbg.synonymScore??0}%</span>
@@ -5133,6 +5154,7 @@ function showDetail(idx){
       <span class="detail-lbl">Deckel:</span><span class="detail-val">${dbg.hardCapsApplied?.length?h(dbg.hardCapsApplied.join(', ')):'-'}</span>
       <span class="detail-lbl">Auto-Prüfung:</span><span class="detail-val">${riskReasons.length?'<span style="color:#fbbf24">Manuell prüfen: '+h(riskReasons.join(' · '))+'</span>':'<span style="color:var(--green)">automatisch übernahmefähig</span>'}</span>
       <span class="detail-lbl">Grund:</span><span class="detail-val detail-lt">${h(dbg.reasonText||'')}</span>
+      <span class="detail-lbl">Prüfschritte · BETA:</span><span class="detail-val detail-lt">${getMatchReviewTrace(r,best).map(step=>`<b>${h(step.schritt)}: ${h(step.status)}</b><br>${h(step.details)}`).join('<br><br>')}</span>
       ${dbg.scoreParts?`<span class="detail-lbl">Score-Aufbau:</span><span class="detail-val" style="font-size:11px;line-height:1.6">Text ${dbg.scoreParts.textScore}% · Kategorie ${dbg.scoreParts.categoryScore}% · Fachbegriffe ${dbg.scoreParts.keywordScore}% · Aktion/Objekt ${dbg.scoreParts.actionObjectScore}% · Einheit ${dbg.scoreParts.unitScore}% · Menge ${dbg.scoreParts.quantityScore}% · Kostenstruktur ${dbg.scoreParts.costStructureScore}% · Kontext ${dbg.scoreParts.contextScore}% · Lernen ${dbg.scoreParts.learningScore}% · Risiko ${dbg.scoreParts.riskScore}% · Abzug ${dbg.scoreParts.penaltyScore}%${dbg.scoreParts.reasons&&dbg.scoreParts.reasons.length?'<br><span style="color:var(--green)">✓ '+h(dbg.scoreParts.reasons.join(' · '))+'</span>':''}${dbg.scoreParts.warnings&&dbg.scoreParts.warnings.length?'<br><span style="color:#fbbf24">⚠ '+h(dbg.scoreParts.warnings.join(' · '))+'</span>':''}</span>`:''}
       ${rp.rawWBSItemXml?'<span class="detail-lbl">Export:</span><span class="detail-val" style="color:var(--green);font-size:11px">✓ 1:1 Rohkopie aus Referenz-XML</span>':'<span class="detail-lbl">Export:</span><span class="detail-val" style="color:var(--yellow);font-size:11px">⚠ Rekonstruiert (keine Rohkopie)</span>'}
     </div>
@@ -5237,8 +5259,7 @@ function computeManualCandidateRowsSync(target,candidateRefs,pool){
     return{
       rp,
       refIdx:pool.indexMap.get(rp),
-      score:Math.min(100,evaluated.score+projectBoost),
-      debug:{...evaluated.debug,projectBoost},
+      ...finalizeCandidateScore(evaluated,{projectBoost}),
       exportable:!!(rp.matchedXML&&(rp.kosten||[]).some(k=>k.typ!=='S')),
       refIdxInPool,
       searchOz:norm(rp.oz||''),
@@ -5286,8 +5307,7 @@ function getGlobalManualSearchRows(target,calcOnly,search,searchTokens){
     return{
       rp,
       refIdx:pool.indexMap.get(rp),
-      score:Math.min(100,evaluated.score+projectBoost),
-      debug:{...evaluated.debug,projectBoost},
+      ...finalizeCandidateScore(evaluated,{projectBoost}),
       exportable:!!(rp.matchedXML&&(rp.kosten||[]).some(k=>k.typ!=='S')),
       searchScore:ss,
       searchOz,searchShort,searchLong,searchSource
@@ -5847,7 +5867,7 @@ function generateChatGPTReviewPrompt(){
 
 function downloadBrowserReview(){
   if(!S.newLV.length&&!S.results.length){alert('Bitte zuerst ein neues Leistungsverzeichnis laden.');return;}
-  const payload=KPBrowserReview.build({version:APP_VERSION,results:S.results,newLV:S.newLV,riskReasons:getMatchRiskReasons});
+  const payload=KPBrowserReview.build({version:APP_VERSION,results:S.results,newLV:S.newLV,riskReasons:getMatchRiskReasons,reviewTrace:getMatchReviewTrace});
   dl(JSON.stringify(payload,null,2),`KalkPilot_ChatGPT_Pruefpaket_BETA_${new Date().toISOString().slice(0,10)}.json`,'application/json');
   log(`✓ Prüfpaket heruntergeladen: ${payload.positionen.length} Positionen. Selbst im ChatGPT-Browser hochladen; Antwort fachlich prüfen.`,'s');
 }
