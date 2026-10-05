@@ -432,7 +432,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
     </div>
     <div class="card">
       <div class="section-copy" style="margin-bottom:10px">
-        <div class="ctitle" style="margin-bottom:0">Matching-Parameter</div>
+        <div class="ctitle" style="margin-bottom:0">Regelvergleich · optional</div>
         <div class="section-note">Die Punktzahl beschreibt Ähnlichkeit, keine Wahrscheinlichkeit. Fachliche Konflikte und offene Preise separat prüfen.</div>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px">
@@ -454,7 +454,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
           <input type="range" min="45" max="100" value="45" id="thresh" oninput="document.getElementById('thrV').textContent=this.value+'%'">
           <span class="rng-val" id="thrV">45%</span>
         </div>
-        <button class="btn btn-p" id="runBtn" disabled onclick="runMatch()">▶ KalkPilot starten - Matching durchführen</button>
+        <button class="btn btn-p" id="runBtn" disabled onclick="runMatch()">▶ Regelvergleich starten (optional)</button>
         <div class="section-note" id="matchStartStatus" role="status">Neues GAEB-LV und aktive Referenzen laden.</div>
         <div id="matchStartHelp" style="display:none;gap:5px;flex-wrap:wrap">
           <button class="btn btn-s btn-sm" onclick="document.getElementById('fileRefJSON').click()">📂 Referenzdatenbank laden</button>

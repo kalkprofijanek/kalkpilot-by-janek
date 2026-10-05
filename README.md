@@ -8,11 +8,13 @@ Statische Browser-App für den Vergleich von Leistungsverzeichnissen mit Referen
 
 ## Verwendung im Browser
 
-1. Referenzen als JSON oder zusammengehörige LV-/Kalkulationsdateien laden.
-2. Das zu bearbeitende GAEB-LV unter **② Matching → Neues LV hochladen** laden und Matching starten. Die GAEB-Dateien unter **Referenzprojekte** dienen als Vergleichsdaten; dort hochzuladen ersetzt den Import des neuen LVs nicht. Direkt am Start-Button stehen die fehlenden Voraussetzungen. Reine D83-Textreferenzen erlauben bei aktiviertem **D83-Textrefs** einen Textvergleich ohne exportierbare Kalkulation. Fachliche Unterschiede und unaufgelöste Bausteine prüfen.
-3. Für eine manuelle KI-Prüfung **ChatGPT-Prüfpaket · BETA** herunterladen und selbst im freigegebenen ChatGPT-Browser hochladen. Die App überträgt keine Daten an KI-Dienste. Das Paket enthält Leistungsbeschreibungen und historische Kostenansätze; der Nutzer entscheidet über den Upload.
-4. ChatGPT-Antwort als Review-Notizen einfügen und fachlich prüfen. Sie ändert keine Preise oder ausgewählten Positionen automatisch.
+1. Referenzen als JSON oder zusammengehörige LV-/Kalkulationsdateien laden und aktivieren.
+2. Das neue GAEB-LV unter **② Matching → Neues LV hochladen** laden. Dateien unter **Referenzprojekte** dienen als Vergleichsdaten und ersetzen diesen Import nicht.
+3. Für LLM-Matching **LLM-Matching-Paket** herunterladen und in Codex/Claude Code hochladen; dort den enthaltenen Auftrag ausführen lassen. Alternativ kann der Agent die App im Cloud-Browser mit euren Originaldateien starten. [Anleitung und Agenten-Auftrag](docs/LLM_MATCHING.md).
+4. Die Antwort über **LLM-Zuordnungen laden** importieren. Die LLM wählt konkrete Referenzen; Preise bleiben unverändert und jede Position startet zur fachlichen Prüfung. Anschließend gewünschte Vorschläge übernehmen. Der optionale **Regelvergleich** ist ein zusätzlicher Vergleichsweg.
 5. Referenzdaten regelmäßig mit **Sichern** als JSON herunterladen. IndexedDB gehört zum Browserprofil und zur Website-Adresse; Firmenrichtlinien, Browserwechsel oder das Löschen von Websitedaten können den lokalen Bestand entfernen.
+
+Für eine zusätzliche manuelle Prüfung steht weiterhin **ChatGPT-Prüfpaket · BETA** bereit. Dessen Antwort kann als Review-Notiz eingefügt werden; dieser Notizweg verändert keine Zuordnungen. Beim LLM-Matching dagegen wird die strukturierte Antwort mit konkreten Referenz-IDs eingelesen. Uploads erfolgen ausschließlich durch den Nutzer; die App sendet keine Dateien an KI-Dienste.
 
 Das Prüfpaket ist ein Referenzentwurf, keine geprüfte selbstständige Angebotskalkulation. Historische Werte, verschachtelte Bausteine und Faktoren benötigen eine fachlich bestätigte Berechnung. Nicht aufgelöste Bausteinpreise verhindern die automatische Übernahme; eine bewusste manuelle Auswahl bleibt möglich.
 
