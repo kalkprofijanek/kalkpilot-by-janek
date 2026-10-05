@@ -62,3 +62,13 @@ Eine `requestId` bindet die Antwort an App-Version, Zielpositionen, aktive Refer
 Die LLM bestimmt die Kandidaten und ihre Reihenfolge; die angezeigte Ähnlichkeit stammt weiterhin aus der nachvollziehbaren Regelprüfung. Fachliche Konflikte werden angezeigt. `high`, `medium` und `low` sind LLM-Einschätzungen, keine kalibrierten Wahrscheinlichkeiten. Jeder importierte Vorschlag startet unübernommen; ein LLM-Ergebnis setzt keinen Angebotspreis frei.
 
 Dieser Ablauf ermöglicht echtes LLM-Matching in der Cloud. Ob es bei euren Fällen bessere Zuordnungen liefert, muss mit fachlich bestätigten Soll-Treffern gemessen werden. Der Import- und Prüfablauf ersetzt diesen Qualitätsnachweis nicht. Ein automatischer Modellaufruf direkt auf der öffentlichen Website wäre ein anderer Ausbau mit Backend und API-Zugang.
+
+## Technische Anforderungen ab Version 1.3.1 BETA
+
+Der Auftrag enthält zusätzliche `fachmerkmale`: explizite Rohr-Außendurchmesser, Nennweiten, SDR-Klassen, PE100/PE80, AVV-Schlüssel einschließlich Gefahrstoff-Stern und erkannte Unterwasser-/Trocken-Einbauverfahren. Sie ergänzen die vollständigen Leistungstexte, die weiterhin entscheidend sind. DN und Außendurchmesser werden getrennt behandelt. Fehlende Angaben sind unbekannt; mehrere Werte können Formstücke, Alternativen oder andere Leistungen betreffen und werden nicht auf einen Wert reduziert.
+
+Die LLM soll diese Merkmale im Text bestätigen, Gegenargumente prüfen und widersprüchliche Gesamtleistungen nicht als `matched` ausgeben. Teilansätze benötigen `ambiguous` und konkrete Unterschiede. Kostenlücken und fachliche Passung sind getrennte Fragen.
+
+Die unabhängige Regelprüfung deckelt eindeutige technische Widersprüche auf höchstens 45 Punkte und nicht bestätigte Zielanforderungen auf höchstens 68 Punkte. Das gilt auch bei identischem Kurztext und für LLM-Vorschläge. Die LLM bestimmt weiterhin Auswahl und Rangfolge; die technische Prüfung macht Widersprüche sichtbar. Die Mustererkennung ersetzt keine vollständige Auslegung komplexer Vorbemerkungen oder mehrdeutiger Leistungstexte.
+
+Ein gezielter synthetischer Vergleich zeigte zuvor 90–100 Punkte für sechs falsche Paare (Durchmesser, SDR, PE-Klasse, AVV/Gefahrklasse, Einbauverfahren). Nach der Änderung sind diese auf 45 Punkte begrenzt. Drei passende Kontrollpaare behielten ihre Werte. Das belegt die Korrektur dieser Fehlerbilder, keine allgemeine LLM-Trefferquote auf Originalprojekten. Dafür sind unabhängige fachliche Sollzuordnungen erforderlich.
