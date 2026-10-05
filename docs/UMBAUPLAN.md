@@ -28,6 +28,7 @@ Die GitHub-Suche nach GAEB/JavaScript ergab in den zugänglichen Ergebnissen kei
 - Unaufgelöste Assembly-Preise als Risiko anzeigen und automatische Übernahme unterbinden.
 - Direkte Anthropic-API-Anbindung entfernen. Ein manuell herunterladbares JSON-Prüfpaket enthält Zielpositionen, Kandidaten, historische Ansätze, Faktoren, Risiken und klare BETA-Kennzeichnung. Es setzt weder Preise noch Übernahmen automatisch.
 - Browsermodule für Speicherung, Encoding und Prüfpaket auslagern; Regressionen und GitHub-Actions-Prüfung ergänzen.
+- Startbedingungen und Matching verwenden denselben Referenzpool. Reine D83-Textreferenzen schalten den Start bei aktiviertem Textvergleich frei; fehlende Voraussetzungen und fehlgeschlagene LV-Imports werden sichtbar erklärt. X83-XML mit Namespace-Präfix ohne XML-Deklaration wird erkannt.
 - Matching-Punktzahlen einheitlich abschließen: erkannte Fachdeckel können weder durch verknüpfte D83-Treffer noch durch Projektboni überschritten werden, auch in der manuellen Suche. Angezeigte Endpunktzahl und Debugdaten stimmen überein.
 - Prüfschritte und Datenqualität in Detailansicht und ChatGPT-Paket anzeigen; fehlende/ungültige Kostenwerte melden. Historische Preise, Preisstand und Region gelten weiterhin als nicht bestätigt.
 - [Öffentliche App](https://kalkprofijanek.github.io/kalkpilot-by-janek/) über den getesteten Pages-Workflow veröffentlichen; Link und [Release-Anleitung](VEROEFFENTLICHUNG.md) ergänzen.
@@ -96,4 +97,4 @@ Zusätzlich werden die 26 bereitgestellten Originaldateien lokal gegen die Impor
 
 ### Ergebnisse des Cloud-Nachtrags
 
-Die neuen Cloud-Skripte sind in der bestehenden Codex-Maschine getestet; das Setup ist wiederholbar. Alle 18 Regressionstests bestehen, einschließlich drei neuer Prüfungen für Start/Healthcheck/Dateibereitstellung. Die Devcontainer-Konfiguration wurde gegen die offizielle Basisspezifikation validiert. Neue Codespaces und der externe Firmenbrowser bleiben separat zu prüfen; produktive API-Aufrufe werden durch den Nachtrag nicht eingeführt.
+Die neuen Cloud-Skripte sind in der bestehenden Codex-Maschine getestet; das Setup ist wiederholbar. Alle 21 Regressionstests bestehen, einschließlich drei neuer Prüfungen für Start/Healthcheck/Dateibereitstellung. Die Devcontainer-Konfiguration wurde gegen die offizielle Basisspezifikation validiert. Neue Codespaces und der externe Firmenbrowser bleiben separat zu prüfen; produktive API-Aufrufe werden durch den Nachtrag nicht eingeführt.
