@@ -1,0 +1,2 @@
+# Browser tests only; the application itself needs no installation.
+playwright==1.62.0

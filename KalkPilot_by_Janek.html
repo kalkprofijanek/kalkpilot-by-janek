@@ -360,6 +360,11 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
   <!-- Geladene Referenzprojekte: flex 1 0 auto statt min-height:0, sonst quetscht der Tab die
        Karte zusammen und die innen fixe projList (280px) wird abgeschnitten/überlappt -->
   <div class="card" style="flex:1 0 auto;display:flex;flex-direction:column;gap:10px">
+    <div class="section-note" role="status" id="referenceStorageStatus">Referenzspeicher wird geöffnet …</div>
+    <div class="section-note">Dateien bleiben in diesem Browserprofil. „Sichern“ erstellt eine portable Kopie für Browserwechsel oder gelöschte Firmendaten.</div>
+    <label class="section-note">Zeichencodierung für D83/P83 und Text-X83:
+      <select id="importEncoding"><option value="auto">Automatisch</option><option value="windows-1252">Windows-1252</option><option value="cp850">DOS CP850</option><option value="utf-8">UTF-8</option></select>
+    </label>
     <div class="ref-notice" id="refDataNotice"></div>
     <div class="section-head">
       <div class="section-copy">
@@ -492,23 +497,8 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
       <button class="btn btn-s btn-sm" onclick="openReviewModal()">🤖 Testbericht für ChatGPT erzeugen</button>
       <button class="btn btn-s btn-sm" onclick="runDiagnosticsSelfTest(true,true)">🧪 Diagnose ausführen</button>
       <span id="accStat" style="font-size:11px;color:var(--muted);margin-left:4px"></span>
-      <!-- KI-Reranking Section -->
-      <span style="border-left:1px solid var(--border);padding-left:8px;display:flex;gap:6px;align-items:center">
-        <input type="password" id="llmApiKey" placeholder="Anthropic API-Key"
-          style="width:180px;padding:2px 6px;font-size:11px;border:1px solid var(--border);border-radius:4px;background:var(--surface)"
-          oninput="onLlmKeyChange()"
-          title="Key wird in localStorage gespeichert. Direkter Browser-Zugriff auf Anthropic-API (anthropic-dangerous-direct-browser-access). Nur für Einzelnutzer mit eigenem Key geeignet.">
-        <select id="llmModel" style="font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--surface)">
-          <option value="claude-sonnet-4-6">Sonnet</option>
-          <option value="claude-opus-4-8">Opus</option>
-        </select>
-        <button class="btn btn-s btn-sm" id="llmRerankBtn" disabled onclick="onLlmRerankClick()"
-          title="Nur Graubereich-Positionen (Score 50–82%) werden an die Anthropic-API gesendet">
-          🤖 KI-Prüfung
-        </button>
-        <button class="btn btn-s btn-sm" id="llmKeyClearBtn" style="display:none" onclick="onLlmKeyClear()"
-          title="API-Key aus localStorage löschen">🗑</button>
-      </span>
+      <button class="btn btn-s btn-sm" onclick="downloadBrowserReview()">📥 ChatGPT-Prüfpaket · BETA</button>
+      <span class="section-note">Datei herunterladen und selbst im ChatGPT-Browser hochladen. Kein API-Schlüssel.</span>
     </div>
     <div id="diagSummary" class="diag-grid">
       <div class="diag-card"><div class="diag-k">Trefferlage</div><div class="diag-v">-</div><div class="diag-s">Nach dem Lauf erscheint hier die Kurzdiagnose.</div></div>
@@ -678,18 +668,19 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 <div id="reviewModal" class="review-modal" onclick="if(event.target===this)closeReviewModal()">
   <div class="review-box">
     <div class="review-head">
-      <h3>Testbericht für ChatGPT</h3>
+      <h3>ChatGPT-Prüfung · BETA</h3>
       <button class="btn btn-s btn-sm" onclick="closeReviewModal()">✕ Schließen</button>
     </div>
     <div class="review-body">
-      <div class="section-note">Der Bericht fasst die aktuellen Matching-Ergebnisse zusammen und enthält die Debugwerte der auffälligen Treffer.</div>
+      <div class="section-note">Prüfpaket herunterladen und selbst in ChatGPT hochladen. Es enthält LV-Texte, Kandidaten und historische Ansätze. Vorschläge bleiben BETA und müssen fachlich geprüft werden. Die App sendet keine Dateien an KI-Dienste.</div>
       <textarea id="reviewPromptArea" class="review-area" spellcheck="false"></textarea>
       <div class="review-actions">
+        <button class="btn btn-p btn-sm" onclick="downloadBrowserReview()">📥 Prüfpaket herunterladen</button>
         <button class="btn btn-p btn-sm" onclick="copyReviewPrompt()">📋 Bericht kopieren</button>
         <button class="btn btn-s btn-sm" onclick="refreshReviewPrompt()">↻ Neu erzeugen</button>
       </div>
       <div class="ctitle" style="margin-bottom:0">Review-Notizen</div>
-      <textarea id="reviewNotesArea" class="review-notes" placeholder="Hier kannst du ChatGPT-Feedback oder deine eigenen Notizen ablegen."></textarea>
+      <textarea id="reviewNotesArea" class="review-notes" placeholder="Hier kannst du die Antwort aus dem ChatGPT-Browser einfügen. Sie ändert keine Preise oder Übernahmen automatisch."></textarea>
       <div class="review-actions">
         <button class="btn btn-s btn-sm" onclick="saveReviewNotes()">💾 Notizen speichern</button>
       </div>
@@ -697,9 +688,13 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
   </div>
 </div>
 
+<script src="vendor/dexie/dexie.js"></script>
+<script src="js/reference-store.js"></script>
+<script src="js/gaeb-encoding.js"></script>
+<script src="js/browser-review.js"></script>
 <script>
-const APP_VERSION='1.0.1';
-const APP_BUILD_DATE='2026-05-27T12:00:00+02:00';
+const APP_VERSION='1.1.0-beta';
+const APP_BUILD_DATE='2026-10-05T00:00:00+02:00';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // STATE
@@ -1325,7 +1320,7 @@ function swSubcategory(text){
 }
 function buildPositionMatchProfile(p){
   const shortRaw=String(p?.kurztext||'');
-  const longRaw=String(p?.langtext||p?.outlineSpecs||'');
+  const longRaw=[...new Set([p?.linkedD83?.langtext,p?.langtext,p?.outlineSpecs].filter(Boolean))].join('\n');
   const fullRaw=(shortRaw+' '+longRaw+' '+String(p?.outlineSpecs||'')).trim();
   const shortNorm=normalizeConstructionTerms(shortRaw);
   const longNorm=normalizeConstructionTerms(longRaw||shortRaw);
@@ -1382,9 +1377,9 @@ function buildPositionMatchProfile(p){
 }
 function getMatchProfile(p){
   if(!p)return buildPositionMatchProfile(null);
-  if(!p.__matchProfileVersion||p.__matchProfileVersion!==2){
+  if(!p.__matchProfileVersion||p.__matchProfileVersion!==3){
     Object.defineProperty(p,'__matchProfile',{value:buildPositionMatchProfile(p),writable:true,configurable:true,enumerable:false});
-    Object.defineProperty(p,'__matchProfileVersion',{value:2,writable:true,configurable:true,enumerable:false});
+    Object.defineProperty(p,'__matchProfileVersion',{value:3,writable:true,configurable:true,enumerable:false});
   }
   return p.__matchProfile;
 }
@@ -2438,10 +2433,10 @@ async function readUploadedText(file,ext){
     const decl=(utf8.match(/<\?xml[^>]*encoding=['"]([^'"]+)['"]/i)?.[1]||ansi.match(/<\?xml[^>]*encoding=['"]([^'"]+)['"]/i)?.[1]||'').toUpperCase();
     if(decl.includes('1252')||decl.includes('ANSI'))return ansi;
     // Wenn es KEIN XML zu sein scheint (kein <? und kein <GAEB), als ANSI behandeln
-    if(!utf8.trim().startsWith('<?xml')&&!utf8.includes('<GAEB')&&ext==='X83')return ansi;
+    if(!utf8.trim().startsWith('<?xml')&&!utf8.includes('<GAEB')&&ext==='X83')return KPGaebEncoding.decode(buf,document.getElementById('importEncoding')?.value||'auto');
     return scoreDecodedText(ansi)>scoreDecodedText(utf8)?ansi:utf8;
   }
-  return decodeText(buf,'windows-1252');
+  return KPGaebEncoding.decode(buf,document.getElementById('importEncoding')?.value||'auto');
 }
 function makeXref(){
   if(globalThis.crypto&&typeof crypto.randomUUID==='function'){
@@ -2467,8 +2462,11 @@ function parseD83(txt,src){
   for(const line of lines){
     if(line.length<2)continue;const rt=line.substring(0,2);
     if(rt==='21'){
-      const ozRaw=line.substring(2,10).trim();
-      const rest=line.substring(10).padEnd(80,' ');
+      // Position flags follow the complete OZ; do not truncate wider numbering.
+      const header=line.match(/^21([\d .]+?)([A-Z]{3})(?=\s)/);
+      if(!header)throw new Error('Unbekannter D83-Positionskopf: '+line.slice(0,22));
+      const ozRaw=header[1].trim();
+      const rest=line.substring(2+header[1].length+3).padEnd(80,' ');
       const mm=rest.match(/(\d{6,11})\s*([a-zA-ZäöüÄÖÜ²³\/\.%][a-zA-Z0-9äöüÄÖÜ²³\/\.%]{0,5})/);
       let menge=0,me='';
       if(mm){menge=parseInt(mm[1])/1000;me=mm[2].trim();}
@@ -2481,12 +2479,10 @@ function parseD83(txt,src){
       if(ktLines===0)cur.kurztext=t;else if(ktLines===1)cur.kurztext+=' '+t;ktLines++;
     }else if(rt==='26'&&cur){
       const t=line.substring(2,Math.min(line.length,67)).trim();if(t)cur.langtext+=t+' ';
-    }else if((rt==='31'||rt==='32')&&cur){
-      const ep=parseFloat(line.substring(2,18).trim().replace(',','.'));
-      if(!isNaN(ep)&&ep>0&&!cur.ep){cur.ep=ep;cur.isFixedPriceItem=true;
-        cur.kosten=[{typ:'S',descr:'Gesamtpreis',menge:1,einheit:'psch',preis:ep,nameCoC:'Festpreis',identifyKey:null,xref:null,factor:1,costFactor:1,cFactorCoC:1,qFactorCoC:1,sItemDisabled:0,curCoC:'EUR'}];}
     }
   }
+  const ozSet=new Set();
+  for(const p of out){if(ozSet.has(p.ozCanon))throw new Error('Doppelte D83-Positionsnummer: '+p.oz);ozSet.add(p.ozCanon);}
   out.forEach(p=>{p.langtext=(p.langtext||'').trim();p.outlineSpecs=p.langtext||p.kurztext;});
   return out.filter(p=>p.kurztext.length>1).map(cleanParsedPosition);
 }
@@ -2547,8 +2543,11 @@ function parseGAEBXML(txt,src){
       const oz=parts.join(' ');
       const qty=parseFloat(item.getElementsByTagNameNS('*','Qty')[0]?.textContent?.replace(',','.')||'0')||0;
       const me=item.getElementsByTagNameNS('*','QU')[0]?.textContent?.trim()||'';
-      const outline=item.getElementsByTagNameNS('*','OutlineText')[0]?.textContent?.replace(/\s+/g,' ').trim()||'';
-      const detailRaw=item.getElementsByTagNameNS('*','DetailTxt')[0]?.textContent?.replace(/\s+/g,' ').trim()||'';
+      const description=item.getElementsByTagNameNS('*','Description')[0];
+      const compatShort=description&&[...description.children].find(el=>el.localName==='S');
+      const compatLong=description&&[...description.children].find(el=>el.localName==='L');
+      const outline=(item.getElementsByTagNameNS('*','OutlineText')[0]||compatShort)?.textContent?.replace(/\s+/g,' ').trim()||'';
+      const detailRaw=(item.getElementsByTagNameNS('*','DetailTxt')[0]||compatLong)?.textContent?.replace(/\s+/g,' ').trim()||'';
       // GAEB DA XML 3.2: OutlineText kann fehlen, dann DetailTxt (erstes ~80 Zeichen) als Kurztext
       const kurztext=outline||(detailRaw.length>80?detailRaw.substring(0,80)+'...':detailRaw);
       const langtext=detailRaw||outline;
@@ -3189,7 +3188,8 @@ function clearPending(){
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // PROJEKT HINZUFÃœGEN (MERGE + SPEICHERN)
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-function addRefProject(){
+async function addRefProject(){
+  await referenceStorageReady;
   if(!P.d83Pos.length&&!P.xmlPos.length){alert('Keine Dateien geladen.');return;}
   const hasD83=P.d83Pos.length>0;
   const hasXML=P.xmlPos.length>0;
@@ -3216,24 +3216,28 @@ function addRefProject(){
   log(`✓ Projekt "${name}" hinzugefügt: ${positions.length} Positionen${matchInfo}, ${stats.withCosts} mit Kalkulation`,'s');
 }
 
-function removeRefProject(i){
+async function removeRefProject(i){
+  await referenceStorageReady;
   const name=S.refProjects[i]?.name||'';
   S.refProjects.splice(i,1);
   saveRefToStorage();updateRefUI();
   log(`Projekt "${name}" entfernt`,'w');
 }
 
-function toggleRefProject(i,active){
+async function toggleRefProject(i,active){
+  await referenceStorageReady;
   S.refProjects[i].active=active;
   saveRefToStorage();updateRefUI();
 }
 
-function selectAllProj(state){
+async function selectAllProj(state){
+  await referenceStorageReady;
   S.refProjects.forEach(p=>p.active=state);
   saveRefToStorage();updateRefUI();
 }
 
-function clearAllProjects(){
+async function clearAllProjects(){
+  await referenceStorageReady;
   if(!confirm(`Alle ${S.refProjects.length} Referenzprojekte wirklich löschen?`))return;
   S.refProjects=[];
   saveRefToStorage();updateRefUI();
@@ -3866,56 +3870,59 @@ function updateRefLoadStatus(activeSource){
   detailEl.textContent=text;
 }
 
-function saveRefToStorage(){
+let referenceSaveNumber=0;
+function referenceStorageStatus(message){
+  const el=document.getElementById('referenceStorageStatus');
+  if(el)el.textContent=message;
+}
+async function saveRefToStorage(projects=S.refProjects){
+  const number=++referenceSaveNumber;
+  referenceStorageStatus('Referenzen werden gespeichert …');
   try{
-    const data=JSON.stringify(S.refProjects);
-    localStorage.setItem(STORAGE_KEY,data);
-    S.refStorageWarning='';
-    // Größe anzeigen
-    const kb=Math.round(data.length/1024);
-    if(kb>3000)log(`⚠ Referenzdatenbank groß (${kb} KB) - Sicherung als JSON empfohlen`,'w');
-  }catch(e){
-    S.refStorageWarning='Speicherhinweis: Lokales Speichern ist fehlgeschlagen · bitte Referenzdatenbank als JSON sichern';
-    log('⚠ localStorage-Speichern fehlgeschlagen (Datenmenge zu groß?) - Bitte als JSON sichern!','w');
+    await KPReferenceStore.save(projects);
+    if(number===referenceSaveNumber){
+      S.refStorageWarning='';
+      referenceStorageStatus('✓ Referenzen in diesem Browser gespeichert.');
+      updateRefLoadStatus();
+    }
+    return true;
+  }catch(error){
+    S.refStorageWarning='Speichern fehlgeschlagen – bitte mit „Sichern“ eine JSON-Kopie herunterladen.';
+    referenceStorageStatus(S.refStorageWarning);
+    updateRefLoadStatus();
+    log('⚠ '+S.refStorageWarning+' '+error.message,'w');
+    return false;
   }
 }
-
-function loadRefFromStorage(){
+async function loadRefFromStorage(){
   try{
-    const raw=localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      S.refProjects=normalizeRefProjects(JSON.parse(raw));
-      S.refProjects=S.refProjects.map(project=>({...project,stats:calculateProjectStats(project.positions||[])}));
-      saveRefToStorage();
-      setRefDataNotice('');
-      updateRefUI();
-      log(`✓ ${S.refProjects.length} Referenzprojekte aus lokalem Speicher geladen`,'s');
-      return;
-    }
-    for(const legacyKey of LEGACY_STORAGE_KEYS){
-      const legacyRaw=localStorage.getItem(legacyKey);
-      if(!legacyRaw)continue;
-      const legacyProjects=normalizeRefProjects(JSON.parse(legacyRaw));
-      const upgradedLegacyProjects=legacyProjects.map(project=>({...project,stats:calculateProjectStats(project.positions||[])}));
-      const hasAssembly=projectsContainAssemblyDetails(upgradedLegacyProjects);
-      const hasRawCopies=projectsContainRawCopies(upgradedLegacyProjects);
-      if(hasAssembly&&hasRawCopies){
-        S.refProjects=upgradedLegacyProjects;
-        saveRefToStorage();
-        localStorage.removeItem(legacyKey);
-        setRefDataNotice('');
-        updateRefUI();
-        log(`✓ ${S.refProjects.length} Referenzprojekte aus älterem Speicherstand übernommen`,'s');
-      }else{
-        setRefDataNotice('<b>Älterer Referenzstand erkannt.</b> Diese lokal gespeicherten Projekte enthalten noch keine vollständige Rohkopie der XML-Positionen. Bitte die betroffenen Referenzprojekte neu laden, damit Export und Matching wirklich 1:1 aus der Referenzposition kopieren können.');
-        log('⚠ Ältere Referenzdaten erkannt - bitte Referenzprojekte neu laden, damit die vollständige Rohkopie der XML-Positionen gespeichert wird.','w');
+    const stored=await KPReferenceStore.load();
+    if(stored!==null){
+      S.refProjects=normalizeRefProjects(stored);
+      referenceStorageStatus('✓ Referenzen aus diesem Browser geladen.');
+    }else{
+      // Legacy copies remain untouched until and after successful migration.
+      for(const key of [STORAGE_KEY,...LEGACY_STORAGE_KEYS]){
+        const raw=localStorage.getItem(key);
+        if(!raw)continue;
+        const projects=normalizeRefProjects(KPReferenceStore.validate(JSON.parse(raw)));
+        if(key!==STORAGE_KEY&&!(projectsContainAssemblyDetails(projects)&&projectsContainRawCopies(projects))){
+          setRefDataNotice('Älterer Referenzstand erkannt. Bitte Originalreferenzen für vollständige XML-Kalkulationen neu laden.');
+          continue;
+        }
+        S.refProjects=projects;
+        await saveRefToStorage();
+        break;
       }
-      return;
+      if(!S.refProjects.length)referenceStorageStatus('Lokaler Referenzspeicher bereit.');
     }
-    setRefDataNotice('');
+    S.refProjects.forEach(project=>project.stats=calculateProjectStats(project.positions||[]));
     updateRefUI();
-  }catch(e){
-    log('⚠ Laden aus lokalem Speicher fehlgeschlagen: '+e.message,'w');
+  }catch(error){
+    S.refStorageWarning='Referenzspeicher nicht verfügbar. Vorhandene Daten wurden nicht überschrieben; JSON-Sicherung verwenden.';
+    referenceStorageStatus(S.refStorageWarning);
+    log('⚠ '+error.message,'w');
+    updateRefUI();
   }
 }
 
@@ -4565,27 +4572,26 @@ function exportRefJSON(){
   log(`Referenzdatenbank (${S.refProjects.length} Projekte) als JSON gesichert`,'s');
 }
 
-function importRefFromJSON(file){
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const payload=JSON.parse(normalizeImportedJSONText(e.target.result));
-      const projects=coerceReferenceProjectsPayload(payload);
-      if(!projects)throw new Error('Kein gültiges Referenzformat (erwartet Array oder Objekt mit refProjects/projects)');
-      S.refProjects=normalizeRefProjects(projects);
-      saveRefToStorage();updateRefUI();
-      log(`✓ ${projects.length} Referenzprojekte aus JSON geladen`,'s');
-    }catch(err){
-      log('⚠ JSON-Import fehlgeschlagen: '+err.message,'w');
-      alert('JSON-Datei ungültig: '+err.message);
-    }
-  };
-  reader.readAsText(file,'UTF-8');
+async function importRefFromJSON(file){
+  await referenceStorageReady;
+  try{
+    const payload=JSON.parse(normalizeImportedJSONText(await file.text()));
+    const projects=coerceReferenceProjectsPayload(payload);
+    KPReferenceStore.validate(projects);
+    const normalized=normalizeRefProjects(projects);
+    normalized.forEach(project=>project.stats=calculateProjectStats(project.positions||[]));
+    // Commit atomically before replacing the currently visible reference set.
+    if(!await saveRefToStorage(normalized))return;
+    S.refProjects=normalized;
+    S.results=[];
+    updateRefUI();renderMatch();updateExport();
+    log(`✓ ${normalized.length} Referenzprojekte geladen und gespeichert`,'s');
+  }catch(error){
+    log('⚠ JSON-Import fehlgeschlagen: '+error.message,'w');
+    alert('Referenzdatei konnte nicht übernommen werden: '+error.message);
+  }
 }
 
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// NEUES LV LADEN
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 async function loadNewLV(file){
   const ext=file.name.split('.').pop().toUpperCase();
   try{
@@ -4804,13 +4810,6 @@ async function runMatch(){
     document.getElementById('hAcc').textContent=S.results.filter(r=>r.accepted).length;
     S.lastReferenceSelfTest=runReferenceLinkSelfTest(false,false);
     renderManualMatch();
-    // KI-Reranking ist ein separater manueller Schritt (kein Auto-Aufruf hier):
-    // nur den Button aktivieren, falls ein API-Key gespeichert ist.
-    {
-      const llmKey=localStorage.getItem('kp_anthropic_key_v1');
-      const llmBtn=document.getElementById('llmRerankBtn');
-      if(llmBtn)llmBtn.disabled=!llmKey||!S.results?.length;
-    }
     setMatchingProgress({
       active:true,
       total:S.newLV.length,
@@ -4827,144 +4826,8 @@ async function runMatch(){
 }
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// KI-RERANKING (optional, Anthropic API)
+// MATCHING SUMMARY
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-async function llmRerankMatches(results,{apiKey,model='claude-sonnet-4-6'}){
-  if(!apiKey||!results?.length)return;
-
-  // ── Phase 1: Unsicherheits-Erkennung (lokal, billig) ─────────────────────
-  const uncertain=results.filter(r=>{
-    if(!r.matches?.length)return false;
-    const best=r.matches[0];
-    const second=r.matches[1];
-    const score=best?.score??0;
-    const isGrey=score>=50&&score<=82;
-    const isClose=second&&(score-(second.score??0))<8;
-    const hasCap=(best?.debug?.hardCapsApplied?.length??0)>0;
-    const capNearThresh=hasCap&&score>=70&&score<=85;
-    return isGrey||isClose||capNearThresh;
-  });
-
-  if(!uncertain.length){
-    setMatchingProgress({active:true,total:1,done:1,
-      label:'KI-Prüfung: keine Graubereich-Positionen gefunden',
-      current:'Alle Treffer haben eindeutigen Score',etaText:'100%'});
-    setTimeout(()=>setMatchingProgress({active:false}),2000);
-    return;
-  }
-
-  // ── Phase 2: LLM-Calls (ein Call pro unsicherer Position) ─────────────────
-  const llmBtn=document.getElementById('llmRerankBtn');
-  if(llmBtn){llmBtn.disabled=true;llmBtn.textContent='⏳ KI läuft...';}
-
-  let done=0;
-  for(const r of uncertain){
-    const np=r.newPos;
-    const candidates=r.matches.slice(0,Math.min(5,r.matches.length));
-
-    setMatchingProgress({
-      active:true,
-      total:uncertain.length,
-      done,
-      label:`KI-Prüfung läuft... (${done}/${uncertain.length})`,
-      current:`${np.oz||''} ${np.kurztext||''}`.trim(),
-      etaText:`${Math.round(done/uncertain.length*100)}%`
-    });
-
-    const systemPrompt=`Du bist ein Experte für Baukalkulation im Erdbau und Tiefbau.
-Du bewertest, welcher Referenz-Kandidat am besten zu einer neuen LV-Position passt.
-Antworte NUR mit validem JSON im Format:
-{"bestIndex": <0-basierter Index>, "confidence": <0-100>, "verdict": "HIGH"|"MED"|"LOW", "reason": "<max 80 Zeichen, deutsch>"}`;
-
-    const userPrompt=`NEUE POSITION:
-OZ: ${np.oz||'–'} | Einheit: ${np.einheit||np.me||'–'} | Menge: ${np.menge||'–'}
-Kurztext: ${np.kurztext||''}
-Langtext: ${(np.langtext||'').slice(0,400)}
-
-KANDIDATEN (regelbasierter Score in Klammern):
-${candidates.map((m,i)=>{
-  const p=m.pos||{};
-  return `[${i}] Score:${m.score}% | ${p.einheit||p.me||'?'} | ${p.kurztext||''}\n    ${(p.langtext||'').slice(0,200)}`;
-}).join('\n\n')}
-
-Welcher Kandidat (Index 0–${candidates.length-1}) passt am besten? Gib bestIndex, confidence (0-100), verdict und reason zurück.`;
-
-    try{
-      const resp=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'x-api-key':apiKey,
-          'anthropic-version':'2023-06-01',
-          'anthropic-dangerous-direct-browser-access':'true'
-        },
-        body:JSON.stringify({
-          model,
-          max_tokens:150,
-          system:systemPrompt,
-          messages:[{role:'user',content:userPrompt}]
-        })
-      });
-
-      if(!resp.ok)throw new Error(`HTTP ${resp.status}`);
-      const data=await resp.json();
-      const raw=data?.content?.[0]?.text||'{}';
-      // robust gegen ```json-Fences: erstes JSON-Objekt extrahieren
-      const jsonMatch=raw.match(/\{[\s\S]*\}/);
-      const parsed=JSON.parse(jsonMatch?jsonMatch[0]:raw);
-
-      const bestIdx=Math.max(0,Math.min(candidates.length-1,parsed.bestIndex??0));
-      const llmConfidence=Math.max(0,Math.min(100,parsed.confidence??50));
-      const ruleScore=candidates[bestIdx]?.score??50;
-
-      // Begrenzung: LLM darf Regelscore max. ±25 Punkte verschieben
-      const blendedScore=Math.round(
-        Math.max(ruleScore-25,Math.min(ruleScore+25,
-          ruleScore*0.5+llmConfidence*0.5
-        ))
-      );
-
-      // Reranking: bestIdx nach vorne, Score anpassen
-      if(bestIdx!==0){
-        const [winner]=r.matches.splice(bestIdx,1);
-        r.matches.unshift(winner);
-      }
-      r.matches[0]={
-        ...r.matches[0],
-        score:blendedScore,
-        llmVerdict:parsed.verdict||'MED',
-        llmReason:parsed.reason||'',
-        llmReranked:true
-      };
-      r.sel=0;
-
-    }catch(e){
-      console.warn('llmRerank Fehler bei',np.oz,e.message);
-      // Position überspringen, kein Abbruch
-    }
-
-    done++;
-    await new Promise(resolve=>setTimeout(resolve,0)); // UI yield
-  }
-
-  // ── Phase 3: Re-Render ────────────────────────────────────────────────────
-  S.results=applyStoredMatchDecisionsToResults(S.results);
-  renderMatch();
-  updateExport();
-  document.getElementById('matchSum').innerHTML=summarizeBadges();
-
-  if(llmBtn){
-    llmBtn.disabled=false;
-    llmBtn.textContent=`🤖 KI-Prüfung (${done} geprüft)`;
-  }
-  setMatchingProgress({
-    active:true,total:uncertain.length,done:uncertain.length,
-    label:`KI-Prüfung abgeschlossen – ${done} Positionen neu bewertet`,
-    current:'',etaText:'100%'
-  });
-  setTimeout(()=>setMatchingProgress({active:false}),2000);
-}
-
 function summarizeBadges(){
   const g=S.results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='green').length;
   const y=S.results.filter(r=>classifyMatchScore(r.matches?.[0]?.score)==='yellow').length;
@@ -4989,30 +4852,6 @@ function onUnitToggle(){
   document.getElementById('unitLbl').classList.toggle('on',document.getElementById('unitFilter').checked);
   renderMatch();
 }
-// ── KI-Reranking: UI-Event-Handler ─────────────────────────────────────────
-function onLlmKeyChange(){
-  const key=document.getElementById('llmApiKey').value.trim();
-  if(key)localStorage.setItem('kp_anthropic_key_v1',key);
-  document.getElementById('llmKeyClearBtn').style.display=key?'':'none';
-  const llmBtn=document.getElementById('llmRerankBtn');
-  if(llmBtn)llmBtn.disabled=!key||!S.results?.length;
-}
-function onLlmKeyClear(){
-  localStorage.removeItem('kp_anthropic_key_v1');
-  document.getElementById('llmApiKey').value='';
-  document.getElementById('llmKeyClearBtn').style.display='none';
-  document.getElementById('llmRerankBtn').disabled=true;
-}
-function onLlmRerankClick(){
-  const key=localStorage.getItem('kp_anthropic_key_v1');
-  const model=document.getElementById('llmModel')?.value||'claude-sonnet-4-6';
-  if(!key)return;
-  llmRerankMatches(S.results,{apiKey:key,model});
-}
-
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// BULK ACCEPT
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function hasExportableMatch(result){
   const best=result?.matches?.[result?.sel||0];
   return !!(best&&best.kind==='CALC'&&(best.pos?.kosten||[]).some(k=>k.typ!=='S'));
@@ -5022,6 +4861,7 @@ function getCostStructureScore(match){
   if(match?.kind!=='CALC')return 0;
   if(!kosten.length)return 0;
   const types=new Set(kosten.map(k=>k.typ).filter(Boolean));
+  if(KPBrowserReview.calculationIssues(match.pos).includes('Bausteinpreis nicht aufgelöst'))return 30;
   if([...types].some(t=>t!=='S')&&types.size>=2)return 100;
   if([...types].some(t=>t!=='S'))return 70;
   return 20;
@@ -5037,6 +4877,7 @@ function getMatchRiskReasons(result,match=result?.matches?.[result?.sel||0]){
   const rpProf=getMatchProfile(pos);
   if(match.kind!=='CALC')reasons.push('nur D83-Texttreffer, keine Kalkulation exportierbar');
   if(!(pos.kosten||[]).some(k=>k.typ!=='S'))reasons.push('keine belastbare L/M/G/N-Kostenstruktur');
+  reasons.push(...KPBrowserReview.calculationIssues(pos).filter(issue=>issue==='Bausteinpreis nicht aufgelöst'));
   if((debug.hardCapsApplied||[]).length)reasons.push('fachlicher Deckel: '+debug.hardCapsApplied[0]);
   if(bestScore>=80&&secondScore>0&&(bestScore-secondScore)<8)reasons.push('knappes Top-1/Top-2-Rennen');
   if((debug.unitScore||0)<80)reasons.push('Einheit nicht sicher gleich');
@@ -5176,7 +5017,7 @@ function renderMatch(){
           <div class="lt">${h((r.newPos.langtext||'').substring(0,55))}${(r.newPos.langtext||'').length>55?'...':''}</div>
           ${(r.newPos.langtext||'').trim()?`<button class="info-btn" style="margin-top:3px;font-size:10px;padding:2px 6px" onclick="openManualTargetLang(${idx},event)" title="Vollständigen Langtext anzeigen">📄 Langtext</button>`:''}</td>
       <td style="white-space:nowrap;font-size:11px">${r.newPos.menge>0?`<b>${r.newPos.menge.toLocaleString('de-DE',{maximumFractionDigits:3})}</b> ${h(newMe)}`:'-'}</td>
-      <td>${sc>0?`<span class="badge ${bc}">${sc}%</span>`:`<span style="color:var(--muted);font-size:10px">-</span>`}${best?.llmReranked?`<span title="KI-geprüft: ${h(best.llmReason||'')}" style="font-size:10px;padding:1px 4px;margin-left:3px;background:rgba(99,102,241,.15);color:#818cf8;border-radius:3px;cursor:help">🤖</span>`:''}</td>
+      <td>${sc>0?`<span class="badge ${bc}">${sc}%</span>`:`<span style="color:var(--muted);font-size:10px">-</span>`}</td>
       <td style="min-width:185px">${best?`
         <div style="display:flex;align-items:flex-start;gap:5px">
           <div style="flex:1">
@@ -6004,6 +5845,13 @@ function generateChatGPTReviewPrompt(){
   return lines.join('\n');
 }
 
+function downloadBrowserReview(){
+  if(!S.newLV.length&&!S.results.length){alert('Bitte zuerst ein neues Leistungsverzeichnis laden.');return;}
+  const payload=KPBrowserReview.build({version:APP_VERSION,results:S.results,newLV:S.newLV,riskReasons:getMatchRiskReasons});
+  dl(JSON.stringify(payload,null,2),`KalkPilot_ChatGPT_Pruefpaket_BETA_${new Date().toISOString().slice(0,10)}.json`,'application/json');
+  log(`✓ Prüfpaket heruntergeladen: ${payload.positionen.length} Positionen. Selbst im ChatGPT-Browser hochladen; Antwort fachlich prüfen.`,'s');
+}
+
 function refreshReviewPrompt(){
   const area=document.getElementById('reviewPromptArea');
   if(area)area.value=generateChatGPTReviewPrompt();
@@ -6814,15 +6662,8 @@ document.getElementById('fileRefJSON').onchange=e=>{if(e.target.files[0])importR
 document.getElementById('fileMatchMemoryJSON').onchange=e=>{if(e.target.files[0])importMatchMemoryJSON(e.target.files[0]);};
 // Gespeicherte Übernahme-Schwelle ins Eingabefeld laden
 {const _at=document.getElementById('acceptThresh');if(_at)_at.value=getAutoAcceptThreshold();}
-// Gespeicherten Anthropic-API-Key ins Eingabefeld laden (Skript läuft am Body-Ende,
-// daher inline statt DOMContentLoaded – das Event ist hier ggf. schon gefeuert)
-{const _savedKey=localStorage.getItem('kp_anthropic_key_v1');
- if(_savedKey){
-   const _f=document.getElementById('llmApiKey');
-   if(_f)_f.value=_savedKey;
-   const _clr=document.getElementById('llmKeyClearBtn');
-   if(_clr)_clr.style.display='';
- }}
+// Remove obsolete API credentials; this edition only uses manual file exchange.
+try{localStorage.removeItem('kp_anthropic_key_v1');}catch(_){}
 
 // Drag-Drop Zonen
 setupDrop2('dropD83','d83');
@@ -6840,7 +6681,7 @@ document.getElementById('d83RefLbl')?.classList.toggle('on',document.getElementB
 document.getElementById('manualCalcOnlyLbl')?.classList.toggle('on',document.getElementById('manualCalcOnly')?.checked);
 loadManualSplitWidth();
 loadMatchSplitHeight();
-loadRefFromStorage();
+const referenceStorageReady=loadRefFromStorage();
 </script>
 </body>
 </html>
