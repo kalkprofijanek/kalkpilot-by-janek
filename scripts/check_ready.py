@@ -11,6 +11,7 @@ CHECKS = {
     '/js/reference-store.js': 'KPReferenceStore',
     '/js/gaeb-encoding.js': 'KPGaebEncoding',
     '/js/browser-review.js': 'KPBrowserReview',
+    '/js/llm-matching.js': 'KPLLMMatching',
 }
 
 

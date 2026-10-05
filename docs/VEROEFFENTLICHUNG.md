@@ -18,7 +18,7 @@ gh run list --repo kalkprofijanek/kalkpilot-by-janek --workflow pages.yml --limi
 python3 scripts/check_ready.py --url https://kalkprofijanek.github.io/kalkpilot-by-janek
 ```
 
-Der erste Befehl prüft den Veröffentlichungsworkflow, der zweite die sieben öffentlich ausgelieferten App-Dateien. Für den zweiten Befehl muss die Cloud-Umgebung `kalkprofijanek.github.io` erreichen dürfen. Ein Netzwerkverbot in der Entwicklungsumgebung sagt nichts über die Erreichbarkeit im Firmenbrowser aus. Die Freigabe einer Cloud-Domain und die Veröffentlichung der App sind getrennte Vorgänge.
+Der erste Befehl prüft den Veröffentlichungsworkflow, der zweite die acht öffentlich ausgelieferten App-Dateien. Für den zweiten Befehl muss die Cloud-Umgebung `kalkprofijanek.github.io` erreichen dürfen. Ein Netzwerkverbot in der Entwicklungsumgebung sagt nichts über die Erreichbarkeit im Firmenbrowser aus. Die Freigabe einer Cloud-Domain und die Veröffentlichung der App sind getrennte Vorgänge.
 
 ## Daten und BETA-Status
 

@@ -33,6 +33,10 @@ Die GitHub-Suche nach GAEB/JavaScript ergab in den zugänglichen Ergebnissen kei
 - Prüfschritte und Datenqualität in Detailansicht und ChatGPT-Paket anzeigen; fehlende/ungültige Kostenwerte melden. Historische Preise, Preisstand und Region gelten weiterhin als nicht bestätigt.
 - [Öffentliche App](https://kalkprofijanek.github.io/kalkpilot-by-janek/) über den getesteten Pages-Workflow veröffentlichen; Link und [Release-Anleitung](VEROEFFENTLICHUNG.md) ergänzen.
 
+## Echtes LLM-Matching in der Cloud
+
+Codex/Claude Code ordnet Zielpositionen selbst konkreten Referenzen zu. Ein Matching-Paket enthält den gesamten aktiven Referenzbestand; eine geprüfte Antwort-JSON übernimmt konkrete IDs und Begründungen in die App. Alle Zuordnungen starten zur fachlichen Prüfung. Das Cloud-Werkzeug startet die echte Browser-App, bereitet den Auftrag vor und validiert die Antwort; die LLM trifft die semantischen Entscheidungen zwischen diesen Schritten. [Ablauf und Agenten-Auftrag](LLM_MATCHING.md).
+
 ## Ergänzung aus der ChatGPT-Info
 
 Der [Architekturabgleich](ARCHITEKTURABGLEICH.md) prüft die vorgeschlagene OpenConstructionERP-Referenz, die aktuelle KalkPilot-Architektur und die Lücken. Bestätigte Ergänzungen:
@@ -97,4 +101,4 @@ Zusätzlich werden die 26 bereitgestellten Originaldateien lokal gegen die Impor
 
 ### Ergebnisse des Cloud-Nachtrags
 
-Die neuen Cloud-Skripte sind in der bestehenden Codex-Maschine getestet; das Setup ist wiederholbar. Alle 21 Regressionstests bestehen, einschließlich drei neuer Prüfungen für Start/Healthcheck/Dateibereitstellung. Die Devcontainer-Konfiguration wurde gegen die offizielle Basisspezifikation validiert. Neue Codespaces und der externe Firmenbrowser bleiben separat zu prüfen; produktive API-Aufrufe werden durch den Nachtrag nicht eingeführt.
+Die neuen Cloud-Skripte sind in der bestehenden Codex-Maschine getestet; das Setup ist wiederholbar. Alle 25 Regressionstests bestehen, einschließlich drei neuer Prüfungen für Start/Healthcheck/Dateibereitstellung. Die Devcontainer-Konfiguration wurde gegen die offizielle Basisspezifikation validiert. Neue Codespaces und der externe Firmenbrowser bleiben separat zu prüfen; produktive API-Aufrufe werden durch den Nachtrag nicht eingeführt.
