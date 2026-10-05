@@ -1,0 +1,44 @@
+name: Publish browser app
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: bash scripts/setup-cloud.sh --browser-deps
+      - run: bash scripts/test-cloud.sh
+      - name: Stage public application files
+        run: |
+          mkdir .pages-site
+          cp index.html KalkPilot_by_Janek.html KalkPilot_Referenzpaket_Builder.html schweiz_reiseplan_2026.html THIRD_PARTY_NOTICES.md .pages-site/
+          cp -R js vendor .pages-site/
+          touch .pages-site/.nojekyll
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: .pages-site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy tested application
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -16,7 +16,7 @@ Das Prüfpaket ist ein Referenzentwurf, keine geprüfte selbstständige Angebots
 
 ## Bereitstellung
 
-GitHub Pages veröffentlicht automatisch den Branch **main**, Ordner **/ (Repository-Wurzel)**. Der öffentliche App-Link lautet https://kalkprofijanek.github.io/kalkpilot-by-janek/. Änderungen werden nach erfolgreichen Browser-Tests per Pull Request nach main gemergt; danach muss der Pages-Build erfolgreich abgeschlossen sein. Ein Feature-Branch allein ändert die Veröffentlichung nicht.
+Der Workflow **Publish browser app** veröffentlicht den Branch **main** automatisch über GitHub Pages. Er führt zuerst die Browser-Tests aus und lädt anschließend nur die öffentlichen App-Dateien als Pages-Artefakt hoch. Der öffentliche App-Link lautet https://kalkprofijanek.github.io/kalkpilot-by-janek/. GitHub Pages muss auf **GitHub Actions** als Veröffentlichungsquelle eingestellt sein. Ein Feature-Branch allein ändert die Veröffentlichung nicht.
 
 Den vollständigen Repository-Inhalt als statische Website bereitstellen, einschließlich `js/` und `vendor/`. Es gibt keinen Buildschritt und keine Laufzeit-CDNs. Nur die einzelne HTML-Datei zu kopieren reicht für diese Version nicht mehr. [Veröffentlichung und Prüfung](docs/VEROEFFENTLICHUNG.md).
 
