@@ -39,7 +39,7 @@ class CloudStartTests(unittest.TestCase):
             cwd=tempfile.gettempdir(), capture_output=True, text=True, timeout=20,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('8 content checks', result.stdout)
+        self.assertIn('9 content checks', result.stdout)
 
     def test_current_static_assets_served(self):
         with urlopen(self.url + '/js/browser-review.js', timeout=10) as response:

@@ -1,8 +1,10 @@
 # KalkPilot by Janek
 
-**[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.3.2 BETA**
+**[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.4.0 BETA**
 
-**LLM-Matching:** Codex oder Claude Code kann in der Cloud das neue LV anhand eurer Referenzen zuordnen. Die App exportiert den Matching-Auftrag und importiert konkrete Referenz-IDs mit fachlicher Begründung. [Browser- und Cloud-Ablauf](docs/LLM_MATCHING.md).
+**Neu in 1.4.0 BETA:** verbessertes Matching mit Fachprüfung und Originaltext-Belegen sowie Excel-Austausch mit Microsoft 365 Copilot im Firmenbrowser. [Verbesserungen, Copilot-Ablauf und Prüfergebnisse](docs/MATCHING_VERBESSERUNGSLOGIK.md).
+
+**LLM-Matching:** Microsoft 365 Copilot kann per Excel-Upload im Firmenbrowser arbeiten. Codex oder Claude Code kann in der Cloud das neue LV anhand eurer Referenzen zuordnen. Die App exportiert den Matching-Auftrag und importiert konkrete Referenz-IDs mit fachlicher Begründung. [Browser- und Cloud-Ablauf](docs/LLM_MATCHING.md).
 
 Statische Browser-App für den Vergleich von Leistungsverzeichnissen mit Referenzkalkulationen. Die Startseite leitet auf `KalkPilot_by_Janek.html` weiter. Auf einem Firmenrechner genügt ein aktueller Edge- oder Chrome-Browser; es werden keine Programme oder API-Schlüssel benötigt.
 
@@ -10,8 +12,8 @@ Statische Browser-App für den Vergleich von Leistungsverzeichnissen mit Referen
 
 1. Referenzen als JSON oder zusammengehörige LV-/Kalkulationsdateien laden und aktivieren.
 2. Das neue GAEB-LV unter **② Matching → Neues LV hochladen** laden. Dateien unter **Referenzprojekte** dienen als Vergleichsdaten und ersetzen diesen Import nicht.
-3. Für LLM-Matching **LLM-Matching-Paket** herunterladen und in Codex/Claude Code hochladen; dort den enthaltenen Auftrag ausführen lassen. Alternativ kann der Agent die App im Cloud-Browser mit euren Originaldateien starten. [Anleitung und Agenten-Auftrag](docs/LLM_MATCHING.md).
-4. Die Antwort über **LLM-Zuordnungen laden** importieren. Die LLM wählt konkrete Referenzen; Preise bleiben unverändert und jede Position startet zur fachlichen Prüfung. Anschließend gewünschte Vorschläge übernehmen. Der optionale **Regelvergleich** ist ein zusätzlicher Vergleichsweg.
+3. Unter **KI-Arbeitsweg** Microsoft 365 Copilot für Excel oder Codex/Claude für JSON wählen. Den Matching-Auftrag herunterladen und zusammen mit dem angezeigten Auftrag in der KI hochladen. [Copilot-Ablauf](docs/MATCHING_VERBESSERUNGSLOGIK.md) · [Cloud-Ablauf](docs/LLM_MATCHING.md).
+4. Die Antwort über **KI-Antwort (Excel / JSON) importieren** laden oder als vollständige Tabelle einfügen. Die LLM wählt konkrete Referenzen; Preise bleiben unverändert und jede Position startet zur fachlichen Prüfung. Anschließend gewünschte Vorschläge übernehmen. Der optionale **Regelvergleich** ist ein zusätzlicher Vergleichsweg.
 5. Referenzdaten regelmäßig mit **Sichern** als JSON herunterladen. IndexedDB gehört zum Browserprofil und zur Website-Adresse; Firmenrichtlinien, Browserwechsel oder das Löschen von Websitedaten können den lokalen Bestand entfernen.
 
 Für eine zusätzliche manuelle Prüfung steht weiterhin **ChatGPT-Prüfpaket · BETA** bereit. Dessen Antwort kann als Review-Notiz eingefügt werden; dieser Notizweg verändert keine Zuordnungen. Beim LLM-Matching dagegen wird die strukturierte Antwort mit konkreten Referenz-IDs eingelesen. Uploads erfolgen ausschließlich durch den Nutzer; die App sendet keine Dateien an KI-Dienste.

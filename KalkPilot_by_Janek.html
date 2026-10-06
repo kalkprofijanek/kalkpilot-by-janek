@@ -434,21 +434,31 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
         <div class="ctitle" style="margin:8px 0 0">KI-Matching im Browser · BETA</div>
         <ol class="section-note" style="padding-left:20px;margin:4px 0;line-height:1.7">
           <li>Referenzdatenbank laden und Projekte aktivieren; neues GAEB-LV laden.</li>
-          <li>Matching-Auftrag herunterladen. Datei und den Auftrag unten in Codex oder Claude hochladen.</li>
-          <li>Die von der KI erzeugte Antwort-JSON hier importieren und Zuordnungen prüfen.</li>
+          <li>Matching-Auftrag herunterladen. Datei und den Auftrag unten in Copilot, Codex oder Claude hochladen.</li>
+          <li>Die KI-Antwort als Excel/JSON importieren oder als vollständige Tabelle einfügen; Zuordnungen prüfen.</li>
         </ol>
-        <div class="section-note">Die KI arbeitet im separaten Codex-/Claude-Browserfenster. Diese Website verbindet sich nicht automatisch mit deinem KI-Konto. „Referenz übernehmen“ gibt keinen Preis frei.</div>
-        <details><summary style="cursor:pointer;font-size:12px">Auftrag für Codex / Claude anzeigen</summary>
+        <div class="section-note">Die KI arbeitet im separaten Copilot-/Codex-/Claude-Browserfenster. Diese Website verbindet sich nicht automatisch mit deinem KI-Konto. „Referenz übernehmen“ gibt keinen Preis frei.</div>
+        <details><summary style="cursor:pointer;font-size:12px">KI-Auftrag anzeigen</summary>
           <label for="llmAgentPrompt" class="section-note">Diesen Text zusammen mit der heruntergeladenen Datei verwenden:</label>
           <textarea id="llmAgentPrompt" readonly rows="5" style="width:100%;box-sizing:border-box;margin:5px 0">Führe den Matching-Auftrag aus der hochgeladenen KalkPilot-Datei aus. Ordne als LLM alle Zielpositionen passenden Referenzen aus dem gesamten Bestand zu. Prüfe die Langtexte und technischen Anforderungen, auch Gegenargumente. Erfinde keine Referenzen oder Preise. Verwende ambiguous für nur teilweise passende Ansätze und no_match, wenn kein belastbarer Treffer vorliegt. Liefere eine herunterladbare JSON-Datei gemäß antwortformat mit unveränderter requestId und genau einem Ergebnis pro Zielposition.</textarea>
           <button class="btn btn-s btn-sm" onclick="copyLLMAgentPrompt(this)">Auftrag kopieren</button>
         </details>
+        <label class="section-note" for="llmProvider">KI-Arbeitsweg:</label>
+        <select id="llmProvider" onchange="updateLLMProvider()" style="max-width:100%">
+          <option value="copilot">Microsoft 365 Copilot · Excel</option>
+          <option value="cloud">Codex / Claude · JSON</option>
+        </select>
         <div style="display:flex;gap:5px;flex-wrap:wrap">
-          <button class="btn btn-p btn-sm" id="llmRequestBtn" disabled onclick="downloadLLMMatchingRequest()">1. Matching-Auftrag herunterladen</button>
-          <button class="btn btn-s btn-sm" onclick="document.getElementById('fileLLMMatches').click()">2. KI-Antwort importieren</button>
-          <input type="file" id="fileLLMMatches" accept=".json" onchange="if(this.files[0])importLLMMatches(this.files[0]);this.value=''">
+          <button class="btn btn-p btn-sm" id="llmRequestBtn" disabled onclick="downloadLLMMatchingRequest()">1. Copilot-Excel herunterladen</button>
+          <button class="btn btn-s btn-sm" onclick="document.getElementById('fileLLMMatches').click()">2. KI-Antwort (Excel / JSON) importieren</button>
+          <input type="file" id="fileLLMMatches" accept=".json,.xlsx,.csv,.tsv,.txt" onchange="if(this.files[0])importLLMMatches(this.files[0]);this.value=''">
         </div>
         <div class="section-note" id="llmMatchingStatus" role="status"></div>
+        <details><summary style="cursor:pointer;font-size:12px">Antworttext oder Copilot-Tabelle einfügen</summary>
+          <label for="llmResponseText" class="section-note">JSON oder vollständige Tabelle mit Spaltenüberschriften aus dem Blatt Antwort:</label>
+          <textarea id="llmResponseText" rows="6" style="width:100%;box-sizing:border-box"></textarea>
+          <button class="btn btn-s btn-sm" onclick="importLLMMatches(new File([document.getElementById('llmResponseText').value],'answer.txt'))">Eingefügte Antwort prüfen</button>
+        </details>
         <div class="section-note" id="matchStartStatus" role="status">Neues GAEB-LV und aktive Referenzen laden.</div>
         <div id="matchStartHelp" style="display:none;gap:5px;flex-wrap:wrap">
           <button class="btn btn-s btn-sm" onclick="document.getElementById('fileRefJSON').click()">📂 Referenzdatenbank laden</button>
@@ -720,8 +730,9 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 <script src="js/gaeb-encoding.js"></script>
 <script src="js/browser-review.js"></script>
 <script src="js/llm-matching.js"></script>
+<script src="js/copilot-exchange.js"></script>
 <script>
-const APP_VERSION='1.3.2-beta';
+const APP_VERSION='1.4.0-beta';
 const APP_BUILD_DATE='2026-10-05T00:00:00+02:00';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -1384,7 +1395,7 @@ function buildPositionMatchProfile(p){
   profile.generic=isGenericReference({...p,kurztext:shortRaw,langtext:longRaw});
   profile.swSub=profile.category==='ARBEITSSCHUTZ_SW'?swSubcategory(fullNorm):'';
   profile.holding=hasHoldingSemantics(fullNorm);
-  profile.docLike=isDocLikeText(fullNorm);
+  profile.docLike=isDocLikeText(shortNorm)||(['DOKUMENTATION','QUALITAET_PROBEFELD','BAULEITUNG_PLANUNG','ARBEITSSCHUTZ_SW'].includes(profile.category)&&isDocLikeText(fullNorm));
   profile.beAsset=profile.category==='BE'?detectBeAsset(fullNorm):'';
   profile.earthFamily=profile.category==='ERDBAU'?detectEarthworkFamily(fullNorm):'';
   profile.disposalSig=['ENTSORGUNG','ERDBAU','TRANSPORT','ABBRUCH_RUECKBAU'].includes(profile.category)?detectDisposalSignature(fullRaw):'';
@@ -1405,9 +1416,11 @@ function buildPositionMatchProfile(p){
 }
 function getMatchProfile(p){
   if(!p)return buildPositionMatchProfile(null);
-  if(!p.__matchProfileVersion||p.__matchProfileVersion!==3){
+  const inputs=[p.kurztext,p.langtext,p.outlineSpecs,p.me,p.menge,p.linkedD83?.langtext,p.linkedD83?.me,p.linkedD83?.menge];
+  if(p.__matchProfileVersion!==4||!p.__matchProfileInputs||!inputs.every((value,i)=>value===p.__matchProfileInputs[i])){
     Object.defineProperty(p,'__matchProfile',{value:buildPositionMatchProfile(p),writable:true,configurable:true,enumerable:false});
-    Object.defineProperty(p,'__matchProfileVersion',{value:3,writable:true,configurable:true,enumerable:false});
+    Object.defineProperty(p,'__matchProfileVersion',{value:4,writable:true,configurable:true,enumerable:false});
+    Object.defineProperty(p,'__matchProfileInputs',{value:inputs,writable:true,configurable:true,enumerable:false});
   }
   return p.__matchProfile;
 }
@@ -4956,6 +4969,7 @@ function getMatchRiskReasons(result,match=result?.matches?.[result?.sel||0]){
   if(match.kind!=='CALC')reasons.push('nur D83-Texttreffer, keine Kalkulation exportierbar');
   if(!(pos.kosten||[]).some(k=>k.typ!=='S'))reasons.push('keine belastbare L/M/G/N-Kostenstruktur');
   reasons.push(...KPBrowserReview.calculationIssues(pos));
+  if(debug.llmAudit)reasons.push(...debug.llmAudit.reasons);
   if((debug.hardCapsApplied||[]).length)reasons.push('fachlicher Deckel: '+debug.hardCapsApplied[0]);
   if(bestScore>=80&&secondScore>0&&(bestScore-secondScore)<8)reasons.push('knappes Top-1/Top-2-Rennen');
   if((debug.unitScore||0)<80)reasons.push('Einheit nicht sicher gleich');
@@ -5092,7 +5106,7 @@ function renderMatch(){
       </td>
       <td class="oz">${h(r.newPos.oz)}</td>
       <td><div class="kt">${h(r.newPos.kurztext)}</div>
-          ${r.llmDecision?`<div class="section-note" title="${h(r.llmDecision.reason)}">LLM · ${h(r.llmDecision.status)} · ${h(r.llmDecision.confidence)}<br>${h(r.llmDecision.reason.slice(0,160))}</div>`:''}
+          ${r.llmDecision&&(!best||best.debug?.llmMatched)?`<div class="section-note" title="${h(r.llmDecision.reason)}">LLM · ${h(r.llmDecision.status)} · ${h(r.llmDecision.confidence)}<br>${h(r.llmDecision.reason.slice(0,160))}<br><b>${h((best?.debug?.llmAudit||r.llmAudit)?.label||'Fachliche Prüfung offen')}</b></div>`:''}
           <div class="lt">${h((r.newPos.langtext||'').substring(0,55))}${(r.newPos.langtext||'').length>55?'...':''}</div>
           ${(r.newPos.langtext||'').trim()?`<button class="info-btn" style="margin-top:3px;font-size:10px;padding:2px 6px" onclick="openManualTargetLang(${idx},event)" title="Vollständigen Langtext anzeigen">📄 Langtext</button>`:''}</td>
       <td style="white-space:nowrap;font-size:11px">${r.newPos.menge>0?`<b>${r.newPos.menge.toLocaleString('de-DE',{maximumFractionDigits:3})}</b> ${h(newMe)}`:'-'}</td>
@@ -5248,6 +5262,8 @@ function showDetail(idx){
       <span class="detail-lbl">Fachklassen:</span><span class="detail-val">EBV/LAGA ${h(dbg.ebvNew||'-')} → ${h(dbg.ebvRef||'-')} · DK ${h(dbg.depvNew||'-')} → ${h(dbg.depvRef||'-')} · Weg ${h(dbg.disposalRouteNew||'-')} → ${h(dbg.disposalRouteRef||'-')}</span>
       <span class="detail-lbl">Deckel:</span><span class="detail-val">${dbg.hardCapsApplied?.length?h(dbg.hardCapsApplied.join(', ')):'-'}</span>
       <span class="detail-lbl">Auto-Prüfung:</span><span class="detail-val">${riskReasons.length?'<span style="color:#fbbf24">Manuell prüfen: '+h(riskReasons.join(' · '))+'</span>':'<span style="color:var(--green)">automatisch übernahmefähig</span>'}</span>
+      ${dbg.llmAudit?`<span class="detail-lbl">KI-Fachprüfung:</span><span class="detail-val detail-lt"><b>${h(dbg.llmAudit.label)}</b><br>${h(dbg.llmAudit.reasons.join(' · ')||'Die Prüfung ersetzt keine fachliche Freigabe.')}</span>`:''}
+      ${r.llmDecision?.evidence?.filter(e=>e.referenceId===best?.llmReferenceId).map(e=>`<span class="detail-lbl">Textbelege:</span><span class="detail-val detail-lt">Ziel: ${h(e.targetQuote)}<br>Referenz: ${h(e.referenceQuote)}<br><small>Im Original gefunden; noch keine Bestätigung fachlicher Gleichwertigkeit.</small></span>`).join('')||''}
       <span class="detail-lbl">Grund:</span><span class="detail-val detail-lt">${h(dbg.reasonText||'')}</span>
       <span class="detail-lbl">Prüfschritte · BETA:</span><span class="detail-val detail-lt">${getMatchReviewTrace(r,best).map(step=>`<b>${h(step.schritt)}: ${h(step.status)}</b><br>${h(step.details)}`).join('<br><br>')}</span>
       ${dbg.scoreParts?`<span class="detail-lbl">Score-Aufbau:</span><span class="detail-val" style="font-size:11px;line-height:1.6">Text ${dbg.scoreParts.textScore}% · Kategorie ${dbg.scoreParts.categoryScore}% · Fachbegriffe ${dbg.scoreParts.keywordScore}% · Aktion/Objekt ${dbg.scoreParts.actionObjectScore}% · Einheit ${dbg.scoreParts.unitScore}% · Menge ${dbg.scoreParts.quantityScore}% · Kostenstruktur ${dbg.scoreParts.costStructureScore}% · Kontext ${dbg.scoreParts.contextScore}% · Lernen ${dbg.scoreParts.learningScore}% · Risiko ${dbg.scoreParts.riskScore}% · Abzug ${dbg.scoreParts.penaltyScore}%${dbg.scoreParts.reasons&&dbg.scoreParts.reasons.length?'<br><span style="color:var(--green)">✓ '+h(dbg.scoreParts.reasons.join(' · '))+'</span>':''}${dbg.scoreParts.warnings&&dbg.scoreParts.warnings.length?'<br><span style="color:#fbbf24">⚠ '+h(dbg.scoreParts.warnings.join(' · '))+'</span>':''}</span>`:''}
@@ -5974,11 +5990,24 @@ async function copyLLMAgentPrompt(button){
   try{await navigator.clipboard.writeText(field.value);button.textContent='Auftrag kopiert';}
   catch(error){field.focus();field.select();button.textContent='Text markiert – mit Strg+C kopieren';}
 }
+function updateLLMProvider(){
+  const copilot=document.getElementById('llmProvider').value==='copilot';
+  document.getElementById('llmRequestBtn').textContent=copilot?'1. Copilot-Excel herunterladen':'1. Matching-JSON herunterladen';
+  document.getElementById('llmAgentPrompt').value=copilot?
+    'Bearbeite die hochgeladene KalkPilot-Exceldatei. Lies das Blatt Auftrag sowie sämtliche Zielpositionen und Referenzen einschließlich aller Langtext-Spalten. Ordne als LLM fachlich passende Referenzen zu; prüfe Gegenargumente und technische Anforderungen. Fülle für jede ZielID das Blatt Antwort aus, mit Begründung, Unterschieden, fehlenden Angaben und wörtlichen Ziel-/Referenzbelegen für den ersten Vorschlag. Lasse Datenkennung und IDs unverändert. Erfinde keine Preise oder Referenzen. Liefere die ausgefüllte Exceldatei oder die vollständige Antworttabelle zum Kopieren. Wenn du nicht alles vollständig lesen kannst, sage das ausdrücklich.':
+    'Führe den Matching-Auftrag aus der hochgeladenen KalkPilot-JSON-Datei aus. Durchsuche alle Referenzen, prüfe Langtexte und Gegenargumente. Liefere für jedes Ziel eine Zuordnung gemäß antwortformat mit unveränderter requestId, konkreten Unterschieden und wörtlichen Textbelegen. Erfinde keine Preise oder IDs.';
+}
 async function downloadLLMMatchingRequest(){
   const status=document.getElementById('llmMatchingStatus');
   try{
     if(S.matching)throw new Error('Bitte laufendes Matching zuerst abschließen lassen.');
     const {request}=await getLLMMatchingContext();
+    if(document.getElementById('llmProvider').value==='copilot'){
+      const file=KPCopilotExchange.exportRequest(request);
+      dl(file,`KalkPilot_Copilot_${request.requestId.slice(0,12)}.xlsx`,file.type);
+      status.textContent=`Copilot-Auftrag: ${request.zielpositionen.length} Zielpositionen, ${request.referenzen.length} Referenzen. Exceldatei plus angezeigten Auftrag in Microsoft 365 Copilot hochladen; ausgefülltes Blatt Antwort hier importieren.`;
+      return;
+    }
     dl(JSON.stringify(request,null,2),`KalkPilot_LLM_Matching_${request.requestId.slice(0,12)}.json`,'application/json');
     status.textContent=`Paket: ${request.zielpositionen.length} Zielpositionen und ${request.referenzen.length} Referenzen. In Codex/Claude Code hochladen: „Führe den Matching-Auftrag aus und liefere die Antwort als JSON-Datei gemäß antwortformat.“`;
   }catch(error){status.textContent=error.message;}
@@ -5988,7 +6017,7 @@ async function importLLMMatches(file){
   try{
     if(S.matching)throw new Error('Bitte laufendes Matching zuerst abschließen lassen.');
     if(file.size>10*1024*1024)throw new Error('LLM-Antwort ist größer als 10 MB.');
-    const response=JSON.parse(normalizeImportedJSONText(await file.text()));
+    const response=/\.xlsx$/i.test(file.name)?await KPCopilotExchange.importWorkbook(await file.arrayBuffer()):KPCopilotExchange.importText(normalizeImportedJSONText(await file.text()));
     const {request,targets,references}=await getLLMMatchingContext();
     const decisions=KPLLMMatching.validateResponse(response,request);
     const rows=new Map(decisions.map(row=>[row.targetId,row]));
@@ -5999,11 +6028,12 @@ async function importLLMMatches(file){
         const pos=refMap.get(id);
         const kind=(pos.kosten||[]).some(c=>c.typ!=='S')?'CALC':'TEXT_ONLY';
         const evaluated=calcScore(np,pos,{isTextOnly:kind==='TEXT_ONLY'});
-        return{pos,kind,score:evaluated.score,debug:{...evaluated.debug,llmMatched:true,
+        return{pos,kind,llmReferenceId:id,score:evaluated.score,debug:{...evaluated.debug,llmMatched:true,
           llmConfidence:decision.confidence,
+          llmAudit:KPLLMMatching.assessDecision({...decision,referenceIds:[id]},np,[pos]),
           reasonText:`LLM: ${decision.reason} Unterschiede: ${decision.differences.join(' · ')||'-'}. Fehlende Angaben: ${decision.missingInformation.join(' · ')||'-'}. Regelprüfung: ${evaluated.debug.reasonText||''}`}};
       });
-      return{newPos:np,matches,sel:0,accepted:false,llmDecision:decision};
+      return{newPos:np,matches,sel:0,accepted:false,llmDecision:decision,llmAudit:KPLLMMatching.assessDecision(decision,np,decision.referenceIds.map(id=>refMap.get(id)))};
     });
     const current=getActiveRef();
     if(S.matching||S.newLV.length!==targets.length||S.newLV.some((p,i)=>p!==targets[i])||
@@ -6852,6 +6882,7 @@ document.addEventListener('mouseup',stopManualSplit);
 window.addEventListener('resize',()=>{loadManualSplitWidth();loadMatchSplitHeight();});
 
 // App starten
+updateLLMProvider();
 applyLayoutPolish();
 document.getElementById('d83RefLbl')?.classList.toggle('on',document.getElementById('d83RefFilter')?.checked);
 document.getElementById('manualCalcOnlyLbl')?.classList.toggle('on',document.getElementById('manualCalcOnly')?.checked);
