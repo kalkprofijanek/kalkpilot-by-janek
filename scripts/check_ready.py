@@ -12,6 +12,7 @@ CHECKS = {
     '/js/gaeb-encoding.js': 'KPGaebEncoding',
     '/js/browser-review.js': 'KPBrowserReview',
     '/js/llm-matching.js': 'KPLLMMatching',
+    '/js/copilot-exchange.js': 'KPCopilotExchange',
 }
 
 

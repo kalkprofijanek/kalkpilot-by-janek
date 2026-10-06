@@ -2,6 +2,8 @@
 
 **[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.3.2 BETA**
 
+**Unveröffentlichter Entwurf auf diesem Branch:** verbessertes Matching mit Fachprüfung und Originaltext-Belegen sowie Excel-Austausch mit Microsoft 365 Copilot im Firmenbrowser. [Verbesserungen, Copilot-Ablauf und Prüfergebnisse](docs/MATCHING_VERBESSERUNGSLOGIK.md). Die Online-App enthält diesen Entwurf erst nach Freigabe und Veröffentlichung.
+
 **LLM-Matching:** Codex oder Claude Code kann in der Cloud das neue LV anhand eurer Referenzen zuordnen. Die App exportiert den Matching-Auftrag und importiert konkrete Referenz-IDs mit fachlicher Begründung. [Browser- und Cloud-Ablauf](docs/LLM_MATCHING.md).
 
 Statische Browser-App für den Vergleich von Leistungsverzeichnissen mit Referenzkalkulationen. Die Startseite leitet auf `KalkPilot_by_Janek.html` weiter. Auf einem Firmenrechner genügt ein aktueller Edge- oder Chrome-Browser; es werden keine Programme oder API-Schlüssel benötigt.

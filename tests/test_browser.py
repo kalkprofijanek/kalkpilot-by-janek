@@ -455,6 +455,7 @@ class BrowserRegression(unittest.TestCase):
           switchTab('t2');checkRunBtn();
         }''')
         with self.page.expect_download() as info:
+            self.page.locator('#llmProvider').select_option('cloud')
             self.page.locator('#llmRequestBtn').click()
         request = json.loads(Path(info.value.path()).read_text())
         self.assertEqual(request['schema'], 'kalkpilot.llm-matching-request')
