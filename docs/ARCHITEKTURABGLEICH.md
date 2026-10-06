@@ -16,7 +16,7 @@ Die Empfehlungen zur Cloud-Entwicklung, mehrstufigen Prüfung, nachvollziehbaren
 | Vektor-/Hybrid-Suche | Regel-, Token-, Synonym-, Fuzzy- und Exact-Suche vorhanden; kein Backend und keine relationale Datenbank | Zuerst lokale Kandidatensuche gegen echte Soll-Treffer messen; Embeddings erst bei nachgewiesenem Recall-Problem |
 | Provider-Abstraktion und API-Secrets | Widerspricht dem festgelegten reinen Datei-Upload-Workflow | Optionaler späterer Ausbau nach eigener Entscheidung; aktuell weder Provider-Aufrufe noch API-Schlüssel |
 | Erweiterbares historisches Datenmodell | Projekte/Positionen/Kosten/Original-XML und Lernsignaturen vorhanden; Preisstand/Region/Freigaben nicht konsistent vorhanden | Versioniertes Datenmodell mit nachvollziehbarer Herkunft und unbekannten Feldern planen |
-| Preisbildung aus realen Ansätzen | Grundsätzlich passend; aktuelle EP-Anzeige ist vereinfacht, Bausteine teils unaufgelöst | Geprüften Kalkulationskern priorisieren; keine Preisfindung allein durch ChatGPT |
+| Preisbildung aus realen Ansätzen | Grundsätzlich passend; aktuelle EP-Anzeige ist vereinfacht, Geräte-/Kostenartenpreise werden aus i2-Stammdaten bezogen | Geprüften Kalkulationskern priorisieren; keine Preisfindung allein durch ChatGPT |
 | Deployment aus GitHub | GitHub Pages ist bereits eingerichtet, Quelle main und Repository-Wurzel | Bestehenden statischen Weg beibehalten; Cloud-Anbieterwechsel erst bei zusätzlichem Backendbedarf |
 
 ## A/B/E/F: KalkPilot heute und konkrete Lücken

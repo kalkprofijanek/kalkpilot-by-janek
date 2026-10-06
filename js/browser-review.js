@@ -1,19 +1,52 @@
 /* Portable review data for a user-initiated ChatGPT file upload. No network calls. */
 (() => {
   'use strict';
+  const isAssembly = cost => !!cost?.isAssembly || cost?.entryType === 'AssemblyDetail';
+  const number = value => value == null || String(value).trim() === '' ? null :
+    (Number.isFinite(Number(value)) ? Number(value) : null);
+  const active = cost => !Number(cost?.sItemDisabled) && number(cost?.menge) !== 0;
+  function referenceStructureIssues(position) {
+    const costs=(position?.kosten || []).filter(active),issues=[];
+    if(!costs.length)issues.push('Keine aktiven Kostenansätze vorhanden');
+    for(const cost of costs){
+      if(number(cost.menge)==null)issues.push('Mengenansatz fehlt oder ist ungültig');
+      if(!['L','M','G','N','B','S'].includes(cost.typ))issues.push('Kostenart nicht zugeordnet');
+      if(!String(cost.identifyKey || cost.nameCoC || '').trim())issues.push('Kostenarten-/Gerätekennung fehlt');
+      for(const key of ['factor','costFactor','cFactorCoC','qFactorCoC']){
+        if(cost[key]!=null && (number(cost[key])==null || number(cost[key])<=0))issues.push(key+': ungültiger Mengen-/Kostenfaktor');
+      }
+    }
+    return [...new Set(issues)];
+  }
+  function resourceContext(position) {
+    return (position?.kosten || []).filter(active).map(cost=>({
+      costType:cost.typ || '',code:cost.nameCoC || '',identifyKey:cost.identifyKey || '',
+      description:cost.descr || '',isAssembly:isAssembly(cost),quantity:cost.menge,unit:cost.einheit || '',
+      factor:cost.factor ?? 1,costFactor:cost.costFactor ?? 1,
+      cFactorCoC:cost.cFactorCoC ?? 1,qFactorCoC:cost.qFactorCoC ?? 1,
+      isPerformanceFactor:!!Number(cost.factorIsPerformanceFactor),
+      priceSource:'i2-Stammdaten; Exportwerte sind historische Hinweise'
+    }));
+  }
+  function assemblyContext(position) {
+    return (position?.kosten || []).filter(c => isAssembly(c) && active(c)).map(cost => {
+      const description=String(cost.descr || cost.nameCoC || 'Zusammengesetzter Ansatz');
+      const device=/bagger|radlader|raupe|walze|dumper|lkw|lade.*gerät|hebe.*gerät|kran|gerät|pumpe|kompressor/i.test(description);
+      return {name:cost.nameCoC || '',description,kind:device?'device':'assembly',
+        label:device?'Geräteansatz':'Zusammengesetzter Ansatz',quantity:cost.menge,unit:cost.einheit || '',
+        performanceFactor:Number(cost.factorIsPerformanceFactor)?cost.factor:null,
+        priceInExport:Number.isFinite(Number(cost.preis)) && Number(cost.preis)>0?Number(cost.preis):null,
+        componentsInExport:false,
+        note:'Vorhandener Geräte-/Bausteinverweis. Preis und Bestandteile werden beim i2-Import aus Stammdaten bezogen. Keine Komponenten hinzurechnen. Kennung, Menge und Faktoren prüfen.'};
+    });
+  }
   function calculationIssues(position) {
     const costs = position?.kosten || [];
     const issues = [];
     if (!costs.length) issues.push('Keine Kostenansätze vorhanden');
-    if (costs.some(c => ['menge', 'preis'].some(key =>
+    if (costs.some(c => active(c) && ['menge'].some(key =>
       c[key] == null || String(c[key]).trim() === '' || !Number.isFinite(Number(c[key]))
-    ))) issues.push('Menge oder Preis im Ansatz fehlt oder ist ungültig');
-    if (costs.some(c => (c.isAssembly || c.entryType === 'AssemblyDetail') && !Number(c.preis))) {
-      issues.push('Bausteinpreis nicht aufgelöst');
-    }
-    if (costs.some(c => Number(c.menge) !== 0 && c.preis != null && Number(c.preis) === 0 && !c.isAssembly)) {
-      issues.push('Nullpreis im Ansatz: fachlich prüfen');
-    }
+    ))) issues.push('Mengenansatz fehlt oder ist ungültig');
     if (costs.some(c => ['factor', 'costFactor', 'cFactorCoC', 'qFactorCoC'].some(
       key => c[key] != null && Number(c[key]) !== 1
     ) || Number(c.factorIsPerformanceFactor))) {
@@ -27,22 +60,23 @@
     return issues;
   }
   function calculateKnownCosts(position) {
-    const number = value => value == null || String(value).trim() === '' ? null :
-      (Number.isFinite(Number(value)) ? Number(value) : null);
     const rows = (position?.kosten || []).map((cost, index) => {
       const result = {index, description: cost.descr || cost.nameCoC || 'Kostenansatz', amount: null, reasons: []};
       if (Number(cost.sItemDisabled)) return {...result, state: 'excluded', reasons: ['deaktiviert']};
       const quantity = number(cost.menge), price = number(cost.preis);
       if (quantity === 0) return {...result, state: 'excluded', reasons: ['Mengenansatz 0']};
-      if (quantity == null || price == null) result.reasons.push('Menge oder Preis fehlt/ist ungültig');
-      if (price === 0) result.reasons.push(cost.isAssembly || cost.entryType === 'AssemblyDetail' ?
-        'Bausteinpreis nicht auflösbar' : 'Nullpreis nicht als kostenlose Leistung bestätigt');
-      if (Number(cost.factorIsPerformanceFactor)) result.reasons.push('Leistungsfaktor: Rechenregel nicht bestätigt');
+      if (quantity == null) return {...result,state:'open',reasons:['Mengenansatz fehlt/ist ungültig']};
+      if (cost.preis!=null && String(cost.preis).trim()!=='' && price==null) return {...result,state:'open',reasons:['Ungültiger Exportpreis']};
+      for(const key of ['factor','costFactor','cFactorCoC','qFactorCoC']){
+        if(cost[key]!=null && (number(cost[key])==null || number(cost[key])<=0))return {...result,state:'open',reasons:[key+': ungültiger Mengen-/Kostenfaktor']};
+      }
+      if (price == null || price === 0) return {...result,state:'master_data',reasons:['Preisbezug beim i2-Import aus Stammdaten']};
+      if (Number(cost.factorIsPerformanceFactor)) result.reasons.push('Leistungsansatz: in i2 berechnen');
       for (const key of ['factor', 'costFactor', 'cFactorCoC', 'qFactorCoC']) {
-        if (cost[key] != null && number(cost[key]) !== 1) result.reasons.push(key + ': Rechenregel nicht bestätigt');
+        if (cost[key] != null && number(cost[key]) !== 1) result.reasons.push(key + ': in i2 berechnen');
       }
       if (cost.curCoC && String(cost.curCoC).toUpperCase() !== 'EUR') result.reasons.push('Andere Währung: keine Umrechnung');
-      if (result.reasons.length) return {...result, state: 'open'};
+      if (result.reasons.length) return {...result, state: 'requires_i2'};
       const amount = quantity * price;
       if (!Number.isFinite(amount)) return {...result, state: 'open', reasons: ['Berechnung außerhalb des Zahlenbereichs']};
       return {...result, state: 'known', amount};
@@ -59,15 +93,19 @@
     const finite = Number.isFinite(subtotal);
     if (!finite) basisReasons.push('Summe außerhalb des Zahlenbereichs');
     const openCount = rows.filter(row => row.state === 'open').length;
+    const masterDataCount=rows.filter(row=>row.state==='master_data').length;
+    const requiresI2Count=rows.filter(row=>row.state==='requires_i2').length;
     return {rows, knownSubtotal: finite && known.length ? subtotal : null,
       knownCount: known.length, openCount, excludedCount: rows.filter(row => row.state === 'excluded').length,
-      basisReasons, complete: rows.length > 0 && known.length > 0 && !openCount && !basisReasons.length,
+      masterDataCount,requiresI2Count,
+      basisReasons, complete: rows.length > 0 && known.length > 0 && !openCount && !masterDataCount && !requiresI2Count && !basisReasons.length,
       priceApproved: false, unitPrice: null};
   }
   function priceStatus(position) {
     const issues = calculationIssues(position);
-    return {label: 'Preis ungeprüft', approved: false, issues,
-      explanation: 'Historische Ansatzsumme; Faktoren, Pauschalen und offene Bausteine sind nicht vollständig berechnet. Referenzübernahme ist keine Preisfreigabe.'};
+    const masterData=(position?.kosten || []).some(c=>active(c) && (number(c.preis)==null || number(c.preis)===0));
+    return {label: masterData?'Preisbezug: i2-Stammdaten':'Preis ungeprüft', approved: false, issues,
+      explanation: 'Kostenarten und Gerätebausteine beziehen Preise beim i2-Import aus Stammdaten. Entscheidend sind korrekte Kennungen, Mengen und Faktoren. Exportwerte sind historische Hinweise, keine Preisfreigabe.'};
   }
   // Exact text groups are review candidates, not proof of identical scope or price basis.
   function referencePeers(position, references) {
@@ -91,6 +129,8 @@
       fehlendeLeistungsdaten: missing,
       kalkulationshinweise: calculationIssues(position),
       teilkosten: calculateKnownCosts(position),
+      geraeteansaetze: assemblyContext(position),
+      kalkulationsstruktur:resourceContext(position),
       preispruefung: 'Nicht bestätigt; historische vereinfachte Werte',
       metadatenpruefung: 'Preisstand und Region nicht bestätigt'
     };
@@ -143,5 +183,31 @@
       }))
     };
   }
-  window.KPBrowserReview = {build, calculationIssues, dataQuality, priceStatus, referencePeers, calculateKnownCosts};
+  // Only complete simple costs with identical text and basis may be displayed together.
+  // This is a descriptive historical comparison, never a price approval or ranking signal.
+  function absolutePriceComparison(position, references, target=null) {
+    const normalize=v=>String(v || '').toLowerCase().replace(/\s+/g,' ').trim();
+    const unit=v=>({'std':'h','std.':'h','m²':'m2','m³':'m3'}[normalize(v)] || normalize(v));
+    const full=p=>normalize(p?.linkedD83?.langtext || p?.langtext || p?.outlineSpecs);
+    const me=unit(position?.me);
+    const entries=[position,...referencePeers(position,references)].map(p=>{
+      const reasons=[],costs=calculateKnownCosts(p);
+      if(!costs.complete)reasons.push('Ansatzpreis im Export nicht vollständig berechenbar');
+      if(!me || me==='psch' || me!==unit(p.me) || p.linkedD83 && unit(p.linkedD83.me)!==me)reasons.push('Einheit oder Pauschalbasis nicht vergleichbar');
+      if(normalize(position.kurztext)!==normalize(p.kurztext) || full(position)!==full(p))reasons.push('Leistungsbeschreibung unterscheidet sich');
+      if(costs.knownSubtotal==null || costs.knownSubtotal<=0)reasons.push('Kein positiver vollständiger Ansatzbetrag');
+      return {position:p,eligible:!reasons.length,reasons,value:!reasons.length?costs.knownSubtotal:null};
+    });
+    const base=entries[0].value;
+    const quantity=target && unit(target.me)===me && Number.isFinite(Number(target.menge)) && Number(target.menge)>0?Number(target.menge):null;
+    for(const entry of entries){
+      entry.delta=entry.value!=null && base!=null?entry.value-base:null;
+      entry.totalDelta=entry.delta!=null && quantity!=null && Number.isFinite(entry.delta*quantity)?entry.delta*quantity:null;
+    }
+    const values=entries.filter(e=>e.eligible).map(e=>e.value);
+    return {entries,unit:me,targetQuantity:quantity,range:values.length>1?[Math.min(...values),Math.max(...values)]:null,
+      approved:false,affectsRanking:false,
+      note:'Absolute Unterschiede einfacher historischer Ansatzkosten; Leistungsumfang, Preisstand, Region und Zuschläge sind fachlich zu bestätigen. Keine statistische Toleranz und kein freigegebener Angebotspreis.'};
+  }
+  window.KPBrowserReview = {build, calculationIssues, dataQuality, priceStatus, referencePeers, calculateKnownCosts, assemblyContext, absolutePriceComparison, referenceStructureIssues, resourceContext};
 })();

@@ -256,7 +256,8 @@ class BrowserRegression(unittest.TestCase):
         candidate = payload['positionen'][0]['kandidaten'][0]
         quality = candidate['datenqualitaet']
         self.assertIn('Langtext', quality['fehlendeLeistungsdaten'])
-        self.assertIn('Menge oder Preis im Ansatz fehlt oder ist ungültig', quality['kalkulationshinweise'])
+        self.assertEqual(quality['teilkosten']['masterDataCount'],1)
+        self.assertNotIn('Menge oder Preis im Ansatz fehlt oder ist ungültig',quality['kalkulationshinweise'])
         self.assertEqual(len(candidate['pruefschritte']), 5)
         self.assertIn('Nicht bestätigt', quality['preispruefung'])
         self.assertIsNone(candidate['kostenansaetze'][0]['historischerPreis'])
@@ -344,7 +345,7 @@ class BrowserRegression(unittest.TestCase):
         self.assertEqual(result['dn']['conflicts'], [])
         self.assertTrue(result['dn']['missing'])
 
-    def test_partial_costs_keep_unresolved_and_factor_rows_open(self):
+    def test_partial_costs_separate_master_data_and_i2_factor_rows(self):
         result = self.page.evaluate("""() => {
           const pos={menge:1,me:'m2',kosten:[
             {descr:'Vlies',menge:1.15,preis:.68},
@@ -359,7 +360,9 @@ class BrowserRegression(unittest.TestCase):
         }""")
         self.assertAlmostEqual(result['knownSubtotal'], .782)
         self.assertEqual(result['knownCount'], 1)
-        self.assertEqual(result['openCount'], 3)
+        self.assertEqual(result['openCount'], 0)
+        self.assertEqual(result['masterDataCount'], 2)
+        self.assertEqual(result['requiresI2Count'], 1)
         self.assertEqual(result['excludedCount'], 2)
         self.assertFalse(result['complete'])
         self.assertFalse(result['priceApproved'])
@@ -380,9 +383,11 @@ class BrowserRegression(unittest.TestCase):
         self.assertTrue(result[1]['basisReasons'])
         self.assertIsNone(result[1]['unitPrice'])
         self.assertIsNone(result[2]['knownSubtotal'])
-        self.assertEqual(result[2]['openCount'], 2)
+        self.assertEqual(result[2]['openCount'], 0)
+        self.assertEqual(result[2]['masterDataCount'], 1)
+        self.assertEqual(result[2]['requiresI2Count'], 1)
 
-    def test_price_basis_risks_prevent_automatic_reference_acceptance(self):
+    def test_missing_resource_keys_prevent_automatic_reference_acceptance(self):
         result = self.page.evaluate("""() => {
           return [
             {kosten:[{typ:'L',menge:1,preis:50,factor:400,factorIsPerformanceFactor:1}]},
@@ -420,7 +425,7 @@ class BrowserRegression(unittest.TestCase):
         self.assertEqual(result['prices'], [60, 75])
         self.assertEqual(result['costs'], [60, 75])
 
-    def test_unresolved_assembly_prevents_auto_accept(self):
+    def test_missing_device_key_prevents_auto_accept(self):
         result = self.page.evaluate('''() => {
           const pos={kurztext:'Boden lösen',me:'m3',kosten:[{typ:'B',isAssembly:true,menge:1,preis:0}]};
           const match={pos,score:100,kind:'CALC',debug:{unitScore:100,categoryScore:100}};
@@ -428,7 +433,8 @@ class BrowserRegression(unittest.TestCase):
           return {accepted:canAutoAcceptMatch(row,match),risks:getMatchRiskReasons(row,match)};
         }''')
         self.assertFalse(result['accepted'])
-        self.assertIn('Bausteinpreis nicht aufgelöst', result['risks'])
+        self.assertIn('Kostenarten-/Gerätekennung fehlt', result['risks'])
+        self.assertNotIn('Bausteinpreis nicht aufgelöst', result['risks'])
 
     def test_manual_chatgpt_download(self):
         self.page.evaluate('''() => {

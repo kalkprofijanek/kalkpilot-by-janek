@@ -1,26 +1,933 @@
 [
- {"name":"DA 75 gegen DA 315","expected":"conflict","a":{"kurztext":"PE100 Rohr liefern und einbauen","langtext":"PE100 da 75 SDR 11","me":"m"},"b":{"kurztext":"PE100 Rohr liefern und einbauen","langtext":"PE100 da 315 SDR 11","me":"m"}},
- {"name":"SDR 11 gegen SDR 17","expected":"conflict","a":{"kurztext":"PE100 Rohr liefern und einbauen","langtext":"PE100 da 75 SDR 11","me":"m"},"b":{"kurztext":"PE100 Rohr liefern und einbauen","langtext":"PE100 da 75 SDR 17","me":"m"}},
- {"name":"PE100 gegen PE80","expected":"conflict","a":{"kurztext":"Kunststoffrohr liefern","langtext":"Rohr PE100 da 75","me":"m"},"b":{"kurztext":"Kunststoffrohr liefern","langtext":"Rohr PE80 da 75","me":"m"}},
- {"name":"Gefährliches Holz gegen nicht gefährlich","expected":"conflict","a":{"kurztext":"Altholz entsorgen","langtext":"Altholz A IV AVV 170204*","me":"t"},"b":{"kurztext":"Altholz entsorgen","langtext":"Altholz A I AVV 170201 nicht gefährlich","me":"t"}},
- {"name":"AVV Stern erhalten","expected":"conflict","a":{"kurztext":"Abfall entsorgen","langtext":"AVV 170204*","me":"t"},"b":{"kurztext":"Abfall entsorgen","langtext":"AVV 170204","me":"t"}},
- {"name":"Unterwasser gegen trocken","expected":"conflict","a":{"kurztext":"Kiessand einbauen","langtext":"Unterhalb der Grundwasseroberfläche einbauen","me":"m3"},"b":{"kurztext":"Kiessand einbauen","langtext":"Trocken oberhalb des Grundwassers einbauen","me":"m3"}},
- {"name":"Mengenbasis Fläche gegen Länge","expected":"conflict","a":{"kurztext":"Trennvlies liefern und verlegen","langtext":"PP Vlies GRK 3","me":"m2"},"b":{"kurztext":"Trennvlies liefern und verlegen","langtext":"PP Vlies GRK 3","me":"m"}},
- {"name":"Geotextil PP gegen PET","expected":"conflict","a":{"kurztext":"Trennvlies verlegen","langtext":"Vlies aus Polypropylen PP GRK >= 3","me":"m2"},"b":{"kurztext":"Trennvlies verlegen","langtext":"Vlies aus Polyester PET GRK 3","me":"m2"}},
- {"name":"GRK Mindestklasse unterschritten","expected":"conflict","a":{"kurztext":"Trennvlies verlegen","langtext":"Vlies aus PP GRK >= 3","me":"m2"},"b":{"kurztext":"Trennvlies verlegen","langtext":"Vlies aus PP GRK 2","me":"m2"}},
- {"name":"Flächengewicht Mindestwert unterschritten","expected":"conflict","a":{"kurztext":"Trennvlies verlegen","langtext":"PP Vlies Flächengewicht >= 180 g/m²","me":"m2"},"b":{"kurztext":"Trennvlies verlegen","langtext":"PP Vlies Flächengewicht 150 g/m²","me":"m2"}},
- {"name":"Mehrere Durchmesser ohne Überdeckung","expected":"conflict","a":{"kurztext":"Rohr liefern und einbauen","langtext":"Rohr da 75","me":"m"},"b":{"kurztext":"Rohr liefern und einbauen","langtext":"Rohr da 110 und da 160","me":"m"}},
- {"name":"Verneinter Unterwassereinbau","expected":"conflict","a":{"kurztext":"Kiessand einbauen","langtext":"Unterwassereinbau mit Baggerschaufel","me":"m3"},"b":{"kurztext":"Kiessand einbauen","langtext":"Kein Unterwassereinbau erforderlich","me":"m3"}},
- {"name":"Außendurchmesser anders geschrieben","expected":"consistent","a":{"kurztext":"PE100 Rohr liefern","langtext":"PE100 da 75 SDR 11","me":"m"},"b":{"kurztext":"PE100 Rohr liefern","langtext":"PE 100 Außendurchmesser 75 mm SDR11","me":"m"}},
- {"name":"AVV mit Leerzeichen","expected":"consistent","a":{"kurztext":"Altholz entsorgen","langtext":"Altholz A IV AVV 170204*","me":"t"},"b":{"kurztext":"Altholz entsorgen","langtext":"Altholz Kategorie A 4 AVV 17 02 04 *","me":"t"}},
- {"name":"Unterwasser anders formuliert","expected":"consistent","a":{"kurztext":"Kiessand einbauen","langtext":"Unterhalb der Grundwasseroberfläche einbauen","me":"m3"},"b":{"kurztext":"Kiessand einbauen","langtext":"Unterwassereinbau mit Baggerschaufel","me":"m3"}},
- {"name":"Höhere GRK erfüllt Mindestklasse","expected":"consistent","a":{"kurztext":"Trennvlies verlegen","langtext":"PP Vlies GRK >= 3","me":"m2"},"b":{"kurztext":"Trennvlies verlegen","langtext":"PP Vlies GRK 4","me":"m²"}},
- {"name":"Höheres Flächengewicht erfüllt Mindestwert","expected":"consistent","a":{"kurztext":"Trennvlies verlegen","langtext":"PP Vlies Flächengewicht mindestens 180 g/m²","me":"m2"},"b":{"kurztext":"Trennvlies verlegen","langtext":"PP Vlies Flächengewicht 200 g/m²","me":"m2"}},
- {"name":"Numerisch gleicher Durchmesser","expected":"consistent","a":{"kurztext":"Rohr liefern","langtext":"Rohr da 75,0 SDR 11","me":"m"},"b":{"kurztext":"Rohr liefern","langtext":"Rohr da 75 SDR 11","me":"m"}},
- {"name":"Stundenalias","expected":"consistent","a":{"kurztext":"Baufacharbeiter","me":"h"},"b":{"kurztext":"Baufacharbeiter","me":"Std"}},
- {"name":"Fehlender Rohrdurchmesser","expected":"incomplete","a":{"kurztext":"Rohr liefern","langtext":"Rohr da 75 SDR 11","me":"m"},"b":{"kurztext":"Rohr liefern","me":"m"}},
- {"name":"DA ist nicht DN","expected":"incomplete","a":{"kurztext":"PE100 Rohr liefern","langtext":"PE100 da 75 SDR 11","me":"m"},"b":{"kurztext":"PE100 Rohr liefern","langtext":"PE100 DN 75 SDR 11","me":"m"}},
- {"name":"Mehrere Durchmesser mit einem Treffer","expected":"incomplete","a":{"kurztext":"Rohr liefern","langtext":"Rohr da 75","me":"m"},"b":{"kurztext":"Rohr liefern","langtext":"Rohr da 75 und da 110","me":"m"}},
- {"name":"GRK Mindestangabe zu niedrig","expected":"incomplete","a":{"kurztext":"Trennvlies verlegen","langtext":"PP Vlies GRK >= 3","me":"m2"},"b":{"kurztext":"Trennvlies verlegen","langtext":"PP Vlies GRK >= 2","me":"m2"}},
- {"name":"Widersprüchlicher Wasserkontext","expected":"incomplete","a":{"kurztext":"Kiessand einbauen","langtext":"Unterwassereinbau","me":"m3"},"b":{"kurztext":"Kiessand einbauen","langtext":"Unterwassereinbau; andere Bereiche trocken oberhalb des Grundwassers einbauen","me":"m3"}}
+  {
+    "name": "DA 75 gegen DA 315",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "PE100 Rohr liefern und einbauen",
+      "langtext": "PE100 da 75 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "PE100 Rohr liefern und einbauen",
+      "langtext": "PE100 da 315 SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "SDR 11 gegen SDR 17",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "PE100 Rohr liefern und einbauen",
+      "langtext": "PE100 da 75 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "PE100 Rohr liefern und einbauen",
+      "langtext": "PE100 da 75 SDR 17",
+      "me": "m"
+    }
+  },
+  {
+    "name": "PE100 gegen PE80",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Kunststoffrohr liefern",
+      "langtext": "Rohr PE100 da 75",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Kunststoffrohr liefern",
+      "langtext": "Rohr PE80 da 75",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Gefährliches Holz gegen nicht gefährlich",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Altholz entsorgen",
+      "langtext": "Altholz A IV AVV 170204*",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Altholz entsorgen",
+      "langtext": "Altholz A I AVV 170201 nicht gefährlich",
+      "me": "t"
+    }
+  },
+  {
+    "name": "AVV Stern erhalten",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Abfall entsorgen",
+      "langtext": "AVV 170204*",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Abfall entsorgen",
+      "langtext": "AVV 170204",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Unterwasser gegen trocken",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Kiessand einbauen",
+      "langtext": "Unterhalb der Grundwasseroberfläche einbauen",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Kiessand einbauen",
+      "langtext": "Trocken oberhalb des Grundwassers einbauen",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Mengenbasis Fläche gegen Länge",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Trennvlies liefern und verlegen",
+      "langtext": "PP Vlies GRK 3",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies liefern und verlegen",
+      "langtext": "PP Vlies GRK 3",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Geotextil PP gegen PET",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies aus Polypropylen PP GRK >= 3",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies aus Polyester PET GRK 3",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "GRK Mindestklasse unterschritten",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies aus PP GRK >= 3",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies aus PP GRK 2",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "Flächengewicht Mindestwert unterschritten",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "PP Vlies Flächengewicht >= 180 g/m²",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "PP Vlies Flächengewicht 150 g/m²",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "Mehrere Durchmesser ohne Überdeckung",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern und einbauen",
+      "langtext": "Rohr da 75",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern und einbauen",
+      "langtext": "Rohr da 110 und da 160",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Verneinter Unterwassereinbau",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Kiessand einbauen",
+      "langtext": "Unterwassereinbau mit Baggerschaufel",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Kiessand einbauen",
+      "langtext": "Kein Unterwassereinbau erforderlich",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Außendurchmesser anders geschrieben",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "PE100 Rohr liefern",
+      "langtext": "PE100 da 75 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "PE100 Rohr liefern",
+      "langtext": "PE 100 Außendurchmesser 75 mm SDR11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "AVV mit Leerzeichen",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Altholz entsorgen",
+      "langtext": "Altholz A IV AVV 170204*",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Altholz entsorgen",
+      "langtext": "Altholz Kategorie A 4 AVV 17 02 04 *",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Unterwasser anders formuliert",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Kiessand einbauen",
+      "langtext": "Unterhalb der Grundwasseroberfläche einbauen",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Kiessand einbauen",
+      "langtext": "Unterwassereinbau mit Baggerschaufel",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Höhere GRK erfüllt Mindestklasse",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "PP Vlies GRK >= 3",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "PP Vlies GRK 4",
+      "me": "m²"
+    }
+  },
+  {
+    "name": "Höheres Flächengewicht erfüllt Mindestwert",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "PP Vlies Flächengewicht mindestens 180 g/m²",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "PP Vlies Flächengewicht 200 g/m²",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "Numerisch gleicher Durchmesser",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75,0 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Stundenalias",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Baufacharbeiter",
+      "me": "h"
+    },
+    "b": {
+      "kurztext": "Baufacharbeiter",
+      "me": "Std"
+    }
+  },
+  {
+    "name": "Fehlender Rohrdurchmesser",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DA ist nicht DN",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "PE100 Rohr liefern",
+      "langtext": "PE100 da 75 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "PE100 Rohr liefern",
+      "langtext": "PE100 DN 75 SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Mehrere Durchmesser mit einem Treffer",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 und da 110",
+      "me": "m"
+    }
+  },
+  {
+    "name": "GRK Mindestangabe zu niedrig",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "PP Vlies GRK >= 3",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "PP Vlies GRK >= 2",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "Widersprüchlicher Wasserkontext",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Kiessand einbauen",
+      "langtext": "Unterwassereinbau",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Kiessand einbauen",
+      "langtext": "Unterwassereinbau; andere Bereiche trocken oberhalb des Grundwassers einbauen",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Bauzaun aufstellen ist nicht umsetzen",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Bauzaun liefern und aufstellen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun umsetzen",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Bauzaun aufstellen ist nicht vorhalten",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Bauzaun aufstellen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun vorhalten",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Bauzaun entfernen ist nicht aufstellen",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Bauzaun entfernen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun aufstellen",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Bauzaun aufstellen ist nicht entfernen",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Bauzaun aufstellen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun entfernen",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Bauzaun mit Entfernung nur Teilansatz",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Bauzaun aufstellen und entfernen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun aufstellen",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Zusätzliche Zaunentfernung abgrenzen",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Bauzaun aufstellen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun aufstellen und entfernen",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Bauzaun Lieferung nicht bestätigt",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Bauzaun liefern und aufstellen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun aufstellen",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Bauzaun gleiche Arbeiten anders angeordnet",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Bauzaun liefern und aufstellen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun aufstellen und liefern",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Rohrliefern ist nur Teil von Lieferung und Einbau",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern und einbauen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Rohrverlegen und Einbauen Tätigkeitsalias",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr einbauen",
+      "langtext": "Rohr PE100 da 75 SDR 11 auf Bettungssand verlegen.",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr verlegen",
+      "langtext": "Rohr PE100 da 75 SDR 11 auf Bettungssand verlegen.",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Entsorgung nicht im Transport enthalten",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Abfall transportieren und entsorgen",
+      "langtext": "",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Abfall transportieren",
+      "langtext": "",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Transport nicht in Entsorgung bestätigt",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Abfall transportieren und entsorgen",
+      "langtext": "",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Abfall entsorgen",
+      "langtext": "",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Bodenladen ist nicht Transportbestätigung",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Boden laden und transportieren",
+      "langtext": "",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden laden",
+      "langtext": "",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Verdichten fehlt im Einbauansatz",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Boden einbauen und verdichten",
+      "langtext": "",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden einbauen",
+      "langtext": "",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Boden lösen und laden vollständig",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Boden lösen und laden",
+      "langtext": "",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden laden und lösen",
+      "langtext": "",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Verneinte Lieferung widerspricht Ziel",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern und verlegen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr verlegen ohne Lieferung",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Verneinte Entsorgung widerspricht Ziel",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Abfall transportieren und entsorgen",
+      "langtext": "",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Abfall transportieren ohne Entsorgung",
+      "langtext": "",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Verneinte Vorhaltung widerspricht Referenz",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Bauzaun aufstellen ohne Vorhaltung",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun aufstellen und vorhalten",
+      "langtext": "",
+      "me": "m"
+    }
+  },
+  {
+    "name": "AG-Lieferung kein automatisch kompletter Lieferansatz",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern und verlegen",
+      "langtext": "",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr verlegen",
+      "langtext": "Vom AG beigestellte Rohre verlegen.",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Vorheriger Ausbau keine aktuelle Ausbautätigkeit",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Boden einbauen und verdichten",
+      "langtext": "Boden in die durch Ausbau hergestellte Baugrube einbauen.",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden einbauen und verdichten",
+      "langtext": "Boden lagenweise einbauen und verdichten.",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Einheitsalias m² zu m2",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "m²"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "Einheitsalias m^2 zu m2",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "m^2"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "Einheitsalias m³ zu m3",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "m³"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Einheitsalias m^3 zu m3",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "m^3"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Einheitsalias Std. zu h",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Baufacharbeiter",
+      "me": "Std."
+    },
+    "b": {
+      "kurztext": "Baufacharbeiter",
+      "me": "h"
+    }
+  },
+  {
+    "name": "Einheitsalias to zu t",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "to"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Andere Dimension m gegen m3",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Andere Dimension m2 gegen m3",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Andere Dimension h gegen m",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "h"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Andere Dimension t gegen m3",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Andere Dimension stück gegen m",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "stück"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Andere Dimension psch gegen m",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Leistung liefern",
+      "me": "psch"
+    },
+    "b": {
+      "kurztext": "Leistung liefern",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Rohr mittlere Durchmesser",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 da 110 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 da 160 SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Rohr große Durchmesser",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 da 315 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 da 400 SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Rohr kleine Durchmesser",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 da 25 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 da 32 SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "GRK 3 mindestens gegenüber 3",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies PP GRK mindestens 3",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies PP GRK 3",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "GRK 4 mindestens gegenüber 3",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies PP GRK mindestens 4",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies PP GRK 3",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "GRK 2 mindestens gegenüber 4",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies PP GRK mindestens 2",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Trennvlies verlegen",
+      "langtext": "Vlies PP GRK 4",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "KDB Kurzform ersetzt fehlende Lieferung nicht",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "KDB PEHD liefern und verlegen",
+      "me": "m2"
+    },
+    "b": {
+      "kurztext": "Kunststoffdichtungsbahn PEHD verlegen",
+      "me": "m2"
+    }
+  },
+  {
+    "name": "Hinterfüllung herstellen und verdichten",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Bauwerkshinterfüllung einbauen und verdichten",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Bauwerkshinterfüllung herstellen und verdichten",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Bauzaun auf- und abbauen nicht nur Aufbau",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Bauzaun auf- und abbauen",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun liefern und aufstellen",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Leitplanke aufstellen ist Einbau",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Schutzplanke liefern und einbauen",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Leitplanke liefern und aufstellen",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Rohrlangtext bestätigt Einbau trotz knappem Kurztext",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern und einbauen",
+      "langtext": "Rohr PE100 da 75 SDR 11 liefern und einbauen.",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 da 75 SDR 11 liefern und einbauen.",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Bauzaunlangtext bestätigt Lieferung",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Bauzaun liefern und aufstellen",
+      "langtext": "Funktionstüchtigen Bauzaun liefern und aufstellen.",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Bauzaun aufstellen",
+      "langtext": "Bauzaun aufstellen\nFunktionstüchtigen Bauzaun liefern und aufstellen.",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Abbruch als Vorleistung nicht aktuelle Tätigkeit",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Boden einbauen",
+      "langtext": "Boden in die durch Abbruch hergestellte Baugrube einbauen.",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden einbauen",
+      "langtext": "Boden in Baugrube einbauen.",
+      "me": "m3"
+    }
+  }
 ]

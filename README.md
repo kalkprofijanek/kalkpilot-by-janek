@@ -1,8 +1,8 @@
 # KalkPilot by Janek
 
-**[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.4.0 BETA**
+**[App online öffnen](https://kalkprofijanek.github.io/kalkpilot-by-janek/)** · **Version 1.5.0 BETA**
 
-**Neu in 1.4.0 BETA:** verbessertes Matching mit Fachprüfung und Originaltext-Belegen sowie Excel-Austausch mit Microsoft 365 Copilot im Firmenbrowser. [Verbesserungen, Copilot-Ablauf und Prüfergebnisse](docs/MATCHING_VERBESSERUNGSLOGIK.md).
+**Neu in 1.5.0 BETA:** Leistungsumfang genauer prüfen, Geräte-/Kostenartenverweise und Leistungsfaktoren erhalten sowie Preis- und Fachfeedback trennen. 69 Fachprüffälle und ein projektübergreifender Lauf über 1.527 Originalpositionen; 200 Originalfälle für den Copilot-Test vorbereitet. [Prüfumfang und Browser-Ablauf](docs/MATCHING_ORIGINALDATEN.md).
 
 **LLM-Matching:** Microsoft 365 Copilot kann per Excel-Upload im Firmenbrowser arbeiten. Codex oder Claude Code kann in der Cloud das neue LV anhand eurer Referenzen zuordnen. Die App exportiert den Matching-Auftrag und importiert konkrete Referenz-IDs mit fachlicher Begründung. [Browser- und Cloud-Ablauf](docs/LLM_MATCHING.md).
 
@@ -18,7 +18,7 @@ Statische Browser-App für den Vergleich von Leistungsverzeichnissen mit Referen
 
 Für eine zusätzliche manuelle Prüfung steht weiterhin **ChatGPT-Prüfpaket · BETA** bereit. Dessen Antwort kann als Review-Notiz eingefügt werden; dieser Notizweg verändert keine Zuordnungen. Beim LLM-Matching dagegen wird die strukturierte Antwort mit konkreten Referenz-IDs eingelesen. Uploads erfolgen ausschließlich durch den Nutzer; die App sendet keine Dateien an KI-Dienste.
 
-Das Prüfpaket ist ein Referenzentwurf, keine geprüfte selbstständige Angebotskalkulation. Historische Werte, verschachtelte Bausteine und Faktoren benötigen eine fachlich bestätigte Berechnung. Nicht aufgelöste Bausteinpreise verhindern die automatische Übernahme; eine bewusste manuelle Auswahl bleibt möglich.
+Das Prüfpaket ist ein Referenzentwurf, keine geprüfte selbstständige Angebotskalkulation. Historische Werte, verschachtelte Bausteine und Faktoren benötigen eine fachlich bestätigte Berechnung. Kostenarten und Gerätepreise kommen beim i2-Import aus Stammdaten. Leere Exportpreise blockieren eine fachlich passende Referenz nicht allein; Kennungen, Mengen und Faktoren sind entscheidend.
 
 ## Bereitstellung
 
@@ -52,10 +52,10 @@ Für GitHub Codespaces ist `.devcontainer/devcontainer.json` enthalten: Das Clou
 
 [Umbauplan und geprüfte GitHub-Projekte](docs/UMBAUPLAN.md) · [Architekturabgleich der Zusatzempfehlungen](docs/ARCHITEKTURABGLEICH.md) · [Drittanbieter-Lizenzen](THIRD_PARTY_NOTICES.md)
 
-Referenzpreise erscheinen als **ungeprüfte Ansatzsummen**. Offene Bausteine, Faktoren und Pauschalansätze erfordern eine manuelle Prüfung. Im Positionsdetail lassen sich aktive Referenzen mit gleichem Text und gleicher Einheit vergleichen. Eine Referenzübernahme bestätigt keinen Angebotspreis.
+Referenzpreise erscheinen als **ungeprüfte Ansatzsummen**. Gerätebausteine sind zusammengesetzte Ansätze mit Preisbezug aus i2-Stammdaten. Im Positionsdetail lassen sich aktive Referenzen mit gleichem Text und gleicher Einheit vergleichen. Eine Referenzübernahme bestätigt keinen Angebotspreis.
 
 Details zur [Referenz- und Preisprüfung](docs/REFERENZPRUEFUNG.md).
 
-Die Positionsdetails zeigen jetzt berechenbare **Teilkosten**, offene Kostenzeilen und ausgeschlossene Ansätze. Nicht auflösbare Bausteine bleiben offen; Leistungsfaktoren und Pauschalen werden ohne bestätigte Rechenregel nicht geraten.
+Die Positionsdetails trennen einfache historische Exportbeträge, i2-Stammdatenverweise, Leistungs-/Faktoransätze, ungültige Werte und ausgeschlossene Zeilen. Vergleichbare vollständige einfache Ansätze zeigen absolute Unterschiede pro Einheit und deren rechnerische Mengenwirkung; Preise verändern die fachliche Rangfolge nicht.
 
 Das LLM-Matching-Paket enthält technische Fachmerkmale (Rohrdurchmesser, SDR, PE-Klasse, AVV und Einbauverfahren). Widersprüche und fehlende Anforderungen bleiben auch bei identischem Kurztext sichtbar.
