@@ -1,8 +1,8 @@
-# Matching verbessern: Entwurf zur Freigabe
+# Matching-Verbesserungslogik · 1.4.0 BETA
 
-Dieser Branch enthält einen unveröffentlichten Entwurf `1.4.0-beta-vorschlag`. Die veröffentlichte App bleibt bei `1.3.2-beta`. Ziel ist die fachliche Zuordnung durch eine LLM mit nachvollziehbaren Belegen. Microsoft 365 Copilot wird über einen bewussten Dateiupload im Firmenbrowser genutzt; Codex und Claude Code bleiben über JSON nutzbar. Die App ruft keinen KI-Dienst auf und benötigt keinen API-Schlüssel.
+Version `1.4.0-beta` ergänzt die folgenden Matching-Verbesserungen gegenüber `1.3.2-beta`. Ziel ist die fachliche Zuordnung durch eine LLM mit nachvollziehbaren Belegen. Microsoft 365 Copilot wird über einen bewussten Dateiupload im Firmenbrowser genutzt; Codex und Claude Code bleiben über JSON nutzbar. Die App ruft keinen KI-Dienst auf und benötigt keinen API-Schlüssel.
 
-## Was im Entwurf umgesetzt ist
+## Umgesetzte Verbesserungen
 
 | Verbesserung | Ergebnis |
 | --- | --- |
@@ -53,13 +53,13 @@ Der tatsächliche Copilot-Zugang wurde hier nicht getestet. Dateierstellung, vol
 
 Ein künftiger fachlich bestätigter Prüfsatz soll mindestens Rohrleitungen, Vlies, Abfall, Erdbau, Transport, Bauzaun und Stundenlohn abdecken. Gemessen werden korrekte erste Vorschläge, zulässige Alternativen, übersehene vorhandene Treffer und fälschlich vorgeschlagene Treffer bei fehlender Referenz. Preise werden separat bewertet. Änderungen am Datenbestand oder an den KI-Anweisungen erfordern einen erneuten Vergleich.
 
-## Bisherige Prüfung des Entwurfs
+## Bisherige Prüfung
 
 - **41 automatisierte Tests bestanden**, einschließlich vorhandener Browser-/Cloud-Prüfungen, Fachmerkmalen, Textbelegen, Excel-Rückimport, kopierter Tabelle, beschädigtem Archiv und atomarer Ablehnung ungültiger Antworten.
-- **24 gezielt formulierte fachliche Prüffälle:** alte Merkmalsprüfung klassifiziert 15 korrekt, Entwurf 24. Das sind synthetische Regressionen gegen bekannte Fehler, keine unabhängige Erfolgsquote der LLM.
+- **24 gezielt formulierte fachliche Prüffälle:** alte Merkmalsprüfung klassifiziert 15 korrekt, neue Merkmalsprüfung 24. Das sind synthetische Regressionen gegen bekannte Fehler, keine unabhängige Erfolgsquote der LLM.
 - **Originaldaten außerhalb des Repositories:** Excel mit 165 Eisert-Positionen und 1.360 Referenzen aus drei anderen Projekten, rund 2,94 MB. Eine unabhängige Excel-Bibliothek konnte alle vier Blätter und Zeilen lesen.
 - **Acht Original-Pilotpositionen:** fachlich geprüfte Agenten-Auswahl mit Textbelegen; zwei passend, drei mit Einschränkungen, drei ohne belastbaren Treffer. Die App validiert fünf Referenzvorschläge, bestätigt automatisch null Positionen und null Preise. Dies ist eine Ablaufprobe, keine Bewertung von Microsoft 365 Copilot.
-- Der Bauzaun-Planverweis führte vorher zum falschen Dokumentabzug auf 39 Punkte. Dieser Abzug entfällt im Entwurf; verbleibende Unterschiede müssen weiterhin fachlich geprüft werden.
+- Der Bauzaun-Planverweis führte vorher zum falschen Dokumentabzug auf 39 Punkte. Dieser Abzug entfällt; verbleibende Unterschiede müssen weiterhin fachlich geprüft werden.
 
 Reproduzierbar im Cloud-Terminal:
 
@@ -70,4 +70,4 @@ bash scripts/test-cloud.sh
   --output-dir /workspace/analysis/matching-quality
 ```
 
-Der zweite Befehl verwendet ausschließlich synthetische Fälle. Originaldaten, individuelle KI-Antworten und Excel-Prüfdateien gehören nicht ins öffentliche Repository. Der Entwurf soll nach Freigabe als Pull Request geprüft und anschließend veröffentlicht werden; vorher ändert sich die Online-App nicht.
+Der zweite Befehl verwendet ausschließlich synthetische Fälle. Originaldaten, individuelle KI-Antworten und Excel-Prüfdateien gehören nicht ins öffentliche Repository. Änderungen werden als Pull Request geprüft. Nach einem Merge in main veröffentlicht der Pages-Workflow die getestete App.
