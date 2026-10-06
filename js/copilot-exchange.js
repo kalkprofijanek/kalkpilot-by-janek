@@ -39,22 +39,22 @@
   function chunks(text){const parts=[];let part='';for(const char of String(text||'')){if(part.length+char.length>32000){parts.push(part);part='';}part+=char;}parts.push(part);return parts;}
   function dataRows(positions,references=false){
     const parts=positions.map(p=>chunks(p.langtext)),count=parts.reduce((maximum,p)=>Math.max(maximum,p.length),1);
-    const header=['ID',...(references?['Projekt']:[]),'OZ','Kurztext','Menge','Einheit',...Array.from({length:count},(_,i)=>'Langtext '+(i+1)),'Fachmerkmale',...(references?['Kalkulationshinweise']:[])];
-    return [header,...positions.map((p,i)=>[p.id,...(references?[p.projekt]:[]),p.oz,p.kurztext,p.menge,p.einheit,...Array.from({length:count},(_,j)=>parts[i][j]||''),JSON.stringify(p.fachmerkmale),...(references?[(p.kalkulationshinweise||[]).join('\n')]:[])])];
+    const header=['ID',...(references?['Projekt']:[]),'OZ','Kurztext','Menge','Einheit','Titelkontext',...Array.from({length:count},(_,i)=>'Langtext '+(i+1)),'Fachmerkmale',...(references?['Kalkulationshinweise','Geräteansätze','Kostenarten und Leistungsansätze','Strukturhinweise']:[])];
+    return [header,...positions.map((p,i)=>[p.id,...(references?[p.projekt]:[]),p.oz,p.kurztext,p.menge,p.einheit,p.titelkontext || '',...Array.from({length:count},(_,j)=>parts[i][j]||''),JSON.stringify(p.fachmerkmale),...(references?[(p.kalkulationshinweise||[]).join('\n'),JSON.stringify(p.geraeteansaetze || []),JSON.stringify(p.kalkulationsstruktur || []),(p.strukturhinweise || []).join('\n')]:[])])];
   }
-  const headers=['requestId','ZielID','Status','ReferenzIDs','Sicherheit','Begründung','Unterschiede','FehlendeAngaben','Zielbeleg','Referenzbeleg'];
+  const headers=['requestId','ZielID','Status','ReferenzIDs','Sicherheit','Begründung','Unterschiede','FehlendeAngaben','Zielbeleg','Referenzbeleg','Preishinweise'];
   function exportRequest(request){
     const instructions=[...request.instructions.filter(value=>!value.startsWith('Liefere eine JSON-Datei') && !value.startsWith('Nenne für den ersten Referenzvorschlag')),
       'Lies alle Langtext-Spalten vollständig. Fachmerkmale sind Hilfen, nicht Ersatz für den Originaltext.',
       'Fülle das Blatt Antwort für jede ZielID aus. Status: matched, ambiguous oder no_match. Sicherheit: high, medium oder low. Mehrere ReferenzIDs durch | trennen.',
-      'Unterschiede und FehlendeAngaben als Text mit Zeilenumbrüchen oder JSON-Arrays. Zielbeleg und Referenzbeleg sind wörtliche Auszüge für die erste ReferenzID. Belege mindestens 8 Zeichen lang, ohne Auslassungen; nicht erfinden.',
+      'Preishinweise getrennt von der fachlichen Passung in die eigene Spalte schreiben. Unterschiede und FehlendeAngaben als Text mit Zeilenumbrüchen oder JSON-Arrays. Zielbeleg und Referenzbeleg sind wörtliche Auszüge für die erste ReferenzID. Belege mindestens 8 Zeichen lang, ohne Auslassungen; nicht erfinden.',
       'Wenn du nicht alle Zielpositionen und Referenzen vollständig lesen kannst, sage das ausdrücklich und liefere keine scheinbar vollständige Bewertung.',
       'Behalte requestId und ZielID unverändert. Liefere die Excel-Datei mit ausgefülltem Blatt Antwort oder dessen Tabelle als TSV/CSV. Ein fehlender Treffer ist ein zulässiges Ergebnis.'];
     return workbook([
       {name:'Auftrag',rows:[['Schlüssel','Wert'],['requestId',request.requestId],['AppVersion',request.appVersion],['Zielpositionen',request.zielpositionen.length],['Referenzen',request.referenzen.length],...instructions.map((value,i)=>['Schritt '+(i+1),value])]},
       {name:'Zielpositionen',rows:dataRows(request.zielpositionen)},
       {name:'Referenzen',rows:dataRows(request.referenzen,true)},
-      {name:'Antwort',rows:[headers,...request.zielpositionen.map(p=>[request.requestId,p.id,'','','','','','','',''])]}
+      {name:'Antwort',rows:[headers,...request.zielpositionen.map(p=>[request.requestId,p.id,'','','','','','','','',''])]}
     ]);
   }
   async function unzip(buffer){
@@ -130,7 +130,7 @@
       if(!requestId)requestId=values[0];if(!values[0] || values[0]!==requestId)throw new Error('Datenkennung fehlt oder unterscheidet sich zwischen den Antwortzeilen.');
       const ids=values[3]?values[3].split(/[|;,\s]+/).filter(Boolean):[];
       const result={targetId:values[1],status:({passend:'matched',teilweise:'ambiguous','kein treffer':'no_match'}[values[2].toLowerCase()]||values[2]),referenceIds:ids,
-        confidence:({hoch:'high',mittel:'medium',niedrig:'low'}[values[4].toLowerCase()]||values[4]),reason:values[5],differences:list(values[6]),missingInformation:list(values[7])};
+        confidence:({hoch:'high',mittel:'medium',niedrig:'low'}[values[4].toLowerCase()]||values[4]),reason:values[5],differences:list(values[6]),missingInformation:list(values[7]),priceInformation:list(values[10])};
       if(values[8] || values[9])result.evidence=[{referenceId:ids[0],targetQuote:values[8],referenceQuote:values[9]}];
       return result;
     });

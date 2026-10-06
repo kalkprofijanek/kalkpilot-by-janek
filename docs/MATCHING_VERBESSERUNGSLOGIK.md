@@ -1,6 +1,6 @@
 # Matching-Verbesserungslogik · 1.4.0 BETA
 
-Version `1.4.0-beta` ergänzt die folgenden Matching-Verbesserungen gegenüber `1.3.2-beta`. Ziel ist die fachliche Zuordnung durch eine LLM mit nachvollziehbaren Belegen. Microsoft 365 Copilot wird über einen bewussten Dateiupload im Firmenbrowser genutzt; Codex und Claude Code bleiben über JSON nutzbar. Die App ruft keinen KI-Dienst auf und benötigt keinen API-Schlüssel.
+Dieser Abschnitt dokumentiert den Stand `1.4.0-beta`; der [Ausbau in 1.5.0 BETA](MATCHING_ORIGINALDATEN.md) berücksichtigt i2-Stammdaten und den größeren Prüflauf. Version `1.4.0-beta` ergänzte die folgenden Matching-Verbesserungen gegenüber `1.3.2-beta`. Ziel ist die fachliche Zuordnung durch eine LLM mit nachvollziehbaren Belegen. Microsoft 365 Copilot wird über einen bewussten Dateiupload im Firmenbrowser genutzt; Codex und Claude Code bleiben über JSON nutzbar. Die App ruft keinen KI-Dienst auf und benötigt keinen API-Schlüssel.
 
 ## Umgesetzte Verbesserungen
 

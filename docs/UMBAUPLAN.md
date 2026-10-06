@@ -44,7 +44,7 @@ Der [Architekturabgleich](ARCHITEKTURABGLEICH.md) prüft die vorgeschlagene Open
 - Browserbasierte Entwicklung ausdrücklich zusätzlich zur Browserbedienung vorbereiten: Cloud-Start-/Prüfbefehle und eine GitHub-Codespaces-Devcontainer-Konfiguration sind im Nachtrag ergänzt. Der weitergeleitete Entwicklungsport soll privat bleiben. Auf dem Firmenrechner müssen keine Entwicklungswerkzeuge installiert werden.
 - Kandidatensuche, Leistungs-/Einheitenprüfung und Preisplausibilität als nachvollziehbare Pässe planen. Exakte Treffer, Lern- und Projektboni dürfen fachliche Sperren für automatische Übernahmen nicht umgehen.
 - Ähnlichkeit, Datenvollständigkeit, fachliche Übertragbarkeit und Freigabe getrennt führen. HIGH/MEDIUM/LOW sind zunächst Prüfklassen, keine bewiesenen Wahrscheinlichkeiten oder Preisfreigaben.
-- Historische Daten um versionierte Herkunft, bestätigten Preisstand/Region und Review-Entscheidungen erweitern. Nullpreise und fehlende Metadaten bleiben ungeklärt; Preis-Ausreißer nur unter wirklich vergleichbaren vollständigen Ansätzen beurteilen.
+- Historische Daten um versionierte Herkunft, bestätigten Preisstand/Region und Review-Entscheidungen erweitern. Null-/Leerpreise sind reguläre i2-Stammdatenverweise; fehlende Kennungen und ungültige Faktoren sind gesondert zu prüfen; Preis-Ausreißer nur unter wirklich vergleichbaren vollständigen Ansätzen beurteilen.
 - Bestehendes GitHub Pages beibehalten: Der Workflow Publish browser app prüft und veröffentlicht main über GitHub Actions. Ein anderer Hostinganbieter ist derzeit nicht erforderlich. Codespaces und Produktionsseite teilen wegen verschiedener Website-Ursprünge keinen lokalen Referenzspeicher.
 
 OpenConstructionERP ist AGPL-3.0. Sein Quellcode wird nicht übernommen; es dient als geprüfte Architektur-Referenz. Produktive Provider-APIs und Vektordatenbanken bleiben optionale spätere Entscheidungen. Der aktuelle Zielweg lässt Codex/Claude Code konkrete Referenzen auswählen; die Browser-App importiert und prüft die Zuordnungen. Das zusätzliche ChatGPT-Prüfpaket bleibt als Review-Weg verfügbar.
@@ -63,7 +63,7 @@ Abnahme: gemeinsam bewertete echte Soll-Treffer; projektweise Trennung von Testf
 
 Verschachtelte SubItems und Assembly-Verweise vollständig auflösen; Faktor, Leistungsfaktor, Mengenbezug, deaktivierte Ansätze, Zu-/Abschläge und Ressourcenpreise fachlich korrekt abbilden. Historischen vereinfachten Referenzwert, bestätigten Referenz-EP und neu berechneten Angebotspreis trennen. decimal.js kann dabei Rundung und Dezimalrechnung übernehmen.
 
-Abnahme: repräsentative Positionen mit bestätigtem iTWO-Ergebnis für einfache Ressource, Leistungsfaktor, Baustein, deaktivierten Ansatz, Pauschale und negative Position. Ohne Ressourcen-/Bausteinkatalog und bestätigte Ergebnisse bleiben Preise unvollständig. Ein Nullpreis darf keine fehlende Preisauflösung ersetzen.
+Abnahme: repräsentative Positionen mit bestätigtem iTWO-Ergebnis für einfache Ressource, Leistungsfaktor, Baustein, deaktivierten Ansatz, Pauschale und negative Position. Kostenarten und Gerätebausteine beziehen ihre Preise beim i2-Import aus Stammdaten. Der Browser erhält die Kennungen und Leistungsansätze; er ergänzt keine erfundenen Preise.
 
 ### C. Selbstständiger Kalkulationsentwurf · BETA
 

@@ -732,7 +732,7 @@ select{background:var(--input);border:1px solid var(--border);color:var(--text);
 <script src="js/llm-matching.js"></script>
 <script src="js/copilot-exchange.js"></script>
 <script>
-const APP_VERSION='1.4.0-beta';
+const APP_VERSION='1.5.0-beta';
 const APP_BUILD_DATE='2026-10-05T00:00:00+02:00';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -1219,14 +1219,14 @@ function tokenizeForMatch(text){
 function normUnit(u){
   const s=repairLegacyGermanText(u||'').toLowerCase().trim();
   if(!s)return'';
-  if(/^(m3|m³|mÂ³|cbm|mue|mü|mÃ¼|kubikmeter)$/.test(s))return'm3';
-  if(/^(m2|m²|mÂ²|qm|quadratmeter)$/.test(s))return'm2';
+  if(/^(m3|m\^3|m³|mÂ³|cbm|mue|mü|mÃ¼|kubikmeter)$/.test(s))return'm3';
+  if(/^(m2|m\^2|m²|mÂ²|qm|quadratmeter)$/.test(s))return'm2';
   if(/^(m|lfm|laufmeter)$/.test(s))return'm';
   if(/^(mmt)$/.test(s))return'mmt';
   if(/^(st|stück|stÃ¼ck|stk)$/.test(s))return'st';
   if(/^(stmt)$/.test(s))return'stmt';
   if(/^(stwo)$/.test(s))return'stwo';
-  if(/^(h|std|stunde|stunden|akh)$/.test(s))return'h';
+  if(/^(h|std\.?|stunde|stunden|akh)$/.test(s))return'h';
   if(/^(mt|monat|monate)$/.test(s))return'mt';
   if(/^(wo|woche|wochen)$/.test(s))return'wo';
   if(/^(psch|pauschal|pauschale)$/.test(s))return'psch';
@@ -2573,12 +2573,14 @@ function parseGAEBXML(txt,src){
     const allEls=[...doc.getElementsByTagName('*')];
     const items=allEls.filter(el=>el.localName==='Item');
     items.forEach(item=>{
-      const parts=[];
+      const parts=[],titles=[];
       let parent=item.parentElement;
       while(parent){
         if(parent.localName==='BoQCtgy'){
           const rno=parent.getAttribute('RNoPart')?.trim();
           if(rno)parts.unshift(rno);
+          const label=[...parent.children].find(el=>el.localName==='LblTx')?.textContent?.replace(/\s+/g,' ').trim();
+          if(label)titles.unshift(label);
         }
         parent=parent.parentElement;
       }
@@ -2599,6 +2601,7 @@ function parseGAEBXML(txt,src){
       out.push({
         oz,
         ozCanon:canonOZ(oz),
+        titlePath:titles.join(' > '),
         kurztext,
         langtext,
         outlineSpecs:langtext||kurztext,
@@ -3387,10 +3390,10 @@ function normalizeKostenEntry(k){
     menge:Number(k.menge)||0,
     einheit,
     preis:Number(k.preis)||0,
-    factor:Number(k.factor)||1,
-    costFactor:Number(k.costFactor)||1,
-    cFactorCoC:Number(k.cFactorCoC)||1,
-    qFactorCoC:Number(k.qFactorCoC)||1,
+    factor:k.factor==null?1:Number(k.factor),
+    costFactor:k.costFactor==null?1:Number(k.costFactor),
+    cFactorCoC:k.cFactorCoC==null?1:Number(k.cFactorCoC),
+    qFactorCoC:k.qFactorCoC==null?1:Number(k.qFactorCoC),
     factorIsPerformanceFactor:Number(k.factorIsPerformanceFactor)||0,
     entryType:k.entryType||null,
     isAssembly:isAssembly,
@@ -3438,10 +3441,10 @@ function extractXmlSubItemData(sub){
       typ:classCoC(nm,dsc,cu),descr:dsc||nm,menge:cq,einheit:cu,preis:ur,nameCoC:nm,
       identifyKey:c.querySelector('IdentifyKey')?.textContent?.trim()||null,
       xref:c.getAttribute('Xref')||null,
-      factor:parseFloat(c.querySelector('Factor')?.textContent||'1')||1,
-      costFactor:parseFloat(c.querySelector('CostFactor')?.textContent||'1')||1,
-      cFactorCoC:parseFloat(c.querySelector('CFactorCoC')?.textContent||'1')||1,
-      qFactorCoC:parseFloat(c.querySelector('QFactorCoC')?.textContent||'1')||1,
+      factor:numOf(c,'Factor',1),
+      costFactor:numOf(c,'CostFactor',1),
+      cFactorCoC:numOf(c,'CFactorCoC',1),
+      qFactorCoC:numOf(c,'QFactorCoC',1),
       sItemDisabled:0,curCoC:c.querySelector('CURCoC')?.textContent?.trim()||'EUR',
       factorIsPerformanceFactor:parseInt(c.querySelector('FactorIsPerformanceFactor')?.textContent||'0')||0
     });
@@ -3468,7 +3471,7 @@ function extractXmlSubItemData(sub){
     const nm=a.querySelector('NameAssembly')?.textContent?.trim()||'';
     const dsc=a.querySelector('DescrAssembly')?.textContent?.trim()||nm;
     const aq=parseFloat(a.querySelector('Quantity')?.textContent||'0')||0;
-    const fac=parseFloat(a.querySelector('Factor')?.textContent||'1')||1;
+    const fac=numOf(a,'Factor',1);
     const cu=a.querySelector('UnitOfMeasure')?.textContent?.trim()||'';
     const sItemDisabled=parseInt(a.querySelector('SItemDisabled')?.textContent||'0')||0;
     if(sItemDisabled===1)return;
@@ -3477,7 +3480,7 @@ function extractXmlSubItemData(sub){
       identifyKey:a.querySelector('IdentifyKey')?.textContent?.trim()||null,
       xref:a.getAttribute('Xref')||null,
       factor:fac,
-      costFactor:parseFloat(a.querySelector('CostFactor')?.textContent||'1')||1,
+      costFactor:numOf(a,'CostFactor',1),
       cFactorCoC:1,
       qFactorCoC:1,
       sItemDisabled:0,curCoC:'EUR',
@@ -3834,6 +3837,7 @@ function normalizeRefProjects(projects){
       const ep=kosten.reduce((sum,k)=>sum+(Number(k.menge)||0)*(Number(k.preis)||0),0);
       return{
         ...cleaned,
+        source:cleaned.source || project.name || '',
         kosten,
         ep:Math.round(ep*100)/100
       };
@@ -4328,6 +4332,34 @@ function toggleRejectMatch(resultIdx,matchIdx=0){
   else{recordRejectedMatch(result.newPos,match.pos);removeTopMatch(result.newPos,match.pos);}
   applyStoredMatchDecisions(result);
   renderMatch();updateExport();
+}
+const MATCH_FEEDBACK_KEY='kalkpilot_matching_feedback_v1';
+function getMatchingFeedback(){
+  try{const saved=JSON.parse(localStorage.getItem(MATCH_FEEDBACK_KEY)||'[]');return Array.isArray(saved)?saved:[];}
+  catch(error){return [];}
+}
+function saveMatchingFeedback(resultIdx,reason){
+  const row=S.results[resultIdx],match=row?.matches?.[row.sel||0];
+  const reasons={scope:'Leistungsumfang falsch',material:'Material/Maße falsch',method:'Ausführungsverfahren falsch',
+    resource:'Kostenart/Gerät prüfen',factor:'Leistungsansatz prüfen',price:'Preisstand/i2-Stammdaten prüfen'};
+  if(!match || !reasons[reason])return;
+  const semantic=['scope','material','method'].includes(reason);
+  const text=p=>({oz:p.oz,kurztext:p.kurztext,langtext:p.langtext || '',linkedLangtext:p.linkedD83?.langtext || '',
+    me:p.me,menge:p.menge,project:p.source || ''});
+  const entry={schemaVersion:1,createdAt:new Date().toISOString(),appVersion:APP_VERSION,
+    reason,reasonLabel:reasons[reason],kind:semantic?'semantic_rejection':'calculation_note',reviewStatus:'user_reported',
+    target:text(row.newPos),reference:text(match.pos),resources:KPBrowserReview.resourceContext(match.pos),priceApproved:false};
+  try{localStorage.setItem(MATCH_FEEDBACK_KEY,JSON.stringify([...getMatchingFeedback(),entry].slice(-200)));}
+  catch(error){document.getElementById('matchingFeedbackStatus').textContent='Feedback konnte nicht gespeichert werden: '+error.message;return;}
+  if(semantic){recordRejectedMatch(row.newPos,match.pos);removeTopMatch(row.newPos,match.pos);applyStoredMatchDecisions(row);renderMatch();updateExport();}
+  document.getElementById('matchingFeedbackStatus').textContent=semantic?
+    'Fachlichen Ablehnungsgrund gespeichert; die falsche Zuordnung wird künftig berücksichtigt.':
+    'Kalkulationshinweis gespeichert. Die fachliche Rangfolge wurde nicht verändert.';
+}
+function downloadMatchingFeedback(){
+  dl(JSON.stringify({schema:'kalkpilot.matching-feedback',schemaVersion:1,
+    instructions:['Benutzerhinweise sind keine unabhängig bestätigten Musterlösungen.','Preis-/Stammdatenhinweise sind keine falsche fachliche Zuordnung.'],
+    feedback:getMatchingFeedback()},null,2),'KalkPilot_Matching_Feedback.json','application/json');
 }
 function currentProjectName(){
   try{return String(S.xmlName||S.newLVName||S.newLvName||'').trim();}catch(_){return'';}
@@ -4916,7 +4948,7 @@ function getCostStructureScore(match){
   if(match?.kind!=='CALC')return 0;
   if(!kosten.length)return 0;
   const types=new Set(kosten.map(k=>k.typ).filter(Boolean));
-  if(KPBrowserReview.calculationIssues(match.pos).includes('Bausteinpreis nicht aufgelöst'))return 30;
+  if(KPBrowserReview.referenceStructureIssues(match.pos).length)return 30;
   if([...types].some(t=>t!=='S')&&types.size>=2)return 100;
   if([...types].some(t=>t!=='S'))return 70;
   return 20;
@@ -4949,9 +4981,9 @@ function getMatchReviewTrace(result,match=result?.matches?.[result?.sel||0]){
       details:'Heuristischer Vergleich; keine Wahrscheinlichkeit oder Preisfreigabe.'},
     {schritt:'Fachprüfung',status:debug.hardCapsApplied?.length?'Konflikt':'Kein Fachdeckel erkannt',
       details:(debug.hardCapsApplied||[]).join(' · ')||'Einheiten, Langtexte und Leistungsumfang fachlich prüfen.'},
-    {schritt:'Kalkulationsdaten',status:quality.kalkulationshinweise.length?'Offene Ansätze':'Ansätze vorhanden',
+    {schritt:'Kalkulationsdaten',status:KPBrowserReview.referenceStructureIssues(match.pos).length?'Struktur prüfen':'Kostenarten-/Geräteverweise vorhanden',
       details:[...quality.fehlendeLeistungsdaten.map(x=>'Fehlt: '+x),...quality.kalkulationshinweise,
-        quality.preispruefung,quality.metadatenpruefung].join(' · ')},
+        ...KPBrowserReview.referenceStructureIssues(match.pos), 'Mengen, Kostenfaktoren und Leistungsansätze im i2-Import erhalten',quality.preispruefung,quality.metadatenpruefung].join(' · ')},
     {schritt:'Übernahmeprüfung',status:canAutoAcceptMatch(result,match)?'Referenz automatisch übernahmefähig':'Manuell prüfen',
       details:risks.join(' · ')||'Eine Referenzübernahme bestätigt keinen neuen Angebotspreis.'}
   ];
@@ -4968,7 +5000,7 @@ function getMatchRiskReasons(result,match=result?.matches?.[result?.sel||0]){
   const rpProf=getMatchProfile(pos);
   if(match.kind!=='CALC')reasons.push('nur D83-Texttreffer, keine Kalkulation exportierbar');
   if(!(pos.kosten||[]).some(k=>k.typ!=='S'))reasons.push('keine belastbare L/M/G/N-Kostenstruktur');
-  reasons.push(...KPBrowserReview.calculationIssues(pos));
+  reasons.push(...KPBrowserReview.referenceStructureIssues(pos));
   if(debug.llmAudit)reasons.push(...debug.llmAudit.reasons);
   if((debug.hardCapsApplied||[]).length)reasons.push('fachlicher Deckel: '+debug.hardCapsApplied[0]);
   if(bestScore>=80&&secondScore>0&&(bestScore-secondScore)<8)reasons.push('knappes Top-1/Top-2-Rennen');
@@ -5139,38 +5171,50 @@ function renderMatch(){
 function renderPills(kosten){
   if(!kosten||!kosten.length)return'<span style="color:var(--muted);font-size:10px">-</span>';
   const by={};kosten.forEach(k=>{by[k.typ]=(by[k.typ]||0)+k.menge*k.preis;});
-  return'<div class="pills" title="Ungeprüfte Ansatzsummen ohne vollständige Faktor- und Bausteinberechnung">'+Object.entries(by).map(([t,v])=>`<span class="pill p${h(t)}">${h(t)}: ${v>0?v.toFixed(0)+'€':'-'}</span>`).join('')+'</div>';
+  return'<div class="pills" title="Historische Exportwerte; Kostenarten und Gerätepreise kommen aus i2-Stammdaten">'+Object.entries(by).map(([t,v])=>`<span class="pill p${h(t)}">${t==='B'?'Geräte/Bausteine':h(t)}: ${t==='B'?kosten.filter(k=>k.typ==='B').length+' Ansätze':v>0?v.toFixed(0)+'€':'i2-Stammdaten'}</span>`).join('')+'</div>';
 }
 
 function renderPriceStatus(position,expanded=false){
   const status=KPBrowserReview.priceStatus(position);
   return `<div class="section-note" title="${h(status.explanation+' '+status.issues.join(' · '))}"><b>${h(status.label)}</b>${expanded?`<br>${h(status.explanation)}${status.issues.length?'<br>⚠ '+h(status.issues.join(' · ')):''}`:''}</div>`;
 }
+function renderAssemblyContext(position){
+  const entries=KPBrowserReview.assemblyContext(position);
+  if(!entries.length)return '';
+  return `<section style="margin-top:16px"><div class="ctitle">Geräte und zusammengesetzte Ansätze (${entries.length})</div>
+    <p class="section-note">Ein Gerätebaustein kann Miete, Diesel, Bedienpersonal und GPS enthalten. Preise werden beim i2-Import aus Stammdaten bezogen. Gerätekennung, Kostenart, Menge und Faktoren sind entscheidend. Bestandteile werden nicht geraten oder doppelt hinzugerechnet.</p>
+    ${entries.map(entry=>`<div><b>${h(entry.label)}: ${h(entry.description)}</b> · ${h(entry.quantity)} ${h(entry.unit)}
+      ${entry.performanceFactor!=null?' · Leistungsfaktor '+h(entry.performanceFactor):''}
+      <br><small>${entry.priceInExport==null?'Preisbezug aus i2-Stammdaten; Bestandteile im Verweis nicht aufgeschlüsselt':'Historischer Ansatzpreis vorhanden; Aufgliederung im Verweis nicht enthalten'}</small></div>`).join('')}</section>`;
+}
 function renderKnownCosts(position){
   const calc=KPBrowserReview.calculateKnownCosts(position);
   const amount=calc.knownSubtotal==null?'Keine eindeutig berechenbaren Kosten':calc.knownSubtotal.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:4})+' €';
-  return `<section style="margin-top:16px"><div class="ctitle">${calc.complete?'Ansatzkosten berechnet':'Teilkosten · Kalkulation unvollständig'}</div>
-    <p><b>${h(amount)}</b> · ${calc.knownCount} berechnet · ${calc.openCount} offen · ${calc.excludedCount} ausgeschlossen</p>
-    <p class="section-note">Summe ausschließlich eindeutig berechenbarer Kostenzeilen (Menge × Preis, ohne abweichende Faktoren). Kein bestätigter Angebotspreis; Zuschläge und aktueller Preisstand sind nicht bestätigt. Offene Kosten können diesen Betrag verändern.</p>
+  return renderAssemblyContext(position)+`<section style="margin-top:16px"><div class="ctitle">${calc.complete?'Ansatzkosten berechnet':'Exportwerte · Stammdaten-/Leistungsansätze in i2'}</div>
+    <p><b>${h(amount)}</b> · ${calc.knownCount} berechnet · ${calc.masterDataCount} Stammdatenverweise · ${calc.requiresI2Count} Leistungs-/Faktoransätze in i2 · ${calc.openCount} ungültig · ${calc.excludedCount} ausgeschlossen</p>
+    <p class="section-note">Summe ausschließlich eindeutig berechenbarer Kostenzeilen (Menge × Preis, ohne abweichende Faktoren). Kein bestätigter Angebotspreis; Zuschläge und aktueller Preisstand sind nicht bestätigt. Die vollständige Berechnung erfolgt in i2 mit Stammdatenpreisen und den originalen Leistungsansätzen.</p>
     ${calc.basisReasons.length?`<p class="match-risk">${h(calc.basisReasons.join(' · '))} · Keine Umrechnung in €/LV-Einheit.</p>`:''}
     <table class="cost-tbl"><thead><tr><th>Ansatz</th><th>Berechnung</th><th>Bekannter Betrag</th></tr></thead><tbody>
       ${calc.rows.map(row=>`<tr><td>${h(row.description)}</td><td>${h(row.state==='known'?'Menge × Preis':row.reasons.join(' · '))}</td>
-      <td>${row.amount==null?'offen / ausgeschlossen':h(row.amount.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:4}))+' €'}</td></tr>`).join('')}
+      <td>${row.amount==null?(row.state==='master_data'?'i2-Stammdaten':row.state==='requires_i2'?'Berechnung in i2':row.state==='excluded'?'ausgeschlossen':'ungültig'):h(row.amount.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:4}))+' €'}</td></tr>`).join('')}
     </tbody></table></section>`;
 }
-function renderReferenceComparison(position){
+function renderReferenceComparison(position,target=null){
+  const comparison=KPBrowserReview.absolutePriceComparison(position,getActiveRef(),target);
+  const money=value=>value.toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
   const peers=KPBrowserReview.referencePeers(position,getActiveRef());
   if(!peers.length)return '<div class="section-note">Referenzvergleich: keine weiteren aktiven Referenzen mit gleichem Text und gleicher Einheit gefunden.</div>';
   const selected=[position,...peers.slice(0,9)];
   return `<details style="margin-top:16px"><summary>Referenzen vergleichen (${peers.length} weitere Textkandidaten)</summary>
-    <p class="section-note">Gleicher Text und gleiche Einheit sind Vergleichskandidaten. Leistungsumfang, Preisstand und Mengenbasis fachlich prüfen. Die Werte werden nicht gemittelt; Referenzübernahme ist keine Preisfreigabe.</p>
-    <table class="cost-tbl"><thead><tr><th>Projekt / OZ</th><th>Leistung / Mengenbasis</th><th>Ansatzsumme · ungeprüft</th><th>Prüfhinweise</th></tr></thead><tbody>
-    ${selected.map((p,i)=>`<tr><td>${i===0?'<b>Ausgewählte Referenz</b><br>':''}${h(p.source||'')}<br>${h(p.oz||'')}</td>
+    <p class="section-note">${h(comparison.note)}</p>${comparison.range?`<p><b>Historische Ansatzspanne: ${h(money(comparison.range[0]))} bis ${h(money(comparison.range[1]))} / ${h(comparison.unit)}</b></p>`:''}<p class="section-note">Gleicher Text und gleiche Einheit sind Vergleichskandidaten. Leistungsumfang, Preisstand und Mengenbasis fachlich prüfen. Die Werte werden nicht gemittelt; Referenzübernahme ist keine Preisfreigabe.</p>
+    <table class="cost-tbl"><thead><tr><th>Projekt / OZ</th><th>Leistung / Mengenbasis</th><th>Ansatzsumme · ungeprüft</th><th>Absoluter Unterschied</th><th>Prüfhinweise</th></tr></thead><tbody>
+    ${selected.map((p,i)=>{const price=comparison.entries.find(entry=>entry.position===p);return `<tr><td>${i===0?'<b>Ausgewählte Referenz</b><br>':''}${h(p.source||'')}<br>${h(p.oz||'')}</td>
       <td>${h(p.kurztext||'')}<br>XML: ${h(p.menge??'-')} ${h(p.me||'')}${p.linkedD83?`<br>LV: ${h(p.linkedD83.menge??'-')} ${h(p.linkedD83.me||'')}`:''}
       <details><summary>Leistung und Kostenansätze</summary><div style="white-space:pre-wrap">${h(p.linkedD83?.langtext||p.langtext||p.outlineSpecs||'')}</div>
       ${(p.kosten||[]).map(k=>`<div>${h(k.descr||'')} · ${h(k.menge??'-')} × ${h(k.preis??'-')} · ${h(formatLeistungsansatz(k))}</div>`).join('')}</details></td>
       <td>${Number.isFinite(Number(p.ep))?Number(p.ep).toFixed(2)+' €':'-'}<br>Preis ungeprüft</td>
-      <td>${h(KPBrowserReview.calculationIssues(p).join(' · ')||'Keine strukturellen Auffälligkeiten; Preisstand und Umfang prüfen.')}</td></tr>`).join('')}
+      <td>${price?.delta!=null?h((price.delta>0?'+':'')+money(price.delta))+' / '+h(comparison.unit):'Nicht vergleichbar'}${price?.totalDelta!=null?`<br>Bei ${h(comparison.targetQuantity)} ${h(comparison.unit)}: ${h((price.totalDelta>0?'+':'')+money(price.totalDelta))}<br><small>Rechnerische Mengenwirkung, kein Angebotspreis</small>`:''}${price?.reasons.length?'<br><small>'+h(price.reasons.join(' · '))+'</small>':''}</td>
+      <td>${h(KPBrowserReview.calculationIssues(p).join(' · ')||'Keine strukturellen Auffälligkeiten; Preisstand und Umfang prüfen.')}</td></tr>`;}).join('')}
     </tbody></table>${peers.length>9?'<p class="section-note">Anzeige auf neun weitere Kandidaten begrenzt.</p>':''}</details>`;
 }
 
@@ -5180,8 +5224,8 @@ function formatLeistungsansatz(detail){
   const costFactor=Number(detail.costFactor);
   const perf=Number(detail.factorIsPerformanceFactor)||0;
   const parts=[];
-  if(Number.isFinite(factor)&&factor!==1)parts.push(`${perf===1?'Faktor':'Ansatz'} ${factor}`);
-  if(Number.isFinite(costFactor)&&costFactor!==1)parts.push(`Divisor ${costFactor}`);
+  if(Number.isFinite(factor)&&factor!==1)parts.push(`${perf===1?'Leistungsansatz':'Mengenfaktor'} ${factor}`);
+  if(Number.isFinite(costFactor)&&costFactor!==1)parts.push(`Kostenfaktor ${costFactor}`);
   for(const key of ['cFactorCoC','qFactorCoC']){
     const value=Number(detail[key]);if(detail[key]!=null&&Number.isFinite(value)&&value!==1)parts.push(`${key} ${value}`);
   }
@@ -5220,9 +5264,9 @@ function showRefDetail(idx){
           <td>${h(k.descr)}</td>
           <td>${h(formatLeistungsansatz(k))}</td>
           <td style="text-align:right">${k.menge}</td>
-          <td style="text-align:right">${typeof k.preis==='number'?k.preis.toFixed(4):'-'}</td>
+          <td style="text-align:right">${typeof k.preis==='number'&&k.preis!==0?k.preis.toFixed(4):'i2-Stammdaten'}</td>
           <td>${h(k.einheit||'')}</td>
-          <td style="text-align:right;font-weight:600">${typeof k.preis==='number'?(k.menge*k.preis).toFixed(2)+' €':'-'}</td>
+          <td style="text-align:right;font-weight:600">${typeof k.preis==='number'&&k.preis!==0?(k.menge*k.preis).toFixed(2)+' €':'i2-Stammdaten'}</td>
         </tr>`).join('')}</tbody>
         <tfoot><tr><td colspan="7" style="text-align:right">Ansatzsumme · ungeprüft:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
       </table>`:'<div style="color:var(--muted);font-size:11px">Keine Kalkulationsdaten vorhanden.</div>'}
@@ -5262,6 +5306,7 @@ function showDetail(idx){
       <span class="detail-lbl">Fachklassen:</span><span class="detail-val">EBV/LAGA ${h(dbg.ebvNew||'-')} → ${h(dbg.ebvRef||'-')} · DK ${h(dbg.depvNew||'-')} → ${h(dbg.depvRef||'-')} · Weg ${h(dbg.disposalRouteNew||'-')} → ${h(dbg.disposalRouteRef||'-')}</span>
       <span class="detail-lbl">Deckel:</span><span class="detail-val">${dbg.hardCapsApplied?.length?h(dbg.hardCapsApplied.join(', ')):'-'}</span>
       <span class="detail-lbl">Auto-Prüfung:</span><span class="detail-val">${riskReasons.length?'<span style="color:#fbbf24">Manuell prüfen: '+h(riskReasons.join(' · '))+'</span>':'<span style="color:var(--green)">automatisch übernahmefähig</span>'}</span>
+      ${r.llmDecision?.priceInformation?.length&&best?.debug?.llmMatched?`<span class="detail-lbl">KI-Preishinweise:</span><span class="detail-val detail-lt">${h(r.llmDecision.priceInformation.join(' · '))}</span>`:''}
       ${dbg.llmAudit?`<span class="detail-lbl">KI-Fachprüfung:</span><span class="detail-val detail-lt"><b>${h(dbg.llmAudit.label)}</b><br>${h(dbg.llmAudit.reasons.join(' · ')||'Die Prüfung ersetzt keine fachliche Freigabe.')}</span>`:''}
       ${r.llmDecision?.evidence?.filter(e=>e.referenceId===best?.llmReferenceId).map(e=>`<span class="detail-lbl">Textbelege:</span><span class="detail-val detail-lt">Ziel: ${h(e.targetQuote)}<br>Referenz: ${h(e.referenceQuote)}<br><small>Im Original gefunden; noch keine Bestätigung fachlicher Gleichwertigkeit.</small></span>`).join('')||''}
       <span class="detail-lbl">Grund:</span><span class="detail-val detail-lt">${h(dbg.reasonText||'')}</span>
@@ -5280,14 +5325,23 @@ function showDetail(idx){
           <td>${h(k.descr)}</td>
           <td>${h(formatLeistungsansatz(k))}</td>
           <td style="text-align:right">${k.menge}</td>
-          <td style="text-align:right">${typeof k.preis==='number'?k.preis.toFixed(4):'-'}</td>
+          <td style="text-align:right">${typeof k.preis==='number'&&k.preis!==0?k.preis.toFixed(4):'i2-Stammdaten'}</td>
           <td>${h(k.einheit||'')}</td>
-          <td style="text-align:right;font-weight:600">${typeof k.preis==='number'?(k.menge*k.preis).toFixed(2)+' €':'-'}</td>
+          <td style="text-align:right;font-weight:600">${typeof k.preis==='number'&&k.preis!==0?(k.menge*k.preis).toFixed(2)+' €':'i2-Stammdaten'}</td>
         </tr>`).join('')}</tbody>
         <tfoot><tr><td colspan="7" style="text-align:right">Ansatzsumme · ungeprüft:</td><td style="text-align:right">${totalEP.toFixed(2)} €</td></tr></tfoot>
       </table>`:'<div style="color:var(--muted);font-size:11px">Keine Kalkulationsdaten (nur D83-Position ohne XML-Match).</div>'}
     </div>`;
-  document.getElementById('dBody').insertAdjacentHTML('beforeend',renderKnownCosts(rp)+renderReferenceComparison(rp));
+  document.getElementById('dBody').insertAdjacentHTML('beforeend',renderKnownCosts(rp)+renderReferenceComparison(rp,np)+`
+    <details style="margin-top:16px"><summary>Matching verbessern: Feedback mit Grund</summary>
+      <p class="section-note">Leistungsfehler beeinflussen das Matching. Hinweise zu Kostenart, Gerät, Faktoren und Stammdaten werden getrennt gesammelt.</p>
+      <label for="matchingFeedbackReason">Grund:</label>
+      <select id="matchingFeedbackReason"><option value="scope">Leistungsumfang falsch</option><option value="material">Material/Maße falsch</option>
+        <option value="method">Ausführungsverfahren falsch</option><option value="resource">Kostenart/Gerät prüfen</option>
+        <option value="factor">Leistungsansatz prüfen</option><option value="price">Preisstand/i2-Stammdaten prüfen</option></select>
+      <button class="btn btn-s btn-sm" onclick="saveMatchingFeedback(${idx},document.getElementById('matchingFeedbackReason').value)">Hinweis speichern</button>
+      <button class="btn btn-s btn-sm" onclick="downloadMatchingFeedback()">Feedback herunterladen</button>
+      <div id="matchingFeedbackStatus" role="status" class="section-note"></div></details>`);
   document.getElementById('detailModal').classList.add('open');
 }
 function closeDetail(){document.getElementById('detailModal').classList.remove('open');}
@@ -6031,7 +6085,7 @@ async function importLLMMatches(file){
         return{pos,kind,llmReferenceId:id,score:evaluated.score,debug:{...evaluated.debug,llmMatched:true,
           llmConfidence:decision.confidence,
           llmAudit:KPLLMMatching.assessDecision({...decision,referenceIds:[id]},np,[pos]),
-          reasonText:`LLM: ${decision.reason} Unterschiede: ${decision.differences.join(' · ')||'-'}. Fehlende Angaben: ${decision.missingInformation.join(' · ')||'-'}. Regelprüfung: ${evaluated.debug.reasonText||''}`}};
+          reasonText:`LLM: ${decision.reason} Preishinweise: ${decision.priceInformation.join(' · ')||'-'}. Unterschiede: ${decision.differences.join(' · ')||'-'}. Fehlende Angaben: ${decision.missingInformation.join(' · ')||'-'}. Regelprüfung: ${evaluated.debug.reasonText||''}`}};
       });
       return{newPos:np,matches,sel:0,accepted:false,llmDecision:decision,llmAudit:KPLLMMatching.assessDecision(decision,np,decision.referenceIds.map(id=>refMap.get(id)))};
     });
@@ -6228,7 +6282,7 @@ function runMatchingSelfTest(showUI=false){
     // Aus echten LVs gelernt (Claude-Oracle über Hyd_Trennung_BA_01_02.X83):
     // DOKUMENTATION-Hijack entschärft + Komposita/Klassifikator-Fixes absichern.
     ,{kind:'good',a:{kurztext:'Nachverdichtung und Feinplanum herstellen',me:'m2'},b:{kurztext:'Planum herstellen und verdichten',me:'m2'},min:50,label:'Nachverdichtung/Feinplanum ↔ Planum (ERDBAU-Komposita, kein DOKU-Hijack)'}
-    ,{kind:'good',a:{kurztext:'KDB PEHD 2,5 mm liefern und verlegen',me:'m2'},b:{kurztext:'Kunststoffdichtungsbahn PEHD verlegen',me:'m2'},min:80,label:'KDB ↔ Kunststoffdichtungsbahn (DEPONIEBAU, kein DOKU-Hijack)'}
+    ,{kind:'good',a:{kurztext:'KDB PEHD 2,5 mm liefern und verlegen',me:'m2'},b:{kurztext:'Kunststoffdichtungsbahn PEHD liefern und verlegen',me:'m2'},min:80,label:'KDB ↔ Kunststoffdichtungsbahn (DEPONIEBAU, kein DOKU-Hijack)'}
     ,{kind:'bad',a:{kurztext:'KDB PEHD liefern und verlegen',me:'m2'},b:{kurztext:'Boden lösen und laden',me:'m2'},max:55,label:'Abdichtung ist nicht Erdaushub'}
     // Komposita-Klassifikation (Schachtabdeckung→LEITUNGSBAU) gegen Erdaushub abgrenzen.
     ,{kind:'good',a:{kurztext:'Schachtabdeckung Klasse D 800 mm',me:'st'},b:{kurztext:'Schachtabdeckung BEGU Klasse D 400',me:'st'},min:55,label:'Schachtabdeckung ↔ Schachtabdeckung (LEITUNGSBAU-Komposita)'}
@@ -6239,7 +6293,7 @@ function runMatchingSelfTest(showUI=false){
     ,{kind:'good',a:{kurztext:'Proctorversuch DIN 18127',me:'st'},b:{kurztext:'Proctorversuche durchführen',me:'st'},min:50,label:'Proctorversuch-Kompositum (QUALITAET_PROBEFELD)'}
     ,{kind:'good',a:{kurztext:'Asphaltbefestigung schneiden',me:'m'},b:{kurztext:'Asphaltdecke schneiden',me:'m'},min:55,label:'Asphalt-Komposita (STRASSENBAU-Prefix)'}
     ,{kind:'good',a:{kurztext:'Verkehrsschilder liefern und montieren',me:'st'},b:{kurztext:'Hinweisschilder liefern und montieren',me:'st'},min:55,label:'Verkehrssicherungs-Schilder (BE)'}
-    ,{kind:'good',a:{kurztext:'Bauzaun auf- und abbauen',me:'m'},b:{kurztext:'Bauzaun liefern und aufstellen',me:'m'},min:75,label:'Bauzaun abbauen bleibt BE (kein ABBRUCH-Hijack durch "abbauen")'}
+    ,{kind:'bad',a:{kurztext:'Bauzaun auf- und abbauen',me:'m'},b:{kurztext:'Bauzaun liefern und aufstellen',me:'m'},max:68,label:'Bauzaun auf- und abbauen: Rückbau nicht durch Liefern/Aufstellen bestätigt'}
     ,{kind:'good',a:{kurztext:'Heizwendelschweißmuffe da 180',me:'st'},b:{kurztext:'Elektroschweißmuffe d 180',me:'st'},min:55,label:'Schweißmuffen-Komposita (LEITUNGSBAU)'}
     ,{kind:'good',a:{kurztext:'Baggerschürfe herstellen',me:'st'},b:{kurztext:'Schürfgrube herstellen',me:'st'},min:50,label:'Baggerschürfe ↔ Schürfgrube (ERDBAU)'}
     ,{kind:'bad',a:{kurztext:'Wasserhaltungskonzept erstellen',me:'psch'},b:{kurztext:'Wasserhaltung betreiben',me:'psch'},max:50,label:'Konzept (DOKU) kapert nicht physische Wasserhaltung'}
@@ -6382,8 +6436,8 @@ function runStoredDecisionSelfTest(){
   const failures=[];
   const check=(cond,msg)=>{if(!cond)failures.push(msg);};
   const newPos={kurztext:'Bodentransport abfahren',me:'m3',menge:10};
-  const refA={kurztext:'Boden entsorgen Deponie DK I',me:'t',menge:10,source:'A',kosten:[{typ:'L',menge:1,preis:1}]};
-  const refB={kurztext:'Boden transportieren',me:'m3',menge:10,source:'B',kosten:[{typ:'L',menge:1,preis:1}]};
+  const refA={kurztext:'Boden entsorgen Deponie DK I',me:'t',menge:10,source:'A',kosten:[{typ:'L',nameCoC:'TEST-LOHN',menge:1,preis:1}]};
+  const refB={kurztext:'Boden transportieren',me:'m3',menge:10,source:'B',kosten:[{typ:'L',nameCoC:'TEST-LOHN',menge:1,preis:1}]};
   const refText={kurztext:'Boden transportieren D83',me:'m3',menge:10,source:'TXT',kosten:[]};
   try{
     keys.forEach(k=>localStorage.removeItem(k));

@@ -209,3 +209,134 @@ class MatchingWorkflow(unittest.TestCase):
         }''',list(damaged))
         self.assertTrue(result['same'])
         self.assertIn('beschädigt',result['status'])
+
+    def test_i2_master_data_prices_do_not_reduce_semantic_matching(self):
+        result=self.page.evaluate('''()=>{
+          const target={kurztext:'Boden lösen',langtext:'Boden lösen',me:'m3',menge:20};
+          const reference={...target,menge:1,kosten:[{typ:'B',nameCoC:'01+',identifyKey:'device-key',
+            descr:'Bagger LH R924',isAssembly:true,menge:1,preis:0,factor:400,costFactor:1,factorIsPerformanceFactor:1}]};
+          const match={pos:reference,score:100,kind:'CALC',debug:{unitScore:100,categoryScore:100}};
+          const row={newPos:target,matches:[match],sel:0};
+          const score=calcScore(target,reference).score;
+          const first={auto:canAutoAcceptMatch(row,match),risks:getMatchRiskReasons(row,match),
+            context:KPBrowserReview.assemblyContext(reference),costs:KPBrowserReview.calculateKnownCosts(reference),
+            structure:KPBrowserReview.resourceContext(reference),html:renderKnownCosts(reference)};
+          reference.kosten[0].preis=10000;
+          return {...first,sameScore:score===calcScore(target,reference).score};
+        }''')
+        self.assertTrue(result['auto'])
+        self.assertEqual(result['risks'],[])
+        self.assertTrue(result['sameScore'])
+        self.assertEqual(result['costs']['masterDataCount'],1)
+        self.assertFalse(result['costs']['priceApproved'])
+        self.assertEqual(result['context'][0]['kind'],'device')
+        self.assertEqual(result['structure'][0]['factor'],400)
+        self.assertTrue(result['structure'][0]['isPerformanceFactor'])
+        self.assertIn('i2-Stammdaten',result['html'])
+
+    def test_invalid_factors_are_preserved_and_prevent_automatic_selection(self):
+        result=self.page.evaluate('''()=>{
+          const cost=normalizeKostenEntry({typ:'G',nameCoC:'BAGGER',menge:1,preis:0,factor:0,costFactor:0});
+          const pos={kurztext:'Boden lösen',me:'m3',menge:1,kosten:[cost]};
+          const match={pos,score:100,kind:'CALC',debug:{unitScore:100,categoryScore:100}};
+          return {factor:cost.factor,costFactor:cost.costFactor,issues:KPBrowserReview.referenceStructureIssues(pos),
+            auto:canAutoAcceptMatch({newPos:pos,matches:[match]},match)};
+        }''')
+        self.assertEqual(result['factor'],0)
+        self.assertEqual(result['costFactor'],0)
+        self.assertFalse(result['auto'])
+        self.assertTrue(result['issues'])
+
+    def test_absolute_price_differences_require_complete_matching_basis(self):
+        result=self.page.evaluate('''()=>{
+          const a={kurztext:'Boden transportieren',langtext:'Boden 100 m transportieren',me:'m3',menge:1,
+            kosten:[{typ:'N',nameCoC:'TRANSPORT',menge:1,preis:.7}]};
+          const b={...a,kosten:[{typ:'N',nameCoC:'TRANSPORT',menge:1,preis:1.5}]};
+          const master={...a,kosten:[{typ:'N',nameCoC:'TRANSPORT',menge:1,preis:0}]};
+          const different={...a,langtext:'Boden 500 m transportieren'};
+          const c=KPBrowserReview.absolutePriceComparison(a,[a,b,master,different],{me:'m3',menge:20000});
+          return {range:c.range,delta:c.entries[1].delta,total:c.entries[1].totalDelta,
+            master:c.entries[2].eligible,different:c.entries[3].eligible,affectsRanking:c.affectsRanking,approved:c.approved};
+        }''')
+        self.assertEqual(result['range'],[.7,1.5])
+        self.assertAlmostEqual(result['delta'],.8)
+        self.assertAlmostEqual(result['total'],16000)
+        self.assertFalse(result['master'])
+        self.assertFalse(result['different'])
+        self.assertFalse(result['affectsRanking'])
+        self.assertFalse(result['approved'])
+
+    def test_price_information_is_separate_from_semantic_audit(self):
+        request=self.prepare()
+        response={'schema':'kalkpilot.llm-matches','schemaVersion':1,'requestId':request['requestId'],
+          'matches':[{'targetId':'t1','status':'matched','referenceIds':['r1'],'confidence':'high',
+            'reason':'Rohrmerkmale stimmen überein.','differences':[],'missingInformation':[],
+            'priceInformation':['Preis wird beim i2-Import aus Stammdaten bezogen.'],
+            'evidence':[{'referenceId':'r1','targetQuote':'PE100 da 75 SDR 11','referenceQuote':'PE100 da 75 SDR 11'}]}]}
+        result=self.page.evaluate('''async response=>{
+          await importLLMMatches(new File([JSON.stringify(response)],'answer.json'));
+          showDetail(0);
+          return {verdict:S.results[0].llmAudit.verdict,accepted:S.results[0].accepted,
+            text:document.getElementById('dBody').textContent};
+        }''',response)
+        self.assertEqual(result['verdict'],'consistent')
+        self.assertFalse(result['accepted'])
+        self.assertIn('KI-Preishinweise',result['text'])
+
+    def test_scope_does_not_treat_previous_soil_removal_as_current_work(self):
+        result=self.page.evaluate('''()=>{
+          const p={kurztext:'Boden einbauen und verdichten',
+            langtext:'Boden in die durch Ausbau hergestellte Baugrube einbauen. Die Walze benötigt keine zusätzliche Lieferung.',me:'m3'};
+          return KPLLMMatching.scopeProfile(p);
+        }''')
+        self.assertEqual(set(result['actions']),{'einbauen','verdichten'})
+
+    def test_price_and_factor_feedback_do_not_teach_a_false_semantic_match(self):
+        self.prepare()
+        result=self.page.evaluate('''()=>{
+          const p=getActiveRef()[0];
+          S.results=[{newPos:S.newLV[0],matches:[{pos:p,score:100,kind:'CALC',debug:{unitScore:100,categoryScore:100}}],sel:0,accepted:true}];
+          showDetail(0);saveMatchingFeedback(0,'price');saveMatchingFeedback(0,'factor');
+          const notes={accepted:S.results[0].accepted,rejected:isRejectedMatch(S.results[0].newPos,p),feedback:getMatchingFeedback()};
+          saveMatchingFeedback(0,'scope');
+          return {notes,nowRejected:isRejectedMatch(S.results[0].newPos,p),nowAccepted:S.results[0].accepted};
+        }''')
+        self.assertTrue(result['notes']['accepted'])
+        self.assertFalse(result['notes']['rejected'])
+        self.assertEqual([r['kind'] for r in result['notes']['feedback']],['calculation_note','calculation_note'])
+        self.assertTrue(result['nowRejected'])
+        self.assertFalse(result['nowAccepted'])
+
+    def test_gaeb_title_context_is_explicit_background(self):
+        result=self.page.evaluate('''async ()=>{
+          const positions=parseGAEBXML('<GAEB><BoQCtgy RNoPart="01"><LblTx>Erdbau / Transport</LblTx><Item RNoPart="10"><Qty>20</Qty><QU>m3</QU><Description><S>Boden transportieren</S><L>Boden 100 m transportieren.</L></Description></Item></BoQCtgy></GAEB>','lv.x83');
+          const request=await KPLLMMatching.buildRequest({version:APP_VERSION,targets:positions,references:positions});
+          return {title:positions[0].titlePath,exported:request.zielpositionen[0].titelkontext};
+        }''')
+        self.assertEqual(result['title'],'Erdbau / Transport')
+        self.assertEqual(result['exported'],result['title'])
+
+    def test_xml_device_identifiers_and_performance_factors_survive_export(self):
+        result=self.page.evaluate('''()=>{
+          const xml='<SubItem><Quantity>1</Quantity><UnitOfMeasure>m3</UnitOfMeasure><EstDetails><AssemblyDetail Xref="device-xref"><NameAssembly>01+</NameAssembly><DescrAssembly>Bagger LH R924</DescrAssembly><IdentifyKey>device-key</IdentifyKey><UnitOfMeasure>h</UnitOfMeasure><Quantity>2</Quantity><Factor>400</Factor><FactorIsPerformanceFactor>1</FactorIsPerformanceFactor><CostFactor>2</CostFactor></AssemblyDetail></EstDetails></SubItem>';
+          const doc=new DOMParser().parseFromString(xml,'text/xml');const sub=extractXmlSubItemData(doc.documentElement)[0];
+          const detail=sub.rawEstimateDetails[0];const output=serializeEstimateDetail(detail,'');
+          const rebuilt=new DOMParser().parseFromString('<SubItem><EstDetails>'+output+'</EstDetails></SubItem>','text/xml');
+          const roundtrip=extractXmlSubItemData(rebuilt.documentElement)[0].kosten[0];
+          return {before:sub.kosten[0],after:roundtrip,output};
+        }''')
+        for key in ['nameCoC','identifyKey','menge','factor','costFactor','factorIsPerformanceFactor','isAssembly']:
+            self.assertEqual(result['before'][key],result['after'][key],key)
+        self.assertEqual(result['after']['factor'],400)
+        self.assertEqual(result['after']['preis'],0)
+        self.assertIn('<AssemblyDetail',result['output'])
+        self.assertNotIn('<CoCDetail',result['output'])
+
+    def test_xml_zero_factor_is_not_silently_repaired(self):
+        result=self.page.evaluate('''()=>{
+          const xml='<SubItem><EstDetails><AssemblyDetail><NameAssembly>01+</NameAssembly><Quantity>1</Quantity><Factor>0</Factor><CostFactor>0</CostFactor></AssemblyDetail></EstDetails></SubItem>';
+          const sub=extractXmlSubItemData(new DOMParser().parseFromString(xml,'text/xml').documentElement)[0];
+          return sub.kosten[0];
+        }''')
+        self.assertEqual(result['factor'],0)
+        self.assertEqual(result['costFactor'],0)

@@ -1,19 +1,29 @@
-# Referenz- und Preisprüfung · BETA
+# Referenz- und Preisprüfung · 1.5.0 BETA
 
-Historische Referenzen können fachlich passen, obwohl ihre Preisbasis unvollständig ist. Die App bezeichnet gespeicherte Werte deshalb als **ungeprüfte Ansatzsummen**, auch in CSV-Ausgaben. Eine manuelle oder automatische Referenzübernahme ist keine Preisfreigabe.
+**Kostenarten und Gerätebausteine beziehen ihre Preise beim i2-Import aus Stammdaten.** Ein leerer oder mit null exportierter Preis ist ein regulärer Verweis, kein fehlendes Gerät und kein automatisch fehlerhafter Kalkulationsansatz. Entscheidend sind korrekte Kennungen sowie Mengen-, Kosten- und Leistungsfaktoren.
 
-Die Prüfung zeigt offene Geräte-/Kalkulationsbausteine, fehlende oder ungültige Ansatzwerte, Nullpreise bei Mengenansätzen, abweichende Faktoren, deaktivierte Kostenzeilen und Pauschalierungen (`sItemLSum` / `sItemLSumAbs` in Subitems). Diese Auffälligkeiten verhindern eine automatische Referenzübernahme. Manuelle Übernahme und Original-XML-Export bleiben möglich; die ursprünglichen Preise und Kalkulationsdaten werden nicht verändert.
+Ein Gerätebaustein kann Baggermiete, Diesel, Bedienpersonal und GPS umfassen. Die vorhandenen XML-Verweise nennen Gerät, Kennung, Menge und Faktoren; sie enthalten nicht zwingend die Einzelbestandteile. KalkPilot erhält die Verweise. Es ergänzt keine vermuteten Komponenten und rechnet Bedienpersonal oder Diesel nicht zusätzlich hinein. Der tatsächliche Abgleich der Kennungen mit dem firmeneigenen Stammdatenkatalog erfolgt in i2.
 
-Im Positionsdetail erscheint ein Vergleich aktiver Referenzen mit gleichem normalisiertem Kurz- oder Langtext und gleicher Einheit. Stunden-Einheiten wie h und Std werden zusammengeführt. Kurze Sammeltexte und fehlende Einheiten reichen nicht aus. Die Anzeige enthält die ausgewählte Referenz und höchstens neun weitere Kandidaten, getrennte XML-/LV-Mengen, Text, Kostenzeilen und Prüfhinweise. Sie erzeugt weder einen Durchschnittspreis noch ein fachliches Gleichheitsurteil. Ein gleichlautender Standardtext kann unterschiedliche Leistungen begleiten.
+## Fachliche Zuordnung und Kalkulationsstruktur
 
-Die App rekonstruiert noch keinen geprüften vollständigen Einheitspreis aus Leistungsfaktoren, Pauschalen, Gerätebausteinen und Zuschlägen. Dazu müssen die Rechenregeln des Ursprungssystems und dessen Kontrollwerte nachvollzogen werden. Faktoren dürfen nicht pauschal multipliziert oder dividiert werden. Ein Nullpreis kann eine beigestellte oder anderweitig enthaltene Leistung bezeichnen; er wird nicht automatisch als Fehler korrigiert.
+Die Fachprüfung bewertet Leistungsumfang, Abmessungen, Material und Ausführungsverfahren. Fehlende Kostenarten-/Gerätekennungen, ungültige Mengen oder ungültige Faktoren werden als Strukturhinweise angezeigt. Ein Faktor null wird nicht mehr stillschweigend in 1 umgewandelt. Gültige Leistungsfaktoren und Stammdatenpreise blockieren eine fachlich passende Referenz nicht allein wegen einer unvollständigen Browser-Preisanzeige.
 
-Browser-Regressionen prüfen, dass Faktoren, Nullpreise und Pauschalansätze automatische Übernahmen blockieren, Vergleichskandidaten gleiche Einheiten besitzen, HTML in Referenzdaten nicht ausgeführt wird und Preise unverändert bleiben. Kundendaten gehören nicht ins Repository.
+KI-Zuordnungen beginnen weiterhin unbestätigt. Eine Referenzübernahme bestätigt keinen Angebotspreis. Original-XML bzw. rekonstruierte Geräteverweise erhalten Mengen, Kennungen, Leistungsfaktor-Flags und Kostenfaktoren. KalkPilot erfindet keine Rechenregel für die Leistungsansätze und keine aktuellen Stammdatenpreise.
 
-## Teilkostenberechnung ab Version 1.3.0 BETA
+## Anzeige der Exportwerte
 
-Für jede Kostenzeile unterscheidet die App **berechnet**, **offen** und **ausgeschlossen**. Menge × Preis wird nur berechnet, wenn beide Werte gültig sind, der Preis nicht null ist, kein Leistungsfaktor gesetzt ist, sämtliche vorhandenen Faktoren 1 sind und keine andere Währung als EUR angegeben ist. Negative Beträge bleiben als negative Ansätze erhalten. Deaktivierte Zeilen und Mengenansätze 0 werden ausgeschlossen. Bausteine ohne Preis und andere Nullpreise bleiben offen; sie werden nicht als kostenlose Leistung eingerechnet.
+Kostenzeilen erscheinen getrennt als **einfacher historischer Betrag**, **i2-Stammdatenverweis**, **in i2 zu berechnender Leistungs-/Faktoransatz**, **ungültiger Wert** oder **ausgeschlossen**. Nur gültige einfache Menge-mal-Preis-Zeilen ohne abweichende Faktoren werden als bekannter historischer Anteil addiert. Zeilen mit null oder leerem Preis erscheinen nicht als kostenlose Leistung. Deaktivierte Zeilen und Mengenansätze null werden ausgeschlossen. Negative einfache Beträge bleiben negativ.
 
-Die Summe ist ausschließlich die Summe der berechenbaren Kostenzeilen. Ein leerer bekannter Anteil erscheint nicht als 0 €. Nicht auflösbare Bausteine können dauerhaft offen bleiben. Die App ergänzt dafür keine erfundenen Gerätepreise. Bei Pauschalierungen, abweichenden Subitem-Faktoren/-Mengen oder unklarer Bezugsmenge wird keine Umrechnung in einen LV-Einheitspreis vorgenommen.
+Ein Leistungsfaktor wird nicht pauschal als Multiplikator verwendet. Pauschalierung, Subitem-Mengen und Faktoren können die Bezugsbasis verändern. Daher wird aus unklaren Ansätzen kein €/LV-Einheit-Wert errechnet. Die vollständige Berechnung erfolgt in i2.
 
-Auch wenn alle Ansatzkosten eindeutig berechenbar sind, sind Preisstand, Zuschläge und Angebotspreis nicht freigegeben. Die Berechnung verändert weder gespeicherte historische EP-Werte noch Kostenansätze oder Original-XML. CSV-Ausgaben und KI-Prüfpakete enthalten die Teilkosten samt offenen Anteilen bzw. Mengenbasis-Hinweisen.
+## Absolute Preisvergleiche
+
+Im Positionsdetail lassen sich aktive Referenzen mit gleichen normalisierten Texten und Einheiten vergleichen. Die Kandidatenliste kann gleiche Kurz- oder Langtexte enthalten; das beweist noch keine gleiche Leistung. Eine absolute Betragsdifferenz wird nur für identische Kurz- **und** Langtexte, gleiche Einheiten, eindeutige Mengenbasis und vollständig einfach berechenbare positive historische Ansätze gezeigt. Stammdatenverweise, Leistungsfaktoren, Pauschalansätze oder unterschiedliche Texte bleiben ohne rechnerischen Preisvergleich.
+
+Zusätzlich zur Differenz pro Einheit kann die App die rechnerische Mengenwirkung für das neue LV zeigen. Beispiel: 0,70 gegenüber 1,50 €/m³ bedeutet +0,80 €/m³; bei 20.000 m³ ergibt sich +16.000 €. Das ist eine Vergleichsrechnung historischer Ansätze, kein neuer Angebotspreis. Preisstand, Region, Zuschläge und Leistungsumfang müssen bestätigt werden. Preise beeinflussen die fachliche Rangfolge nicht; es gibt keine pauschale Prozent- oder Eurogrenze und keine vorgetäuschte statistische Toleranz.
+
+## Rückmeldungen
+
+Im Matching-Detail kann Feedback mit Grund gespeichert werden. Falscher Leistungsumfang, falsches Material/Maße und falsches Verfahren gehen als fachliche Ablehnung in das Matching-Wissen ein. Hinweise zu Kostenart/Gerät, Leistungsansatz oder Preisstand werden getrennt gesammelt und verschlechtern keine fachliche Zuordnung. Der Download enthält Texte und Ressourcen-/Faktorkontext zur späteren Prüfung. Benutzerhinweise sind keine unabhängig bestätigten Musterlösungen.
+
+[Größerer Originaldaten-Prüflauf und Copilot-Prüfpakete](MATCHING_ORIGINALDATEN.md).
