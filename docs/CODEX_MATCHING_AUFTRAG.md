@@ -188,6 +188,7 @@ git add -- KalkPilot_by_Janek.html README.md js/llm-matching.js \
   scripts/matching_originals_cloud.py scripts/matching_quality_cloud.py \
   scripts/prepare_original_review_cloud.py scripts/public_lv_review_cloud.py \
   scripts/run_public_lv_check.py config/public-lv-sources.json \
+  scripts/discover_public_lvs.py tests/test_public_lv_discovery.py \
   .github/workflows/matching-check.yml tests/test_public_lv_runner.py \
   tests/fixtures/matching-quality.json tests/test_matching_workflow.py \
   tests/test_original_benchmark.py docs/MATCHING_VERTIEFUNG.md \
@@ -207,7 +208,7 @@ große Referenzbestände können geeignete Kandidaten zu früh abschneiden.
 Der neue Stand prüft diese Unterschiede vor der Übernahme und ergänzt
 reproduzierbare Import-, Vergleichs- und Review-Werkzeuge.
 
-Prüfung: 64 automatisierte Tests bestanden, 123 synthetische Fachfälle korrekt.
+Prüfung: 70 automatisierte Tests bestanden, 123 synthetische Fachfälle korrekt.
 Zwei öffentliche LVs mit 829 Positionen importiert und abgeglichen;
 60 Originalfälle zur unabhängigen Fachprüfung vorbereitet.
 Originaldateien und Prüfpakete liegen außerhalb dieses PRs.

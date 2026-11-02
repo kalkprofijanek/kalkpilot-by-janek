@@ -72,7 +72,7 @@ Ein erster Praxistest mit zwei öffentlichen X83-LVs umfasst 829 vollständig ab
 
 In GitHub unter **Actions → Matching check → Run workflow** starten. Die Option **public_lvs** schaltet den Download und Vergleich der zwei öffentlichen Original-LVs ein. Auf Branches `codex/matching-*` startet der vollständige Prüflauf bereits beim Push. Die Aktion veröffentlicht die App nicht.
 
-Der Lauf prüft Browser-/Cloud-Regressionen, synthetische Fachfälle sowie optional den Originalimport und die projektübergreifenden Vergleiche. Die öffentlichen Dateien werden anhand der Quellen in `config/public-lv-sources.json` abgerufen und per SHA-256 geprüft. Geänderte oder nicht mehr verfügbare Quellen führen zu einem sichtbaren Fehler. In GitHub werden ausschließlich Zähler, Quellennachweise und der synthetische Bericht als Artefakt gespeichert; Original-LVs und vollständige Prüfpakete werden nicht hochgeladen.
+Der Lauf prüft Browser-/Cloud-Regressionen, synthetische Fachfälle sowie optional den Originalimport und die projektübergreifenden Vergleiche. Die öffentlichen Dateien werden anhand der Quellen in `config/public-lv-sources.json` abgerufen und per SHA-256 geprüft. Geänderte oder nicht mehr verfügbare Quellen führen zu einem sichtbaren Fehler. In GitHub werden Zähler, Quellennachweise, der synthetische Bericht und gegebenenfalls entdeckte Bekanntmachungsmetadaten als Artefakt gespeichert; Original-LVs und vollständige Prüfpakete werden nicht hochgeladen.
 
 Lokal im Cloud-Terminal nach dem Setup:
 
@@ -89,3 +89,16 @@ python3 scripts/run_public_lv_check.py \
 ```
 
 Bei Verwendung der durch `scripts/setup-cloud.sh` angelegten Umgebung stattdessen `.venv/bin/python` verwenden. Lokal bleiben vollständige Importberichte, Ranglisten und Copilot-/JSON-Prüfpakete im gewählten Ausgabeordner verfügbar. Ohne Originaldaten lässt sich die synthetische Prüfung in GitHub mit deaktiviertem **public_lvs** starten. Ein neuer Workflow ist über die Actions-Oberfläche regulär verfügbar, sobald die Workflow-Datei im Standardbranch liegt; der Push-Auslöser funktioniert bereits auf dem passenden Feature-Branch.
+
+### Weitere LV-Quellen über die API finden
+
+Beim manuellen **Matching check** zusätzlich **discover_lvs** einschalten. **discovery_day** wählt den Veröffentlichungstag; leer bedeutet gestern in Berlin. Beim Push auf `codex/matching-*` wird ebenfalls der Vortag durchsucht. Die Suche filtert den offiziellen OCDS-Tagesexport nach Begriffen und CPV-Gruppen für Erd-, Tief- und Leitungsbau. Bereits verwendete Projekte werden anhand ihrer bekannten OCID ausgeschlossen; Mehrfachversionen im Export werden zusammengefasst. Ergebnis sind `candidates.json` und eine Excel-lesbare `candidates.csv` im Actions-Artefakt.
+
+Direkt aus dem ausgecheckten Repository:
+
+```sh
+python3 scripts/discover_public_lvs.py \
+  --day 2026-10-30 --output-dir /tmp/kalkpilot-lv-suche
+```
+
+Ohne `--day` wird der Vortag verwendet. `--keywords`, `--cpv-prefixes` und `--limit` begrenzen die Suche; `--export-file` erlaubt die Wiederholung mit einem vorhandenen OCDS-ZIP. Die Ergebnisse enthalten Bekanntmachungsdaten und Unterlagenlinks. GAEB-Verfügbarkeit, freie Abrufbarkeit und fachliche Passung bleiben unbestätigt. Geeignete neue Projektdateien erst nach Quellenprüfung herunterladen, Dubletten prüfen und vor der Regelentwicklung dem Entwicklungs- oder unabhängigen Testbestand zuordnen. Diese API-Suche allein verändert weder Zuordnungen noch Fachlabels oder Preise.
