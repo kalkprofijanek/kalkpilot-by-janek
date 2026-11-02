@@ -15,7 +15,9 @@ from llm_matching_cloud import ROOT, QuietHandler
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir',required=True,type=Path)
-    parser.add_argument('--baseline-ref',help='Optional local Git revision for technical-profile comparison')
+    baseline_group=parser.add_mutually_exclusive_group()
+    baseline_group.add_argument('--baseline-ref',help='Optional local Git revision for technical-profile comparison')
+    baseline_group.add_argument('--baseline-file',type=Path,help='Saved matching JS snapshot for an uncommitted baseline')
     args=parser.parse_args()
     out=args.output_dir.resolve()
     if out==ROOT or ROOT in out.parents:
@@ -27,6 +29,9 @@ def main():
     if args.baseline_ref:
         baseline=subprocess.run(['git','show',args.baseline_ref+':js/llm-matching.js'],cwd=ROOT,
             capture_output=True,text=True,check=True).stdout
+    elif args.baseline_file:
+        if not args.baseline_file.is_file():parser.error('Baseline JS file does not exist.')
+        baseline=args.baseline_file.read_text()
     server=ThreadingHTTPServer(('127.0.0.1',0),partial(QuietHandler,directory=str(ROOT)))
     Thread(target=server.serve_forever,daemon=True).start()
     os.environ.setdefault('PLAYWRIGHT_BROWSERS_PATH',str(ROOT/'.cache/ms-playwright'))
@@ -49,6 +54,7 @@ def main():
                     })''',cases)
                     return {'correct':sum(row['ok'] for row in rows),'total':len(rows),'rows':rows}
                 report={'kind':'curated-synthetic-regression','baselineRef':args.baseline_ref,
+                    'baselineFile':str(args.baseline_file.resolve()) if args.baseline_file else None,
                     'baseline':measure(baseline) if baseline else None,'current':measure(source),
                     'limitation':'Technical requirement checks on curated cases; not independent expert validation or LLM accuracy.'}
                 if errors:raise RuntimeError('; '.join(errors))

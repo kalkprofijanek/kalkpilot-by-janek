@@ -72,6 +72,7 @@ def main():
                     .map(pos=>({...pos,source:project.name})));
                   window.originalPositions=positions.map((pos,i)=>({id:'r'+(i+1),project:pos.source,pos,
                     target:{oz:pos.oz,kurztext:pos.kurztext,
+                      titlePath:pos.titlePath || pos.linkedD83?.titlePath || '',
                       langtext:[...new Set([pos.langtext,pos.outlineSpecs,pos.linkedD83?.langtext].filter(Boolean))].join('\\n\\n'),
                       me:pos.linkedD83?.me || pos.me,menge:pos.linkedD83?.menge ?? pos.menge}}));
                   return originalPositions.map(p=>({id:p.id,project:p.project,category:positionCategory(p.target)}));
