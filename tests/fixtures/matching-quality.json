@@ -929,5 +929,741 @@
       "langtext": "Boden in Baugrube einbauen.",
       "me": "m3"
     }
+  },
+  {
+    "name": "DA Meter und Millimeter gleich",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 0,075 m",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DA Zentimeter und Millimeter gleich",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 7,5 cm",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DA Punktdezimal in Meter",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 0.075 m",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DA Einheit verhindert falsche Gleichheit",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 cm",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DA Bereich keine sichere Einzelabmessung",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 mm",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75–110 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DA Näherung keine bestätigte Abmessung",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 mm",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da ca. 75 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "PE gegenüber PVC",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr Werkstoff PE100 da 75",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr Werkstoff PVC-U da 75",
+      "me": "m"
+    }
+  },
+  {
+    "name": "PP gegenüber PVC",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "PP-Rohr DN 100",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "PVC-U-Rohr DN 100",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Stahl gegenüber Beton",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Stahlrohr DN 100",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Betonrohr DN 100",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Rohr Werkstoff unbekannt",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "PP-Rohr DN 100",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr DN 100",
+      "me": "m"
+    }
+  },
+  {
+    "name": "PE Synonyme über Werkstoff",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr Werkstoff Polyethylen da 75",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "PE-Rohr da 75",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Bettungsvlies kein Rohrwerkstoff",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "PE100 Rohr da 75",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "PE100 Rohr da 75 auf PP Vlies",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Zusätzliche Rohrwerkstoffe mehrdeutig",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr Werkstoff PE100",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr Werkstoff PE100; PVC-Rohr als Alternative",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Nachgestellte Entsorgung ausgeschlossen",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Abfall transportieren und entsorgen",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Abfall transportieren",
+      "langtext": "Entsorgung ist nicht enthalten.",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Nachgestellte Lieferung ausgeschlossen",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern und verlegen",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr verlegen",
+      "langtext": "Lieferung wird gesondert vergütet.",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Ohne Lieferung verlegen bleibt Einbau",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr verlegen ohne Lieferung",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr ohne Lieferung verlegen",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Nicht nur liefern ist keine Negation",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern und verlegen",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr nicht nur liefern sondern verlegen",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Komma beendet örtliche Negation",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr verlegen ohne Lieferung",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr ohne Lieferung, verlegen",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Transport Tausenderpunkt gleich Kilometer",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Boden transportieren",
+      "langtext": "Transportweg 1.000 m",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden transportieren",
+      "langtext": "Transportweg 1 km",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Transport Tausender mit Dezimalkomma",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Boden transportieren",
+      "langtext": "Transportweg 1.500,5 m",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden transportieren",
+      "langtext": "Transportweg 1,5005 km",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Transport Tausenderpunkt kein Dezimalpunkt",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Boden transportieren",
+      "langtext": "Transportweg 1.000 m",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden transportieren",
+      "langtext": "Transportweg 1 m",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Transport Bereich bleibt offen",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Boden transportieren",
+      "langtext": "Transportweg 1000 m",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden transportieren",
+      "langtext": "Transportweg 500–1000 m",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Transport fehlende Entfernung bleibt offen",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Boden transportieren",
+      "langtext": "Transportweg 1000 m",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden transportieren",
+      "langtext": "",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Kilogramm braucht Umrechnung zu Tonnen",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Material liefern",
+      "me": "kg"
+    },
+    "b": {
+      "kurztext": "Material liefern",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Fehlende Referenzeinheit bleibt offen",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Material liefern",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Material liefern",
+      "me": ""
+    }
+  },
+  {
+    "name": "Fehlende Zieleinheit bleibt offen",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Material liefern",
+      "me": ""
+    },
+    "b": {
+      "kurztext": "Material liefern",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Laufmeteralias",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "me": "lfm"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Tonnenalias",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Material liefern",
+      "me": "Tonnen"
+    },
+    "b": {
+      "kurztext": "Material liefern",
+      "me": "t"
+    }
+  },
+  {
+    "name": "DA mit Komma als Satztrenner",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75, SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DA mit Punkt als Satzende",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr da 75. SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DN OD ist Außendurchmesser",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 DN/OD 63 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 da 63 SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DN OD andere Größe nicht übersehen",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 DN/OD 63 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 DN/OD 110 SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DN OD darf nicht DN werden",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 DN/OD 63 SDR 11",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr PE100 DN 63 SDR 11",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DN OD bis keine exakte Größe",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr DN/OD 63",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr bis DN/OD 63",
+      "me": "m"
+    }
+  },
+  {
+    "name": "AD als Außendurchmesser",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr AD 200 mm",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr Außendurchmesser 200 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "ID unterschiedliche Innenmaße",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr ID 150 mm",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr ID 200 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DI als Innendurchmesser",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr di 150 mm",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr Innendurchmesser 150 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "DN ID als Innendurchmesser",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr DN/ID 150",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr ID 150 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Innendurchmesser bleibt von Außendurchmesser getrennt",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr ID 150 mm",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr AD 150 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "ID Bereich bleibt offen",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr ID 150 mm",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr ID 150–200 mm",
+      "me": "m"
+    }
+  },
+  {
+    "name": "AVV nach ausgeschriebenem Klammerzusatz",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Abfall entsorgen",
+      "langtext": "AVV (Abfallverzeichnis-Verordnung) 17 01 01",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Abfall entsorgen",
+      "langtext": "AVV (Abfallverzeichnis-Verordnung) 17 03 02",
+      "me": "t"
+    }
+  },
+  {
+    "name": "AVV Kurzform und Klammerzusatz gleich",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Abfall entsorgen",
+      "langtext": "AVV170101",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Abfall entsorgen",
+      "langtext": "AVV (Abfallverzeichnis-Verordnung) 17 01 01",
+      "me": "t"
+    }
+  },
+  {
+    "name": "AVV Klammerzusatz bewahrt Stern",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Abfall entsorgen",
+      "langtext": "AVV (Abfallverzeichnis-Verordnung) 17 05 03*",
+      "me": "t"
+    },
+    "b": {
+      "kurztext": "Abfall entsorgen",
+      "langtext": "AVV (Abfallverzeichnis-Verordnung) 17 05 03",
+      "me": "t"
+    }
+  },
+  {
+    "name": "Entsorgungsleitungen keine Entsorgungstätigkeit",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Boden lösen",
+      "langtext": "Boden mit Behinderung durch Entsorgungsleitungen lösen.",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden lösen",
+      "langtext": "Boden lösen.",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Verfüllen ist Einbautätigkeit",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Boden verfüllen und verdichten",
+      "langtext": "Boden verfüllen und verdichten",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden verfüllen und verdichten",
+      "langtext": "Boden einbauen und verdichten",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Verfüllen fehlt beim reinen Verdichten",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Boden verfüllen und verdichten",
+      "me": "m3"
+    },
+    "b": {
+      "kurztext": "Boden verdichten",
+      "me": "m3"
+    }
+  },
+  {
+    "name": "Auflagering mit anderer Bauhöhe",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Auflagering liefern",
+      "langtext": "Auflagering Bauhöhe 60 mm",
+      "me": "St"
+    },
+    "b": {
+      "kurztext": "Auflagering liefern",
+      "langtext": "Auflagering Bauhöhe 100 mm",
+      "me": "St"
+    }
+  },
+  {
+    "name": "Auflagering Bauhöhe Einheit umgerechnet",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Auflagering liefern",
+      "langtext": "Auflagering Bauhöhe 0,1 m",
+      "me": "St"
+    },
+    "b": {
+      "kurztext": "Auflagering liefern",
+      "langtext": "Auflagering Bauhöhe 100 mm",
+      "me": "St"
+    }
+  },
+  {
+    "name": "Auflagering fehlende Bauhöhe",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Auflagering liefern",
+      "langtext": "Auflagering Bauhöhe 60 mm",
+      "me": "St"
+    },
+    "b": {
+      "kurztext": "Auflagering liefern",
+      "langtext": "Auflagering",
+      "me": "St"
+    }
+  },
+  {
+    "name": "Bogen mit anderem Winkel",
+    "expected": "conflict",
+    "a": {
+      "kurztext": "Bogen liefern",
+      "langtext": "Bogen aus PP 15 Grad DN/OD 200",
+      "me": "St"
+    },
+    "b": {
+      "kurztext": "Bogen liefern",
+      "langtext": "Bogen aus PP 45 Grad DN/OD 200",
+      "me": "St"
+    }
+  },
+  {
+    "name": "Bogen gleicher Winkel anders geschrieben",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Bogen liefern",
+      "langtext": "Bogen aus PP 45° DN/OD 200",
+      "me": "St"
+    },
+    "b": {
+      "kurztext": "Bogen liefern",
+      "langtext": "Bogen aus PP 45 Grad DN/OD 200",
+      "me": "St"
+    }
+  },
+  {
+    "name": "Bogen Winkelbereich offen",
+    "expected": "incomplete",
+    "a": {
+      "kurztext": "Bogen liefern",
+      "langtext": "Bogen aus PP 15 Grad",
+      "me": "St"
+    },
+    "b": {
+      "kurztext": "Bogen liefern",
+      "langtext": "Bogen aus PP 15–45 Grad",
+      "me": "St"
+    }
+  },
+  {
+    "name": "Reihenfolge OD DN normalisiert",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr OD DN200",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr DN/OD 200",
+      "me": "m"
+    }
+  },
+  {
+    "name": "Reihenfolge ID DN normalisiert",
+    "expected": "consistent",
+    "a": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr ID DN200",
+      "me": "m"
+    },
+    "b": {
+      "kurztext": "Rohr liefern",
+      "langtext": "Rohr DN/ID 200",
+      "me": "m"
+    }
   }
 ]

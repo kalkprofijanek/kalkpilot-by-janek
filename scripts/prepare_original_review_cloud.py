@@ -52,6 +52,7 @@ def main():
                   const positions=S.refProjects.flatMap(project=>(project.positions || []).filter(p=>active.has(p))
                     .map(p=>({...p,source:project.name})));
                   return positions.map((p,i)=>({id:'r'+(i+1),project:p.source,oz:p.oz,
+                  titlePath:p.titlePath || p.linkedD83?.titlePath || '',
                   kurztext:p.kurztext,langtext:[...new Set([p.langtext,p.outlineSpecs,p.linkedD83?.langtext].filter(Boolean))].join('\\n\\n'),
                   me:p.linkedD83?.me || p.me,menge:p.linkedD83?.menge ?? p.menge}));}''')
                 source_map={s['id']:s for s in sources}
@@ -68,9 +69,20 @@ def main():
                     (folder/'referenzen-ohne-zielprojekt.json').write_text(json.dumps(holds,ensure_ascii=False))
                     gaeb=ET.Element('GAEB');body=ET.SubElement(gaeb,'BoQBody')
                     itemlist=ET.SubElement(body,'Itemlist')
+                    title_lists={}
                     for row in rows:
                         source=source_map[row['id']]
-                        item=ET.SubElement(itemlist,'Item',{'RNoPart':source['oz']})
+                        destination=itemlist
+                        title=source['titlePath']
+                        if title:
+                            if title not in title_lists:
+                                # Review excerpts retain the original full OZ on each
+                                # Item. Label-only groups add context without OZ parts.
+                                category=ET.SubElement(body,'BoQCtgy')
+                                ET.SubElement(category,'LblTx').text=title
+                                title_lists[title]=ET.SubElement(ET.SubElement(category,'BoQBody'),'Itemlist')
+                            destination=title_lists[title]
+                        item=ET.SubElement(destination,'Item',{'RNoPart':source['oz']})
                         ET.SubElement(item,'Qty').text=str(source['menge'] if source['menge'] is not None else 0)
                         ET.SubElement(item,'QU').text=source['me']
                         desc=ET.SubElement(item,'Description')
@@ -84,6 +96,14 @@ def main():
                     page.evaluate('''({xml,project})=>{S.refProjects=S.refProjects.filter(p=>p.name!==project);S.newLV=parseGAEBXML(xml,'pruef-lv.x83');}''',{'xml':xml,'project':project})
                     request=page.evaluate('async ()=>(await getLLMMatchingContext()).request')
                     if len(request['zielpositionen'])!=len(rows):raise RuntimeError('Review excerpt lost target positions.')
+                    # Category grouping can change document order; map the review
+                    # labels to the actual reimported target order by full OZ.
+                    row_map={source_map[row['id']]['oz']:row for row in rows}
+                    if len(row_map)!=len(rows):raise RuntimeError('Review source has duplicate OZ.')
+                    rows=[row_map[target['oz']] for target in request['zielpositionen']]
+                    if any(target['titelkontext']!=source_map[row['id']]['titlePath']
+                        for target,row in zip(request['zielpositionen'],rows)):
+                        raise RuntimeError('Review excerpt lost source title context.')
                     if any(p['projekt']==project for p in request['referenzen']):raise RuntimeError('Target project leaked into references.')
                     (folder/'matching-auftrag.json').write_text(json.dumps(request,ensure_ascii=False,indent=2))
                     encoded=page.evaluate('''request=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.onerror=()=>reject(new Error('Workbook cannot be read'));reader.readAsDataURL(KPCopilotExchange.exportRequest(request));})''',request)

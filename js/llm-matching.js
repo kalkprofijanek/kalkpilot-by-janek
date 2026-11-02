@@ -16,19 +16,25 @@
     const data=textData(position),short=data.kurztext.toLowerCase(),long=data.langtext.toLowerCase();
     const full=short+'\n'+long;
     const objectPattern=/bauzaun|rohr|leitung|vlies|geotextil|boden|erdarbeiten|hinterfüll|schutzplanke|leitplanke/;
-    const patterns=[['liefern',/\bliefer\w*|\blieferung\b/g],['einbauen',/\beinbau\w*|\bverleg\w*/g],
+    const patterns=[['liefern',/\bliefer\w*|\blieferung\b/g],['einbauen',/\beinbau\w*|\bverleg\w*|\b(?:hinter|ver)füll(?:en|ung)\b/g],
       ['aufstellen',/\baufst\w*|\baufbau\w*|\berricht\w*/g],['umsetzen',/\bumsetz\w*/g],
       ['vorhalten',/\bvorhalt\w*|\bvorhaltung\b/g],['entfernen',/\bentfern\w*|\bräumen\b|\brückbau\w*|\babbrech\w*|\babbruch\w*/g],
       ['loesen',/\blösen\b|\bloesen\b|\baushub\b|\bausheben\b/g],['laden',/\bladen\b|\bverlad\w*|\bbelad\w*/g],
       ['transportieren',/\btransport\w*|\bförder\w*|\bbeförder\w*|\babfahren\b/g],
-      ['entsorgen',/\bentsorg\w*|\b(?:boden|abfall)?verwert\w*/g],['verdichten',/\bverdicht\w*/g]];
+      ['entsorgen',/\bentsorg(?:en|t|ung(?:en)?)\b|\b(?:boden|abfall)?verwert(?:en|et|ung)\b/g],['verdichten',/\bverdicht\w*/g]];
     const extract=text=>{
       text=text.replace(/\bdurch\s+(?:ausbau|abtrag|abbruch|rückbau)[^.;\n]{0,160}?\b(?:hergestellte|entstandene)\w*/g,' ');
       const yes=[],no=[];
       for(const [action,pattern] of patterns){
         for(const match of text.matchAll(pattern)){
-          const before=text.slice(Math.max(0,match.index-45),match.index).split(/[.;\n]/).pop();
-          const negated=/(?:ohne|kein(?:e|en|er)?|nicht)\s+(?:[\wäöüß-]+\s+){0,2}$/.test(before);
+          const before=text.slice(Math.max(0,match.index-70),match.index).split(/[.;,\n]|\b(?:aber|sondern|jedoch)\b/).pop();
+          const after=text.slice(match.index+match[0].length);
+          const prefix=before.match(/(?:ohne|kein(?:e|en|er|es)?|nicht)\s+((?:[\wäöüß-]+\s+){0,3})$/);
+          const otherAction=prefix && patterns.some(([,rx])=>[...prefix[1].matchAll(rx)].length);
+          const preceding=!!prefix && !/^nur\s/.test(prefix[1]) &&
+            (!otherAction || /\b(?:und|oder)\s*$/.test(prefix[1]));
+          const following=/^\s+(?:(?:ist|sind|wird|werden|erfolgt|erfolgen)\s+)?(?:nicht\s+(?:enthalten|inbegriffen|geschuldet|auszuführen|auszufuehren|erforderlich)|(?:gesondert|separat)\s+(?:vergütet|verguetet|abgerechnet))\b/.test(after);
+          const negated=preceding || following;
           (negated?no:yes).push(action);
         }
       }
@@ -57,6 +63,63 @@
       note:'Aus dem Text erkannte Tätigkeiten; fehlende oder verkürzte Angaben sind kein bestätigter Leistungsumfang.'};
   }
   const profileCache = new WeakMap();
+  const numericPattern = '(?:[1-9]\\d{0,2}(?:\\.\\d{3})+(?:,\\d+)?|\\d+(?:[.,]\\d+)?)';
+  function numberValue(value) {
+    const normalized=/^[1-9]\d{0,2}(?:\.\d{3})+(?:,\d+)?$/.test(value)?value.replace(/\./g,''):value;
+    return Number(normalized.replace(',','.'));
+  }
+  function pipeDiameters(text,labels='(?:da|ad|außendurchmesser|aussendurchmesser|dn\\s*/\\s*od|od\\s+dn)') {
+    const values = new Set();
+    let qualified = false;
+    const expression = new RegExp('\\b'+labels+'\\s*[:=]?\\s*'+
+      '((?:(?:bis|über|mindestens|ca\\.?|etwa)\\s+)?)('+numericPattern+')'+
+      '\\s*(?:(?:bis|[-–])\\s*('+numericPattern+')\\s*)?(mm|cm|m)?(?!\\w|[.,]\\d)','g');
+    for (const m of text.matchAll(expression)) {
+      const factor = m[4]==='m'?1000:m[4]==='cm'?10:1;
+      values.add(String(Number((numberValue(m[2])*factor).toFixed(6))));
+      const prefix=text.slice(Math.max(0,m.index-25),m.index);
+      if (m[1] || m[3] || /\b(?:bis|über|mindestens|ca\.?|etwa)\s*$/.test(prefix)) qualified=true;
+    }
+    return {values:[...values].sort(),qualified};
+  }
+  function bendAngles(text) {
+    const values = new Set();
+    let qualified = false;
+    const expression = /(\d+(?:[.,]\d+)?)\s*(?:(?:bis|[-–])\s*(\d+(?:[.,]\d+)?)\s*)?(?:grad\b|°)/g;
+    for(const m of text.matchAll(expression)) {
+      values.add(String(Number(m[1].replace(',','.'))));
+      if(m[2]) {values.add(String(Number(m[2].replace(',','.'))));qualified=true;}
+    }
+    return {values:[...values].sort(),qualified};
+  }
+  function pipeMaterials(text) {
+    const found = new Set();
+    const materials=[['PE', /\bpe\s*[- ]?\s*(?:100|80)(?:\b|rc\b)/g],
+      ['PE', /\b(?:pe(?:-hd|hd)?|polyethylen)\s*[- ]?rohr/g],
+      ['PVC', /\bpvc(?:\s*[- ]?\s*[uc])?\s*[- ]?rohr/g],
+      ['PP', /\b(?:pp|polypropylen)\s*[- ]?rohr/g],
+      ['Stahl', /\bstahlrohr/g],['Beton', /\b(?:stahlbeton|beton)rohr/g],
+      ['Guss', /\b(?:gussrohr|duktil(?:es|e|er)?\s+guss)/g]];
+    for(const [material,rx] of materials)if(rx.test(text))found.add(material);
+    const explicit=/\b(?:werkstoff\s*[:=]?|rohr\s+aus)\s*(pe(?:\s*[- ]?\s*(?:100|80|hd))?|polyethylen|pvc(?:\s*[- ]?\s*[uc])?|pp|polypropylen|stahlbeton|beton|stahl|guss)\b/g;
+    for(const m of text.matchAll(explicit))found.add(/^pe|^polyethylen/.test(m[1])?'PE':/^pvc/.test(m[1])?'PVC':/^pp|^polypropylen/.test(m[1])?'PP':/beton/.test(m[1])?'Beton':m[1]==='stahl'?'Stahl':'Guss');
+    return [...found].sort();
+  }
+  function transportDistances(text) {
+    // Only distances attached to transport language; never pipe lengths or depths.
+    const values = new Set();
+    let qualified = false;
+    const pattern = new RegExp('\\b(?:transportentfernung|transportstrecke|transportweg|förderweg|foerderweg|förderentfernung|transportieren|befördern|befoerdern)\\s*[:=]?\\s*'+
+      '((?:(?:bis(?:\\s+zu)?|über|ueber|von|mindestens|maximal|ca\\.?|etwa)\\s+)?)('+numericPattern+')\\s*'+
+      '(?:(?:bis|[-–])\\s*('+numericPattern+')\\s*)?(km|m)\\b','g');
+    for (const match of text.matchAll(pattern)) {
+      const factor = match[4] === 'km' ? 1000 : 1;
+      values.add(String(Number((numberValue(match[2]) * factor).toFixed(6))));
+      if (match[3]) values.add(String(Number((numberValue(match[3]) * factor).toFixed(6))));
+      if (match[1] || match[3]) qualified = true;
+    }
+    return {values:[...values].sort(), qualified};
+  }
   function technicalProfile(position) {
     const key = position && typeof position === 'object' ? position : null;
     const inputs = [position?.kurztext, position?.langtext, position?.outlineSpecs, position?.linkedD83?.langtext, position?.me, position?.linkedD83?.me];
@@ -64,9 +127,9 @@
     if (cached && inputs.every((value, i) => value === cached.inputs[i])) return cached.profile;
     const data = textData(position), text = (data.kurztext + '\n' + data.langtext).toLowerCase();
     const unique = values => [...new Set(values)].sort();
-    const collect = expression => unique([...text.matchAll(expression)].map(m => String(Number(m[1].replace(',', '.')))));
-    const pipe = /rohr|leitung|sickerwassersammler/.test(text), geo = /vlies|geotextil/.test(text);
-    const avv = unique([...text.matchAll(/\bavv(?:[-\s]*(?:schlüssel(?:nummer)?|code|nummer))?\s*[:=(-]?\s*(\d{2})\s*(\d{2})\s*(\d{2})\s*(\*)?/g)].map(m => m[1] + m[2] + m[3] + (m[4] || '')));
+    const collect = (expression,source=text) => unique([...source.matchAll(expression)].map(m => String(Number(m[1].replace(',', '.')))));
+    const pipe = /rohr|leitung|sickerwassersammler|\bdn\s*\/\s*(?:od|id)\s*\d/.test(text), geo = /vlies|geotextil/.test(text);
+    const avv = unique([...text.matchAll(/\bavv(?:[-\s]*(?:schlüssel(?:nummer)?|code|nummer))?(?:\s*\([a-zäöüß][^()\n]{0,100}\))?\s*[:=(-]?\s*(\d{2})\s*(\d{2})\s*(\d{2})(?!\d)\s*(\*)?/g)].map(m => m[1] + m[2] + m[3] + (m[4] || '')));
     const nonHazardous = /\b(?:nicht\s+gefährlich|ungefährlich)/.test(text);
     const wood = unique([...text.matchAll(/\baltholz\s*[-,]?\s*(?:kat(?:egorie)?\.?\s*)?a\s*(iv|iii|ii|i|[1-4])\b/g)].map(m => ({'i':'1','ii':'2','iii':'3','iv':'4'}[m[1]] || m[1])));
     const hazardous = avv.some(code => code.endsWith('*')) || wood.includes('4') || (!nonHazardous && /\bgefährlich(?:e|er|es|en)?\b/.test(text));
@@ -84,9 +147,21 @@
     const weights = geo ? collect(/(?:flächengewicht|flaechengewicht)\s*[:=]?\s*(?:>=|≥|mindestens|min\.?)?\s*(\d+(?:[.,]\d+)?)\s*g\s*\/\s*m(?:²|2|\^2)/g) : [];
     const weightMin = geo && /(?:flächengewicht|flaechengewicht)\s*[:=]?\s*(?:>=|≥|mindestens|min\.?)\s*\d/.test(text);
     const geoMaterial = geo ? unique([/\bpolypropylen\b|\bpp\b/.test(text)?'PP':null,/\bpolyester\b|\bpet\b|\bpes\b/.test(text)?'PET':null].filter(Boolean)) : [];
+    const distance = transportDistances(text);
+    const diameter = pipe ? pipeDiameters(text) : {values:[],qualified:false};
+    const innerDiameter = pipe ? pipeDiameters(text,'(?:di|id|innendurchmesser|dn\\s*/\\s*id|id\\s+dn)') : {values:[],qualified:false};
+    const nominalText=text.replace(/\b(?:od|id)\s+dn\s*\d+(?:[.,]\d+)?/g,' ');
+    const height = /\b(?:auflagering|schachtring|schachtunterteil|schachthals)\b/i.test(data.kurztext) ?
+      pipeDiameters(text,'(?:h|höhe|hoehe|bauhöhe|bauhoehe|bauteilhöhe|bauteilhoehe)') : {values:[],qualified:false};
+    const angle = /\b(?:rohrbogen|bogen|winkel(?:stück)?)\b/i.test(data.kurztext) ? bendAngles(text) : {values:[],qualified:false};
     const profile = {
-      aussendurchmesser: pipe ? collect(/\b(?:da|außendurchmesser|aussendurchmesser)\s*[:=]?\s*(\d+(?:[.,]\d+)?)/g) : [],
-      nennweite: pipe ? collect(/\bdn\s*(\d+(?:[.,]\d+)?)/g) : [],
+      transportentfernung: distance.values, transportentfernungQualifiziert: distance.qualified,
+      aussendurchmesser: diameter.values, aussendurchmesserQualifiziert:diameter.qualified,
+      innendurchmesser: innerDiameter.values, innendurchmesserQualifiziert:innerDiameter.qualified,
+      bauteilhoehe:height.values, bauteilhoeheQualifiziert:height.qualified,
+      bogenwinkel:angle.values, bogenwinkelQualifiziert:angle.qualified,
+      rohrwerkstoff: pipe ? pipeMaterials(text) : [],
+      nennweite: pipe ? collect(/\bdn\s*(\d+(?:[.,]\d+)?)/g,nominalText) : [],
       sdr: pipe ? collect(/\bsdr\s*(\d+(?:[.,]\d+)?)/g) : [],
       peKlasse: pipe ? collect(/\bpe\s*[- ]?\s*(100|80)\b/g) : [],
       avv, holzklasse:wood, gefaehrlich: hazardous && nonHazardous ? null : hazardous ? true : nonHazardous ? false : null,
@@ -99,11 +174,29 @@
   }
   function compareRequirements(target, reference) {
     const a = technicalProfile(target), b = technicalProfile(reference), conflicts = [], missing = [];
-    const unit = value => ({'m²':'m2','m^2':'m2','m³':'m3','m^3':'m3','cbm':'m3','std':'h','std.':'h','st':'stück','stk':'stück','to':'t'}[String(value).toLowerCase().trim()] || String(value).toLowerCase().trim());
-    const family = value => ({m:'length',m2:'area',m3:'volume',h:'time',t:'mass',kg:'mass','stück':'count',psch:'lump'}[unit(value)] || null);
-    if (family(a.einheit) && family(b.einheit) && family(a.einheit)!==family(b.einheit)) conflicts.push('Abrechnungseinheit hat andere Dimension: '+a.einheit+' / '+b.einheit);
+    const unit = value => ({'m²':'m2','m^2':'m2','qm':'m2','quadratmeter':'m2','m³':'m3','m^3':'m3','cbm':'m3','kubikmeter':'m3',
+      'lfm':'m','laufmeter':'m','std':'h','std.':'h','stunde':'h','stunden':'h','akh':'h',
+      'st':'stück','stk':'stück','st.':'stück','stk.':'stück','to':'t','tonne':'t','tonnen':'t',
+      'pauschal':'psch','pauschale':'psch','monat':'mt','monate':'mt','woche':'wo','wochen':'wo'}[String(value).toLowerCase().trim()] || String(value).toLowerCase().trim());
+    const family = value => ({m:'length',cm:'length',mm:'length',km:'length',m2:'area',m3:'volume',h:'time',mt:'time',wo:'time',t:'mass',kg:'mass','stück':'count',psch:'lump'}[unit(value)] || null);
+    const ua=unit(a.einheit),ub=unit(b.einheit);
+    if (family(ua) && family(ub) && family(ua)!==family(ub)) conflicts.push('Abrechnungseinheit hat andere Dimension: '+a.einheit+' / '+b.einheit);
+    else if (!ua || !ub) missing.push('Abrechnungseinheit fehlt: Bezugsbasis prüfen');
+    else if (ua!==ub) missing.push('Abweichende Abrechnungseinheit: Umrechnung / Bezugsbasis prüfen ('+a.einheit+' / '+b.einheit+')');
     if (a.widerspruechlicheAngaben || b.widerspruechlicheAngaben) missing.push('Widersprüchliche Angaben im Leistungstext: Kontext prüfen');
-    for (const [key,label] of [['aussendurchmesser','Rohr-Außendurchmesser'],['nennweite','Rohr-Nennweite'],['sdr','SDR-Klasse'],['peKlasse','PE-Werkstoffklasse'],['avv','AVV-Schlüssel'],['holzklasse','Altholzklasse'],['geotextilMaterial','Geotextil-Material']]) {
+    if (a.transportentfernung.length) {
+      if (!b.transportentfernung.length) missing.push('Transportentfernung in Referenz nicht bestätigt');
+      else if (a.transportentfernungQualifiziert || b.transportentfernungQualifiziert ||
+          a.transportentfernung.length > 1 || b.transportentfernung.length > 1)
+        missing.push('Transportentfernung: Bereich, Näherung oder mehrere Werte fachlich prüfen');
+      else if (a.transportentfernung[0] !== b.transportentfernung[0])
+        conflicts.push('Transportentfernung widerspricht: '+a.transportentfernung[0]+' m / '+b.transportentfernung[0]+' m');
+    }
+    for (const [key,label] of [['aussendurchmesser','Rohr-Außendurchmesser'],['innendurchmesser','Rohr-Innendurchmesser'],['bauteilhoehe','Bauteilhöhe'],['bogenwinkel','Bogenwinkel'],['rohrwerkstoff','Rohrwerkstoff'],['nennweite','Rohr-Nennweite'],['sdr','SDR-Klasse'],['peKlasse','PE-Werkstoffklasse'],['avv','AVV-Schlüssel'],['holzklasse','Altholzklasse'],['geotextilMaterial','Geotextil-Material']]) {
+      if(['aussendurchmesser','innendurchmesser','bauteilhoehe','bogenwinkel'].includes(key) && a[key].length && (a[key+'Qualifiziert'] || b[key+'Qualifiziert'])) {
+        missing.push(label+': Bereich oder Näherung fachlich prüfen');
+        continue;
+      }
       if (a[key].length && b[key].length && !a[key].some(value=>b[key].includes(value))) conflicts.push(label+' widerspricht: '+a[key].join('/')+' / '+b[key].join('/'));
       else if (a[key].length && !b[key].length) missing.push(label+' in Referenz nicht bestätigt');
       else if (a[key].length && (a[key].length>1 || b[key].length>1)) missing.push(label+': mehrere Werte, Leistungsumfang prüfen');
@@ -163,6 +256,8 @@
         'Gleiche OZ oder ähnliche Kurztexte allein sind kein Nachweis fachlicher Gleichwertigkeit.',
         'Nutze fachmerkmale als Suchhilfe und bestätige sie im Originaltext. Fehlende Merkmale sind unbekannt, nicht gleichwertig.',
         'Unterschiedlicher Rohr-Außendurchmesser, DN, SDR, PE-Klasse, AVV einschließlich Stern oder trocken gegenüber Unterwasser sind keine gleichwertige Gesamtleistung. DN und Außendurchmesser sind verschiedene Größen.',
+        'DN/OD bezeichnet die Außendurchmesserreihe; DN/ID und ID/DI bezeichnen Innenmaße. Verwechsle Innen- und Außendurchmesser nicht mit bloßem DN. Entsorgungsleitungen im Arbeitsbereich sind kein Nachweis einer Entsorgungstätigkeit. Verfüllen gehört zum Einbauumfang.',
+        'Prüfe Rohrwerkstoffe und Transportentfernungen ausdrücklich. Außendurchmesser werden in Millimeter, Transportentfernungen in Meter normalisiert. Im deutschen Zahlenformat ist 1.000 m gleich 1 km. Bereiche und Näherungen sind keine bestätigten Einzelwerte. Gleiche Dimension bedeutet bei kg/t oder m/km noch keine gleiche Abrechnungsbasis; keine ungeprüften Ansätze umrechnen.',
         'Suche für jede Zielposition gezielt technische Alternativen und prüfe Gegenargumente. Widersprüchliche Referenzen dürfen nicht als matched erscheinen; Teilansätze allenfalls ambiguous mit konkret beschriebenen Grenzen.',
         'Hohe Zuordnungssicherheit braucht bestätigte wesentliche Anforderungen. Kostenlücken getrennt von der fachlichen Passung bewerten.',
         'Gerätebausteine sind vorhandene zusammengesetzte Geräteansätze, häufig aus Miete, Diesel, Bedienpersonal und optional GPS. Der Verweis enthält diese Bestandteile nicht zwingend. Kostenarten und Gerätepreise werden beim i2-Import aus Stammdaten gezogen. Leere oder Nullpreise im Export sind kein Mangel der Referenz. Entscheidend sind korrekte Kostenarten-/Bausteinkennungen und Mengen-/Kostenfaktoren; Leistungsfaktoren nicht wie Mengenmultiplikatoren behandeln. Keine Komponenten oder Preise erfinden und keine enthaltenen Bestandteile doppelt hinzurechnen.',

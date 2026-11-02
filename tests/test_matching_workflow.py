@@ -51,6 +51,47 @@ class MatchingWorkflow(unittest.TestCase):
         self.assertNotIn('Dokumenttyp unpassend',result['caps'])
         self.assertTrue(result['documentCaps'])
 
+    def test_transport_distance_guards_rule_scores_and_llm_decisions(self):
+        rows = self.page.evaluate('''() => {
+          const p = text => ({kurztext:'Boden transportieren',langtext:text,me:'m3'});
+          const target = p('Transportentfernung 1000 m');
+          return ['Transportentfernung 500 m', 'Transportentfernung 1 km',
+            'Boden transportieren', 'Transportentfernung bis 1000 m',
+            'Transportentfernung 500–1000 m', 'Transportentfernung ca. 1000 m']
+            .map(text => {
+              const ref = p(text), check = KPLLMMatching.compareRequirements(target,ref);
+              const audit = KPLLMMatching.assessDecision({status:'matched',referenceIds:['r1'],
+                confidence:'high',differences:[],missingInformation:[],
+                evidence:[{referenceId:'r1'}]},target,[ref]);
+              return {conflicts:check.conflicts,missing:check.missing,
+                score:calcScore(target,ref).score,verdict:audit.verdict};
+            });
+        }''')
+        self.assertTrue(rows[0]['conflicts'])
+        self.assertLessEqual(rows[0]['score'],45)
+        self.assertEqual(rows[0]['verdict'],'conflict')
+        self.assertEqual(rows[1]['conflicts'],[])
+        self.assertEqual(rows[1]['missing'],[])
+        self.assertEqual(rows[1]['verdict'],'consistent')
+        for row in rows[2:]:
+            self.assertTrue(row['missing'])
+            self.assertLessEqual(row['score'],68)
+            self.assertEqual(row['verdict'],'incomplete')
+
+    def test_transport_distance_ignores_unrelated_lengths_and_refreshes_cache(self):
+        result = self.page.evaluate('''() => {
+          const p={kurztext:'Rohr liefern',langtext:'Rohr DN 100, Länge 500 m, Tiefe 2 m',me:'m'};
+          const before=KPLLMMatching.technicalProfile(p).transportentfernung;
+          p.langtext='Transportweg: 0,5 km';
+          const after=KPLLMMatching.technicalProfile(p).transportentfernung;
+          const ref={...p,langtext:'Transportweg: 500 m'};
+          return {before,after,check:KPLLMMatching.compareRequirements(p,ref)};
+        }''')
+        self.assertEqual(result['before'],[])
+        self.assertEqual(result['after'],['500'])
+        self.assertEqual(result['check']['conflicts'],[])
+        self.assertEqual(result['check']['missing'],[])
+
     def test_profile_cache_updates_after_text_changes(self):
         result=self.page.evaluate("""()=>{
           const p={kurztext:'Bauzaun aufstellen',langtext:'Bauzaun aufstellen',me:'m'};
@@ -64,6 +105,79 @@ class MatchingWorkflow(unittest.TestCase):
         self.assertTrue(result['document'])
         self.assertEqual(result['unit'],'psch')
         self.assertNotIn('__matchProfile',result['serialized'])
+
+    def test_large_pool_keeps_technically_matching_reference_beyond_retrieval_window(self):
+        result = self.page.evaluate('''async () => {
+          const target={oz:'T1',kurztext:'Rohr liefern',langtext:'Rohr PE100 da 75 SDR 11',me:'m',menge:10};
+          const wrong=Array.from({length:260},(_,i)=>({...target,oz:'R'+i,
+            langtext:'Rohr PE100 da 315 SDR 11',menge:1,matchedXML:true,
+            kosten:[{typ:'L',nameCoC:'L1',menge:1,preis:10}]}));
+          const valid={...wrong[0],oz:'VALID',langtext:target.langtext};
+          S.refProjects=[{name:'Synthetic',active:true,positions:[...wrong,valid]}];
+          S.newLV=[target];
+          document.getElementById('unitFilter').checked=true;
+          await runMatch();
+          return {first:S.results[0].matches[0]?.pos.oz,
+            score:S.results[0].matches[0]?.score,
+            manual:getManualCandidatesForTarget(S.results[0],true).map(r=>r.rp.oz)};
+        }''')
+        self.assertEqual(result['first'],'VALID')
+        self.assertGreaterEqual(result['score'],80)
+        self.assertIn('VALID',result['manual'])
+
+    def test_recall_respects_explicit_unit_filter(self):
+        result=self.page.evaluate('''() => {
+          const p={oz:'1',kurztext:'Boden lösen',me:'m3'};
+          const ref={...p,me:'t'};
+          return {filtered:collectAutoRecallCandidates(p,getMatchProfile(p),[ref],[],40,true).length,
+            unfiltered:collectAutoRecallCandidates(p,getMatchProfile(p),[ref],[],40,false).length};
+        }''')
+        self.assertEqual(result,{'filtered':0,'unfiltered':1})
+
+    def test_bulk_acceptance_keeps_risks_open_and_rechecks_changed_text(self):
+        self.prepare()
+        result=self.page.evaluate('''() => {
+          const target={oz:'1',kurztext:'Rohr liefern',langtext:'Rohr PE100 da 75',me:'m',menge:10};
+          const ref={...target,menge:1,kosten:[{typ:'L',nameCoC:'L1',menge:1,preis:10}]};
+          const match={pos:ref,score:100,kind:'CALC',debug:{unitScore:100,categoryScore:100}};
+          const row=()=>({newPos:{...target},matches:[{...match,pos:{...ref}}],sel:0,accepted:false});
+          const good=row(),changed=row(),llm=row(),ambiguous=row();
+          changed.newPos.langtext='Rohr PE100 da 315';
+          llm.matches[0].debug={...match.debug,llmMatched:true};
+          ambiguous.matches.push({...match,pos:{...ref,oz:'2'},score:98});
+          S.results=[good,changed,llm,ambiguous];
+          acceptAllAboveThreshold();
+          return {accepted:S.results.map(r=>r.accepted),
+            risks:getMatchRiskReasons(changed),trace:getMatchReviewTrace(changed)};
+        }''')
+        self.assertEqual(result['accepted'],[True,False,False,False])
+        self.assertTrue(any('Außendurchmesser' in s for s in result['risks']))
+        self.assertEqual(result['trace'][2]['status'],'Fachlicher Widerspruch')
+        self.assertIn('Außendurchmesser',result['trace'][2]['details'])
+
+    def test_confident_llm_import_cannot_hide_pipe_material_conflict(self):
+        self.import_projects([{'name':'Synthetic','active':True,'positions':[
+            {'oz':'R1','kurztext':'Rohr liefern','langtext':'PVC-Rohr da 75 SDR 11 liefern',
+             'me':'m','menge':1,'kosten':[{'typ':'L','nameCoC':'L1','menge':1,'preis':10}]}]}])
+        request=self.page.evaluate('''async () => {
+          S.newLV=[{oz:'T1',kurztext:'Rohr liefern',langtext:'PE100 Rohr da 75 SDR 11 liefern',me:'m',menge:10}];
+          return (await getLLMMatchingContext()).request;
+        }''')
+        response={'schema':'kalkpilot.llm-matches','schemaVersion':1,'requestId':request['requestId'],
+            'matches':[{'targetId':'t1','status':'matched','referenceIds':['r1'],'confidence':'high',
+                'reason':'Gleiche Rohrleistung.','differences':[],'missingInformation':[],
+                'evidence':[{'referenceId':'r1','targetQuote':'Rohr da 75 SDR 11 liefern',
+                    'referenceQuote':'Rohr da 75 SDR 11 liefern'}]}]}
+        result=self.page.evaluate('''async response => {
+          await importLLMMatches(new File([JSON.stringify(response)],'answer.json'));
+          const row=S.results[0];
+          return {verdict:row.matches[0].debug.llmAudit.verdict,score:row.matches[0].score,
+            reasons:row.matches[0].debug.llmAudit.reasons,accepted:row.accepted};
+        }''',response)
+        self.assertEqual(result['verdict'],'conflict')
+        self.assertLessEqual(result['score'],45)
+        self.assertTrue(any('Rohrwerkstoff' in s for s in result['reasons']))
+        self.assertFalse(result['accepted'])
 
     def prepare(self):
         self.import_projects([{'name':'Synthetic','active':True,'positions':[

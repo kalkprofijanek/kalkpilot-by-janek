@@ -1,0 +1,21 @@
+[
+  {
+    "name": "Ulm JVA Tiefbau",
+    "ocid": "ocds-mnwr74-0b6eca6f-22f4-4c2c-a861-e5a553b46c80",
+    "fileName": "26-92354 LV.X83",
+    "sourceUrl": "https://vergabe.landbw.de/NetServer/TenderingProcedureDetails?function=_Details&TenderOID=54321-NetTender-1a1869827a0-47c5b50978d78c39&thContext=publications",
+    "downloadUrl": "https://vergabe.landbw.de/NetServer/TenderingProcedureDetails?function=_DownloadTenderDocuments&documentOID=54321-SpecificationVersion-1a18698421f-7120142699648c2e",
+    "archiveEntry": "Leistungsverzeichnis/26-92354 LV.X83",
+    "sha256": "22a3636a0a2e0dfda1807135eb6d0f1eaa133f1acee3ac65b2c8751c823a0b7a",
+    "expectedItems": 244
+  },
+  {
+    "name": "Heidelberg Uniklinik Tiefbau",
+    "ocid": "ocds-mnwr74-df8aebbc-7518-47d5-aad6-4f9ef3951235",
+    "fileName": "26-63243-V2.X83",
+    "sourceUrl": "https://vergabe.landbw.de/NetServer/TenderingProcedureDetails?function=_Details&TenderOID=54321-NetTender-1a0ce9295bb-46005b05fe66602c&thContext=publications",
+    "downloadUrl": "https://vergabe.landbw.de/NetServer/TenderingProcedureDetails?function=_DownloadTenderDocument&documentOID=54321-SpecificationVersion-1a186ead05d-2ae50392bfeabb2a&Document=MjYtNjMyNDMtVjIuWDgz",
+    "sha256": "8a4f41652e7506f707f464863739ff2ed9fa25a3acdd0121c33f4cb02f78a091",
+    "expectedItems": 585
+  }
+]

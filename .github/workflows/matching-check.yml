@@ -1,0 +1,84 @@
+name: Matching check
+
+on:
+  workflow_dispatch:
+    inputs:
+      public_lvs:
+        description: 'Auch die zwei öffentlichen Original-LVs herunterladen und prüfen'
+        type: boolean
+        default: true
+      discover_lvs:
+        description: 'Weitere Ausschreibungen über die Open-Data-API suchen'
+        type: boolean
+        default: false
+      discovery_day:
+        description: 'Veröffentlichungstag YYYY-MM-DD, leer = gestern (Berlin)'
+        type: string
+        default: ''
+  push:
+    branches:
+      - 'codex/matching-*'
+
+permissions:
+  contents: read
+
+jobs:
+  matching:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: bash scripts/setup-cloud.sh --browser-deps
+      - name: Browser and cloud regression tests
+        run: bash scripts/test-cloud.sh
+      - name: Synthetic matching quality
+        run: .venv/bin/python scripts/matching_quality_cloud.py --output-dir "$RUNNER_TEMP/matching-synthetic"
+      - name: Public LV import and cross-project review
+        if: github.event_name == 'push' || inputs.public_lvs
+        run: .venv/bin/python scripts/run_public_lv_check.py --output-dir "$RUNNER_TEMP/matching-public"
+      - name: Discover additional public LV sources
+        if: github.event_name == 'push' || inputs.discover_lvs
+        env:
+          DISCOVERY_DAY: ${{ inputs.discovery_day }}
+        run: |
+          args=()
+          if [[ -n "$DISCOVERY_DAY" ]]; then args+=(--day "$DISCOVERY_DAY"); fi
+          .venv/bin/python scripts/discover_public_lvs.py "${args[@]}" --output-dir "$RUNNER_TEMP/matching-discovery"
+      - name: Publish summary
+        if: success()
+        run: |
+          .venv/bin/python - <<'PY'
+          import json, os
+          from pathlib import Path
+          base=Path(os.environ['RUNNER_TEMP'])
+          quality=json.loads((base/'matching-synthetic/matching-quality.json').read_text())['current']
+          lines=['## Matching check',f"Synthetic cases: {quality['correct']}/{quality['total']}."]
+          path=base/'matching-public/summary.json'
+          if path.exists():
+              s=json.loads(path.read_text())
+              lines += [f"Public LV positions: {s['positions']}; cross-project pairs: {s['pairs']}.",
+                        f"Review cases: {s['reviewCases']}; expert-confirmed: 0; price approvals: 0."]
+          else:
+              lines.append('Public LV check was not requested.')
+          path=base/'matching-discovery/candidates.json'
+          if path.exists():
+              s=json.loads(path.read_text())
+              lines.append(f"API discovery: {len(s['candidates'])} candidates from {s['noticesScanned']} notices; GAEB availability unverified.")
+          lines.append('Original LVs and full review texts are not uploaded as CI artifacts.')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:f.write('\n\n'.join(lines)+'\n')
+          PY
+      - name: Store counts and synthetic report only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: matching-check-summary
+          path: |
+            ${{ runner.temp }}/matching-synthetic/matching-quality.json
+            ${{ runner.temp }}/matching-public/summary.json
+            ${{ runner.temp }}/matching-discovery/candidates.json
+            ${{ runner.temp }}/matching-discovery/candidates.csv
+          if-no-files-found: ignore
+          retention-days: 14
